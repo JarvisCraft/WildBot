@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 public class Setting {
     private String name;
     private InputType inputType;
+    private int min = Integer.MIN_VALUE;
+    private int max = Integer.MAX_VALUE;
 
     private String[] requestInputMessage;
     private String[] wrongInputMessage;
@@ -19,10 +21,27 @@ public class Setting {
         setInputType(inputType);
     }
 
+    public Setting(String name, InputType inputType, int min, int max) {
+        setName(name);
+        setInputType(inputType);
+        setMax(max);
+    }
+
     public Setting(String name, InputType inputType, String[] requestInputMessage, String[] wrongInputMessage,
                    String[] successInputMessage) {
         setName(name);
         setInputType(inputType);
+        setRequestInputMessage(requestInputMessage);
+        setWrongInputMessage(wrongInputMessage);
+        setSuccessInputMessage(successInputMessage);
+    }
+
+
+    public Setting(String name, InputType inputType, int min, int max, String[] requestInputMessage,
+                   String[] wrongInputMessage, String[] successInputMessage) {
+        setName(name);
+        setInputType(inputType);
+        setMax(max);
         setRequestInputMessage(requestInputMessage);
         setWrongInputMessage(wrongInputMessage);
         setSuccessInputMessage(successInputMessage);
@@ -43,6 +62,24 @@ public class Setting {
 
     public Setting setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public int getMin() {
+        return min;
+    }
+
+    public Setting setMin(int min) {
+        this.min = Math.abs(min);
+        return this;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
+    public Setting setMax(int max) {
+        this.max = Math.abs(max);
         return this;
     }
 

@@ -3,10 +3,11 @@ package ru.wildcubes.wildbot.vk.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import com.vk.api.sdk.callback.objects.CallbackMessage;
-import com.vk.api.sdk.callback.objects.CallbackMessageType;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessage;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessageType;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import ru.wildcubes.wildbot.logging.Tracer;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +28,8 @@ public class VkConfirmationCodeHandler extends AbstractHandler {
                        HttpServletResponse response) throws IOException, ServletException {
         if (request == null || request.getMethod() == null
                 || !request.getMethod().equalsIgnoreCase("POST")) return;
+
+        Tracer.info("VkConfirmationCodeHandler");
 
         final CallbackMessage<JsonObject> callback = gson.fromJson(
                 request.getReader().lines().collect(Collectors.joining()),

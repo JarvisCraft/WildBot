@@ -1,38 +1,71 @@
 package ru.wildcubes.wildbot.vk.server;
 
-import com.vk.api.sdk.client.VkApiClient;
+import com.vk.api.sdk.actions.Groups;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.objects.groups.responses.SetCallbackServerResponse;
-import com.vk.api.sdk.objects.groups.responses.SetCallbackServerResponseStateCode;
+import com.vk.api.sdk.objects.groups.CallbackServer;
+import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import ru.wildcubes.wildbot.logging.Tracer;
 import ru.wildcubes.wildbot.settings.SettingsManager;
 import ru.wildcubes.wildbot.vk.VkApiManager;
+
 public class VkCallbackServerManager {
     // Server General
     private static int port;
     private static String host;
-    private static HandlerCollection handlers;
-    // VK API special
     private static Server server;
-    private static String callbackCode;
+    private static HandlerCollection handlers;
+    private static int id;
+    // VK API special
+    private static CallbackServer callbackServer = null;
+    private static String confirmationCode;
 
-    public static void init() throws ApiException, ClientException{
+    public static void init() throws ApiException, ClientException {
         // Shorthands
-        final VkApiClient vk = VkApiManager.getVkApi();
+        final Groups group = VkApiManager.getVkApi().groups();
         final GroupActor actor = VkApiManager.getActor();
 
         // Server Details
-        port = Integer.valueOf(SettingsManager.getSetting("server-port"));
-        host = "http://" + SettingsManager.getSetting("server-host") + "/";
+        // Used for Opening Jetty Server
+        port = Integer.valueOf(SettingsManager.getSetting("callback-server-port"));
+        // Used for opening Jetty Server and as Callback Url
+        host = SettingsManager.getSetting("callback-server-host");
+
+        Tracer.info("Using Host \"" + host + "\" for Callback Server");
         handlers = new HandlerCollection();
 
-        callbackCode = vk.groups().getCallbackConfirmationCode(actor).execute().getCode();
+        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
 
-        if(!vk.groups().getCallbackServerSettings(actor).execute().getServerUrl().equals(host)) {
+        final ContextHandler contextHandler = new ContextHandler("/wildbot");
+
+        handlers.addHandler(contextHandler);
+        handlers.addHandler(new VkConfirmationCodeHandler(confirmationCode));
+        handlers.addHandler(new VkCallbackRequestHandler());
+
+        server = new Server(port);
+        server.setHandler(handlers);
+
+        // Find CallBack server in Group's list
+
+        try {
+            server.start();
+
+            findCallbackServer(group, actor);
+            registerCallbackServer(group, actor);
+
+            group.setCallbackSettings(actor, id).messageNew(true).execute();
+
+            server.join();
+        } catch (Exception e) {//TODO
+            e.printStackTrace();
+        }
+
+        /*
+        if(!vk.groups().getCalSe(actor, id).execute().equals(host)) {
             Tracer.info("Group's Callback-Url not equal");
             final String confirmationCode = vk.groups().getCallbackConfirmationCode(actor).execute().getCode();
             handlers.addHandler(new VkConfirmationCodeHandler(confirmationCode));
@@ -56,8 +89,9 @@ public class VkCallbackServerManager {
                 i++;
                 Tracer.info("Performing ServerTest №" + i + " for host " + host);
 
-                final SetCallbackServerResponse response = vk.groups().setCallbackServer(actor).serverUrl(host)
+                final SetCallbackServerResponse response = vk.groups().addCallbackServer(actor).serverUrl(host)
                         .execute();
+                new
                 Tracer.info(response);
                 Tracer.info(response.getState());
                 Tracer.info(response.getStateCode());
@@ -75,7 +109,33 @@ public class VkCallbackServerManager {
             Tracer.error("An exception occurred while trying to Start:");
             e.getCause();
         }
+        */
 
-        Tracer.info(vk.groups().getCallbackServerSettings(actor).execute());
+        //Tracer.info(group.getCallbackServerSettings(actor).execute());
+    }
+
+    public static void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Finding CallBack Server in the list of registered");
+
+        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
+
+        for (CallbackServer callbackServerTested : servers.getItems()) if (callbackServerTested.getUrl()
+                .equalsIgnoreCase(host)) {
+            Tracer.info("CallbackServer was found by host " + host);
+            callbackServer = callbackServerTested;
+            id = callbackServer.getId();
+            break;
+        }
+    }
+
+    public static void registerCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Registering custom Callback Server");
+
+        if (callbackServer == null) {
+            Tracer.info("There were no registered CallbackServer with host " + host);
+            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("callback-server-title"))
+                    .execute().getServerId();
+            findCallbackServer(group, actor);
+        }
     }
 }

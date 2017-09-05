@@ -30,6 +30,10 @@ public class VkApiManager {
         return group;
     }
 
+    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:" +
+            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: "
+            + System.currentTimeMillis();
+
     public static void authorise() {
         GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
         GROUP_KEY = SettingsManager.getSetting("group-key");
@@ -43,7 +47,7 @@ public class VkApiManager {
                     "by the following criteria:",
                     "ID: " + GROUP_ID, "Key: " + GROUP_KEY);
 
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message("Hello World!").execute());
+            Tracer.info("Send: " + vkApi.messages().send(actor).userId(402833125).message(HELLO_WORLD).execute());
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
             Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:",
                     e.getCause());
