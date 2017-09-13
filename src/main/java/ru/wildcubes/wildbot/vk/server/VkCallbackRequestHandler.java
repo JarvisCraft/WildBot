@@ -22,6 +22,8 @@ public class VkCallbackRequestHandler extends AbstractHandler {
                        HttpServletResponse response) throws IOException, ServletException {
         Tracer.info("VkCallbackRequestHandler");
 
+        if (baseRequest.isHandled()) return;
+
         if (request == null || request.getMethod() == null
                 || !request.getMethod().equalsIgnoreCase("POST")) return;
 

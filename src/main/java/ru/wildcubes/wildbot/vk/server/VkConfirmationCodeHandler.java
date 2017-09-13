@@ -23,6 +23,10 @@ public class VkConfirmationCodeHandler extends AbstractHandler {
         this.confirmationCode = confirmationCode;
     }
 
+    public void setConfirmationCode(String confirmationCode) {
+        this.confirmationCode = confirmationCode;
+    }
+
     @Override
     public void handle(String target, Request baseRequest, HttpServletRequest request,
                        HttpServletResponse response) throws IOException, ServletException {

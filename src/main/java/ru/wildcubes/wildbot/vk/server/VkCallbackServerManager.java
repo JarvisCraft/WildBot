@@ -2,12 +2,12 @@ package ru.wildcubes.wildbot.vk.server;
 
 import com.vk.api.sdk.actions.Groups;
 import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.exceptions.ApiCaptchaException;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.groups.CallbackServer;
 import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import ru.wildcubes.wildbot.logging.Tracer;
 import ru.wildcubes.wildbot.settings.SettingsManager;
@@ -40,10 +40,8 @@ public class VkCallbackServerManager {
 
         confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
 
-        final ContextHandler contextHandler = new ContextHandler("/wildbot");
-
-        handlers.addHandler(contextHandler);
-        handlers.addHandler(new VkConfirmationCodeHandler(confirmationCode));
+        final  VkConfirmationCodeHandler confirmationCodeHandler = new VkConfirmationCodeHandler(confirmationCode);
+        handlers.addHandler(confirmationCodeHandler);
         handlers.addHandler(new VkCallbackRequestHandler());
 
         server = new Server(port);
@@ -56,62 +54,14 @@ public class VkCallbackServerManager {
 
             findCallbackServer(group, actor);
             registerCallbackServer(group, actor);
+            confirmationCodeHandler.setConfirmationCode(group.getCallbackConfirmationCode(actor).execute().getCode());
 
             group.setCallbackSettings(actor, id).messageNew(true).execute();
 
             server.join();
         } catch (Exception e) {//TODO
-            e.printStackTrace();
+            Tracer.info("An exception occurred while Starting VK-Callback Server:", e.getCause());
         }
-
-        /*
-        if(!vk.groups().getCalSe(actor, id).execute().equals(host)) {
-            Tracer.info("Group's Callback-Url not equal");
-            final String confirmationCode = vk.groups().getCallbackConfirmationCode(actor).execute().getCode();
-            handlers.addHandler(new VkConfirmationCodeHandler(confirmationCode));
-        }
-
-        Tracer.info("OK: " + String.valueOf(vk.groups().setCallbackSettings(actor).messageNew(true)
-                .execute()));
-        handlers.addHandler(new VkCallbackRequestHandler());
-
-        final Server server = new Server(port);
-        server.setHandler(handlers);
-        try {
-            server.start();
-
-            int testTries = Integer.parseInt(SettingsManager.getSetting("server-start-test-tries"));
-            long testSleep = Long.parseLong(SettingsManager.getSetting("server-start-test-sleep"));
-            Tracer.info("Times to try connecting: " + testTries, "Interval tries: " + testSleep);
-
-            int i = 0;
-            do {
-                i++;
-                Tracer.info("Performing ServerTest №" + i + " for host " + host);
-
-                final SetCallbackServerResponse response = vk.groups().addCallbackServer(actor).serverUrl(host)
-                        .execute();
-                new
-                Tracer.info(response);
-                Tracer.info(response.getState());
-                Tracer.info(response.getStateCode());
-
-                if (response.getStateCode() == SetCallbackServerResponseStateCode.FAILED) throw new RuntimeException(
-                        "Setting Callback Server has Failed");
-
-                if (response.getStateCode() == SetCallbackServerResponseStateCode.OK) return;
-
-                Thread.sleep(testSleep);
-            } while (i < testTries);
-
-            server.join();
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to Start:");
-            e.getCause();
-        }
-        */
-
-        //Tracer.info(group.getCallbackServerSettings(actor).execute());
     }
 
     public static void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {

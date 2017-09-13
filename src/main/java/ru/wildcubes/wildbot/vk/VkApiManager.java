@@ -6,36 +6,29 @@ import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
 import com.vk.api.sdk.objects.groups.GroupFull;
+import lombok.Getter;
+import lombok.Setter;
 import ru.wildcubes.wildbot.logging.Tracer;
 import ru.wildcubes.wildbot.settings.SettingsManager;
 
 public class VkApiManager {
-    private static VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+    @Getter private static final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
 
-    private static Integer GROUP_ID;
+    @Getter @Setter private static GroupActor actor;
+    @Getter @Setter private static GroupFull group;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Secure
+    ///////////////////////////////////////////////////////////////////////////
+
     private static String GROUP_KEY;
-
-    private static GroupActor actor;
-    private static GroupFull group;
-
-    public static VkApiClient getVkApi() {
-        return vkApi;
-    }
-
-    public static GroupActor getActor() {
-        return actor;
-    }
-
-    public static GroupFull getGroup() {
-        return group;
-    }
 
     public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:" +
             "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: "
             + System.currentTimeMillis();
 
     public static void authorise() {
-        GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
+        final int GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
         GROUP_KEY = SettingsManager.getSetting("group-key");
 
         try {
@@ -48,6 +41,8 @@ public class VkApiManager {
                     "ID: " + GROUP_ID, "Key: " + GROUP_KEY);
 
             Tracer.info("Send: " + vkApi.messages().send(actor).userId(402833125).message(HELLO_WORLD).execute());
+
+            vkApi.messages().send(actor).userId(402833125).message("Эээй, у меня вообще-то чувсива есть :(").execute();
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
             Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:",
                     e.getCause());

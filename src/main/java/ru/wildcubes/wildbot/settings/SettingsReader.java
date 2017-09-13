@@ -4,43 +4,40 @@ import ru.wildcubes.wildbot.logging.Tracer;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class SettingsReader {
+    private static final String SETTING_NAME_PLACEHOLDER = "{setting_name}";
+    private static final String SETTING_VALUE_PLACEHOLDER = "{setting_value}";
 
     private static List<Setting> requiredSettings = new ArrayList<Setting>() {{
         //VK API group access
-        add(new Setting("group-id", Setting.InputType.INT)
-                .setSuccessInputMessage("Enter your Group ID")
-                .setWrongInputMessage("Not valid Group ID")
-                .setWrongInputMessage("Group ID set to TODO")
+        add(Setting.builder().name("group-id").inputType(Setting.InputType.INT)
+                .requestInputMessage("Enter your Group ID")
+                .wrongInputMessage("Not valid Group ID .")
+                .successInputMessage("Group ID set to TODO")
+                .build()
         );
-        add(new Setting("group-key", Setting.InputType.SINGLE_STRING)
-                .setSuccessInputMessage("Enter your Group Access Key")
-                .setWrongInputMessage("Invalid Group Access Key")
-                .setWrongInputMessage("Group Access Key set to TODO")
+        add(Setting.builder().name("group-key").inputType(Setting.InputType.SINGLE_STRING)
+                .requestInputMessage("Enter your Group Access Key")
+                .wrongInputMessage("Invalid Group Access Key")
+                .successInputMessage("Group Access Key set to TODO")
+                .build()
         );
 
         // Callback Handling Server
-        add(new Setting("callback-server-host", Setting.InputType.SINGLE_STRING)
-                .setRequestInputMessage("Please specify the host you would like to use for Callback Handling")
-                .setWrongInputMessage("Given value is not a valid host")
-                .setSuccessInputMessage("Callback Handling host set to TODO"));
-        add(new Setting("callback-server-port", Setting.InputType.INT)
-                .setRequestInputMessage("Please specify the port you would like to use for Callback Handling")
-                .setWrongInputMessage("Given value is not a valid port")
-                .setSuccessInputMessage("Callback Handling port set to TODO"));
-        add(new Setting("callback-server-title", Setting.InputType.SINGLE_STRING, 1, 14)
-                .setRequestInputMessage("Please specify the ID you would like to use for Callback Handling")
-                .setWrongInputMessage("Given value is not a valid ID")
-                .setSuccessInputMessage("Callback Handling ID set to TODO"));
-        add(new Setting("callback-server-id", Setting.InputType.STRING, 0, 65536)
-                .setRequestInputMessage("Please specify the ID you would like to use for Callback Handling")
-                .setWrongInputMessage("Given value is not a valid ID")
-                .setSuccessInputMessage("Callback Handling ID set to TODO"));
+        add(Setting.builder().name("callback-server-host").inputType(Setting.InputType.SINGLE_STRING)
+                .requestInputMessage("Please specify the host you would like to use for Callback Handling")
+                .wrongInputMessage("Given value is not a valid host")
+                .successInputMessage("Callback Handling host set to {setting_value}")
+                .build()
+        );
+        add(Setting.builder().name("callback-server-port").inputType(Setting.InputType.INT)
+                .requestInputMessage("Please specify the port you would like to use for Callback Handling")
+                .wrongInputMessage("Given value is not a valid port")
+                .successInputMessage("Callback Handling port set to {setting_value}")
+                .build()
+        );
     }};
 
     public static void readRequiredSettings() {
@@ -49,14 +46,16 @@ public class SettingsReader {
 
     public static void readSetting(final Setting setting) {
         if (SettingsManager.getSetting(setting.getName()) == null) {
-            Tracer.info((Object[]) setting.getRequestInputMessage());
+            Tracer.infoP(Arrays.asList(setting.getRequestInputMessage().toArray()),
+                    Arrays.asList(SETTING_NAME_PLACEHOLDER, setting.getName()));
 
             final Object settingValue = readSettingFromConsole(setting);
 
             SettingsManager.setSetting(setting.getName(), settingValue, true);
 
-            Tracer.info((Object[]) setting.getSuccessInputMessage());
-            Tracer.info(settingValue);
+            Tracer.infoP(Arrays.asList(setting.getSuccessInputMessage().toArray()),
+                    Arrays.asList(SETTING_NAME_PLACEHOLDER, setting.getName(),
+                            SETTING_VALUE_PLACEHOLDER, settingValue));
         }
     }
 
@@ -124,7 +123,8 @@ public class SettingsReader {
                 default: return scanner.nextLine();
             }
         } catch (InputMismatchException e) {
-            Tracer.warn((Object[]) setting.getWrongInputMessage());
+            Tracer.warnP(Arrays.asList(setting.getWrongInputMessage().toArray()),
+                    Arrays.asList(SETTING_NAME_PLACEHOLDER, setting.getName()));
             return readSettingFromConsole(setting);
         }
     }
