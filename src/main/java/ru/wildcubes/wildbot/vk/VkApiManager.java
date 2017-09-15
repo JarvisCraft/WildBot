@@ -42,7 +42,7 @@ public class VkApiManager {
 
             Tracer.info("Send: " + vkApi.messages().send(actor).userId(402833125).message(HELLO_WORLD).execute());
 
-            vkApi.messages().send(actor).userId(402833125).message("Эээй, у меня вообще-то чувсива есть :(").execute();
+            vkApi.messages().send(actor).userId(402833125).message("Эээй, у меня вообще-то чувства есть :(").execute();
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
             Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:",
                     e.getCause());

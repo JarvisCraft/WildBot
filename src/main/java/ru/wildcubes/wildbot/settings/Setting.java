@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Builder
+@EqualsAndHashCode
 public class Setting {
     @Builder.Default @Getter @NonNull private String name = "unknown_field";
     @Builder.Default @Getter @NonNull private InputType inputType = InputType.STRING;

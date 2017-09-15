@@ -1,34 +1,97 @@
 package ru.wildcubes.wildbot.api.plugin;
 
+import lombok.Getter;
 import org.apache.commons.io.FilenameUtils;
+import ru.wildcubes.wildbot.api.plugin.annotation.WildBotPluginData;
 import ru.wildcubes.wildbot.logging.AnsiCodes;
 import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.util.FileHelper;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginManager {
-    private static final Set<JarFile> pluginsLoadQueue = new HashSet<>();
+    private static final Set<JavaPluginInQueue> pluginsLoadQueue = new LinkedHashSet<>();
 
-    private static final Map<String, WildBotAbstractPlugin> plugins = new HashMap<>();
+    @Getter private static final Map<String, WildBotAbstractPlugin> plugins = new HashMap<>();
+
+    public static void enablePlugin(WildBotAbstractPlugin plugin) {
+        enablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+    }
+
+    private static void enablePlugin(WildBotAbstractPlugin plugin, WildBotPluginData pluginData) {
+        if (plugins.containsKey(pluginData.name())) {
+            Tracer.error("Unable to enable plugin by name \"" + pluginData.name()
+                    + "\" as there's already one registered by this name");
+            return;
+        }
+        if (plugins.containsValue(plugin)) {
+            Tracer.error("Unable to enable plugin by name \"" + pluginData.name()
+                    + "\" as there's already one registered by this main class");
+            return;
+        }
+
+        Tracer.info("Enabling Plugin \"" + pluginData.name() + "\"");
+        try {
+            plugin.onEnable();
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying ");
+        }
+        Tracer.info("Plugin \"" + pluginData.name() + "\" was successfully enabled");
+    }
+/*
+
+        else if (plugins.containsValue(plugin)) Tracer.error("Unable to disable plugin by name \""
+                + pluginData.name() + "\" as there's none registered by this main class");
+ */
+
+    public static void disablePlugin(final String pluginName) {
+        if (!plugins.containsKey(pluginName)) {
+            Tracer.error("Unable to disable plugin by name \""
+                    + pluginName + "\" as there's none enabled by it");
+            return;
+        }
+
+        final WildBotAbstractPlugin plugin = plugins.get(pluginName);
+
+        disablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+    }
+
+    public static void disablePlugin(final WildBotAbstractPlugin plugin) {
+        if (!plugins.containsValue(plugin)) {
+            Tracer.error("Unable to disable plugin by class \"" + plugin.getClass().getSimpleName()
+                    + "\" as there's none enabled by it");
+            return;
+        }
+
+        disablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+    }
+
+    private static void disablePlugin(final WildBotAbstractPlugin plugin, final WildBotPluginData pluginData) {
+        Tracer.info("Disabling Plugin \"" + plugin.getClass().getSimpleName() + "\"");
+
+        try {
+            plugin.onDisable();
+            plugins.remove(pluginData.name());
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to disable plugin by name \"" );
+        }
+
+        Tracer.info("Plugin \"" + plugin.getClass().getSimpleName() + "\" was successfully disabled");
+    }
 
     public static final String PLUGINS_FOLDER = "plugins";
-
-    public static Map<String, WildBotAbstractPlugin> getPlugins() {
-        return plugins;
-    }
 
     public static void loadPlugins() {
         final File[] files = loadJarFiles();
         for (File file : files) {
             queueJarIfPlugin(file);
         }
+
+        sortPluginsQueue();
     }
 
     private static File[] loadJarFiles() {
@@ -70,56 +133,73 @@ public class PluginManager {
         return filesArray;
     }
 
+    public static final String PLUGIN_MAIN_FILE_NAME = "main.wildbot";
+    public static final String PLUGIN_DEPENDENCIES_FILE_NAME = "depend.wildbot";
+    public static final String PLUGIN_SOFT_DEPENDENCIES_FILE_NAME = "softdepend.wildbot";
+
     private static void queueJarIfPlugin(File file) {
         final JarFile jarFile;
         try {
             jarFile = new JarFile(file);
         } catch (IOException e) {
-            Tracer.error("An exception occurred while trying to load plugin \""
+            Tracer.error("An exception occurred while trying to load plugin from .jar \""
                     + file.getName() + "\":", e.getCause());
             return;
         }
 
-        final Enumeration<JarEntry> jarEntries = jarFile.entries();
+        JarEntry jarEntry;
+        if ((jarEntry = jarFile.getJarEntry(PLUGIN_MAIN_FILE_NAME)) != null) {
+            // "main.wildbot" loading
+            final List<String> mainClasses = FileHelper.readLines(jarFile, jarEntry);
+            if (mainClasses.isEmpty()) {
+                Tracer.warn("File \"/plugins/" + file.getName()
+                        + "\"'s file main.wildbot is empty");
+                return;
+            } else
+                Tracer.info("Found " + mainClasses.size()
+                        + " main-classes for Plugin \"" + file.getName() + "\": " + mainClasses.toString());
+            Tracer.info();
 
-        final URLClassLoader classLoader;
-        try {
-            classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
-        } catch (MalformedURLException e) {
-            Tracer.error("An exception occureed while trying to load a plugin:", e.getCause());
-            return;
-        }
+            // "depend.wildbot" loading
+            final List<String> dependencies;
+            if ((jarEntry = jarFile.getJarEntry(PLUGIN_DEPENDENCIES_FILE_NAME)) != null) {
+                dependencies = FileHelper.readLines(jarFile, jarEntry);
+                Tracer.info("Found " + dependencies.size()
+                        + " dependencies for Plugin \"" + file.getName() + "\"");
+            } else dependencies = new ArrayList<>();
 
-            while (jarEntries.hasMoreElements()) {
-            final JarEntry jarEntry = jarEntries.nextElement();
-            Tracer.info("JarEntry: " + jarEntry);
-            if (FilenameUtils.isExtension(jarEntry.getName(), "class")) {
-                Tracer.info("IsClass");
-                try {
-                    Tracer.info(jarEntry.getName().replace('/', '.'));
-                    final Class jarClass = classLoader.loadClass(jarEntry.getName()
-                            .replace('/', '.').substring(0, jarEntry.getName().length() - 6));
-                    Tracer.info(jarClass.toString());
+            // "softdepend.wildbot" loading
+            final List<String> softDependencies;
+            if ((jarEntry = jarFile.getJarEntry(PLUGIN_SOFT_DEPENDENCIES_FILE_NAME)) != null) {
+                softDependencies = FileHelper.readLines(jarFile, jarEntry);
+                Tracer.info("Found " + dependencies.size()
+                        + " dependencies for Plugin \"" + file.getName() + "\"");
+            } else softDependencies = new ArrayList<>();
 
-                    if (WildBotAbstractPlugin.class.isAssignableFrom(jarClass)) {
-                        Tracer.info(AnsiCodes.FG_GREEN + "Is assignable" + AnsiCodes.RESET);
-                    } else Tracer.info(AnsiCodes.FG_RED + "Is not assignable" + AnsiCodes.RESET);
-                } catch (ClassNotFoundException todo) {
-                    Tracer.warn(todo.getCause());
-                } catch (NoClassDefFoundError e) {
-                    Tracer.error("Unknown dependency found at class \"" + jarEntry.getName() + "\"");
-                }
-            }
-        }
+            // Queue
+            final JavaPluginInQueue pluginInQueue = new JavaPluginInQueue(file, jarFile, mainClasses, dependencies,
+                    softDependencies);
+            pluginsLoadQueue.add(pluginInQueue);
 
-        try {
-            classLoader.close();
-        } catch (IOException e) {
-            Tracer.error("An exception occurred while trying to close ClassLoader");
-        }
+        } else Tracer.warn("File \"/plugins/" + file.getName()
+                + "\" does not contain main.wildbot, ignoring it");
     }
 
     /*private static void queueJarIfPlugin(File file) {
 
     }*/
+
+    public static void sortPluginsQueue() {
+        final Set<JavaPluginInQueue> queue = new LinkedHashSet<>();
+        for (JavaPluginInQueue plugin : pluginsLoadQueue) {
+            if (plugin.getDependencies().isEmpty() && plugin.getSoftDependencies().isEmpty()) {
+                queue.add(plugin);
+                infoPluginAddedToQueue(plugin);
+                plugin.loadClasses();
+            }
+        }
+    }
+    private static void infoPluginAddedToQueue(JavaPluginInQueue pluginInQueue) {
+        Tracer.info("Plugin \"" + pluginInQueue + "\" was added to the queue");
+    }
 }

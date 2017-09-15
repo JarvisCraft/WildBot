@@ -40,88 +40,88 @@ public class Tracer {
     //Warnings
     public static void warn(Collection<Object> objects) {
         if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(String.valueOf(object));
+                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
     }
     public static void warn(Object... objects) {
         if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(String.valueOf(object));
+                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
     }
     //Warnings
     public static void warnF(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(String.valueOf(object), args);
+                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
     }
     //Warnings
     public static void warnP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isWarnEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.warn(String.valueOf(object), args);
+            for (Object object : objects) logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
     //Error
     public static void error(Collection<Object> objects) {
         if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(String.valueOf(object));
+                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
     }
     public static void error(Object... objects) {
         if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(String.valueOf(object));
+                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
     }
     //Error
     public static void errorF(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(String.valueOf(object), args);
+                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
     }
     //Error
     public static void errorP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isErrorEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.error(String.valueOf(object), args);
+            for (Object object : objects) logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
     //General debug
     public static void debug(Collection<Object> objects) {
         if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object));
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
     }
     public static void debug(Object... objects) {
         if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object));
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
     }
     //General debug
     public static void debugF(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object), args);
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
     }
     //General debug
     public static void debugP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isDebugEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.debug(String.valueOf(object), args);
+            for (Object object : objects) logger.debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
     //All important debug
     public static void trace(Collection<Object> objects) {
         if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object));
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
     }
     public static void trace(Object... objects) {
         if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object));
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
     }
     //All important debug
     public static void traceF(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
-                .debug(String.valueOf(object), args);
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
     }
     //All important debug
     public static void traceP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isTraceEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.debug(String.valueOf(object), args);
+            for (Object object : objects) logger.debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
@@ -192,11 +192,11 @@ public class Tracer {
         }
     }
 
-    public static void outputSessionInfo() {
+    private static void outputSessionInfo() {
         info("<" + new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss").format(new Date()) + ">");
     }
 
-    private static final Object[] ASCII_LOGO = {
+    private static final Object[] ASCII_LOGO = {"${kappaPride}",// TODO: 15.09.2017 Remove
             "                                                                              ",
             "oooooo   oooooo     oooo  o8o  oooo        .o8  oooooooooo.                .  ",
             " `888.    `888.     .8'   `\"'  `888       \"888  `888'   `Y8b             .o8  ",
