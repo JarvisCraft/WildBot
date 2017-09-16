@@ -1,20 +1,22 @@
 package ru.wildcubes.wildbot.api.plugin;
 
 import lombok.*;
-import ru.wildcubes.wildbot.api.plugin.annotation.WildBotPluginData;
-import ru.wildcubes.wildbot.logging.AnsiCodes;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.AnsiCodes;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @EqualsAndHashCode
+@ToString(exclude = {"jarFile", "data", "pluginsClasses"})
 class JavaPluginInQueue {
     @NonNull @Getter private final File file;
     @NonNull @Getter private final JarFile jarFile;
@@ -22,11 +24,12 @@ class JavaPluginInQueue {
     @NonNull @Getter @Setter private List<String> mainClasses;
     @NonNull @Getter @Setter private List<String> dependencies;
     @NonNull @Getter @Setter private List<String> softDependencies;
+    @NonNull @Getter @Setter private List<String> loadBefore;
 
     @Getter @Setter(value = AccessLevel.PRIVATE) private WildBotPluginData data;
 
 
-    public void loadClasses() {
+    void loadClasses() {
         final URLClassLoader classLoader;
         try {
             classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
@@ -37,21 +40,23 @@ class JavaPluginInQueue {
 
         for (String mainClass : mainClasses) {
             try {
-                final Class jarClass = classLoader.loadClass(mainClass);
+                final Class<?> jarClass = classLoader.loadClass(mainClass);
                 Tracer.info(jarClass.toString());
 
-                if (WildBotAbstractPlugin.class.isAssignableFrom(jarClass)) {
+                if (WildBotJavaPlugin.class.isAssignableFrom(jarClass)) {
                     if (jarClass.isAnnotationPresent(WildBotPluginData.class)) {
-                        Tracer.info(AnsiCodes.FG_GREEN + "Loading Class " + jarClass.getSimpleName()
+                        Tracer.info(AnsiCodes.FG_GREEN + "Registering Class " + jarClass.getSimpleName()
                                 + AnsiCodes.RESET);
+                        pluginsClasses.add(jarClass.asSubclass(WildBotJavaPlugin.class));
+
+                        Tracer.info(AnsiCodes.FG_GREEN + "Class " + jarClass.getSimpleName()
+                                + "has been registered" + AnsiCodes.RESET);
                     } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                             + "\": not annotated with @WildBotPluginData");
                 } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                         + "\": not extending WildBotAbstractPlugin");
-            } catch (ClassNotFoundException e) { // TODO
-                Tracer.warn(e.getCause());
-            } catch (NoClassDefFoundError e) {
-                Tracer.error("Unknown dependency found at class \"" + mainClass + "\"");
+            } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                Tracer.warn("Unable to load Class \"" + mainClass + "\" as it can't be found");
             }
         }
 
@@ -60,5 +65,11 @@ class JavaPluginInQueue {
         } catch (IOException e) {
             Tracer.error("Unable to close ClassLoader while loading one of the plugins: " + e.getCause());
         }
+    }
+    
+    @Getter @Setter private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
+    String getJarName() {
+        final String fileName = file.getName();
+        return fileName.substring(7, fileName.length()-4);
     }
 }

@@ -1,4 +1,4 @@
-package ru.wildcubes.wildbot.logging;
+package ru.wildcubes.wildbot.console.logging;
 
 public final class AnsiCodes {
     public static final String

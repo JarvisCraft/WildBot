@@ -8,7 +8,7 @@ import com.vk.api.sdk.httpclient.HttpTransportClient;
 import com.vk.api.sdk.objects.groups.GroupFull;
 import lombok.Getter;
 import lombok.Setter;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 import ru.wildcubes.wildbot.settings.SettingsManager;
 
 public class VkApiManager {

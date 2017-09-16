@@ -1,4 +1,4 @@
-package ru.wildcubes.wildbot.api.plugin.annotation;
+package ru.wildcubes.wildbot.api.plugin;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,9 +18,6 @@ public @interface WildBotPluginData {
     ///////////////////////////////////////////////////////////////////////////
     // Plugin loading
     ///////////////////////////////////////////////////////////////////////////
-    String[] dependencies() default {};
-    String[] softDependencies() default {};
-    String[] loadBefore() default {};
     String[] commands() default {};
 
     ///////////////////////////////////////////////////////////////////////////

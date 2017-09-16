@@ -1,6 +1,6 @@
 package ru.wildcubes.wildbot.settings;
 
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

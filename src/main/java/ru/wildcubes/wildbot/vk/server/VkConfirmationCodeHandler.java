@@ -7,7 +7,7 @@ import com.vk.api.sdk.callback.objects.messages.CallbackMessage;
 import com.vk.api.sdk.callback.objects.messages.CallbackMessageType;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

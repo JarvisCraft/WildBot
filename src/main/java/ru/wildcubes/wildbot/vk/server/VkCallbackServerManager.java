@@ -2,14 +2,13 @@ package ru.wildcubes.wildbot.vk.server;
 
 import com.vk.api.sdk.actions.Groups;
 import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiCaptchaException;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.groups.CallbackServer;
 import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 import ru.wildcubes.wildbot.settings.SettingsManager;
 import ru.wildcubes.wildbot.vk.VkApiManager;
 

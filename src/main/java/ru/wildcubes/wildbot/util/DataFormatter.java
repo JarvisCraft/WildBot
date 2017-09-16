@@ -1,7 +1,9 @@
 package ru.wildcubes.wildbot.util;
 
 import io.netty.util.internal.UnstableApi;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class DataFormatter {
     public static final String HTTP_PREFIX = "http://";
     public static final String HTTPS_PREFIX = "https://";

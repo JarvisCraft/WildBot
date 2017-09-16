@@ -1,10 +1,9 @@
 package ru.wildcubes.wildbot.api.plugin;
 
 import lombok.Getter;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.io.FilenameUtils;
-import ru.wildcubes.wildbot.api.plugin.annotation.WildBotPluginData;
-import ru.wildcubes.wildbot.logging.AnsiCodes;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 import ru.wildcubes.wildbot.util.FileHelper;
 
 import java.io.File;
@@ -14,12 +13,23 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginManager {
-    private static final Set<JavaPluginInQueue> pluginsLoadQueue = new LinkedHashSet<>();
+    private static final HashSet<JavaPluginInQueue> pluginsLoadQueue
+            = new LinkedHashSet<>();
 
-    @Getter private static final Map<String, WildBotAbstractPlugin> plugins = new HashMap<>();
+    @Getter private static final CaseInsensitiveMap<String, WildBotAbstractPlugin> plugins = new CaseInsensitiveMap<>();
+
+    public static WildBotAbstractPlugin getPlugin(final String name) {
+        return plugins.get(name);
+    }
+
+    public static WildBotAbstractPlugin getPlugin(final Class<? extends WildBotAbstractPlugin> plugin) {
+        for (Map.Entry<String, WildBotAbstractPlugin> pluginEntry : plugins.entrySet()) if (plugin.isAssignableFrom(
+                pluginEntry.getValue().getClass())) return pluginEntry.getValue();
+        return null;
+    }
 
     public static void enablePlugin(WildBotAbstractPlugin plugin) {
-        enablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+        enablePlugin(plugin, PluginHelper.getPluginData(plugin));
     }
 
     private static void enablePlugin(WildBotAbstractPlugin plugin, WildBotPluginData pluginData) {
@@ -42,11 +52,6 @@ public class PluginManager {
         }
         Tracer.info("Plugin \"" + pluginData.name() + "\" was successfully enabled");
     }
-/*
-
-        else if (plugins.containsValue(plugin)) Tracer.error("Unable to disable plugin by name \""
-                + pluginData.name() + "\" as there's none registered by this main class");
- */
 
     public static void disablePlugin(final String pluginName) {
         if (!plugins.containsKey(pluginName)) {
@@ -57,7 +62,7 @@ public class PluginManager {
 
         final WildBotAbstractPlugin plugin = plugins.get(pluginName);
 
-        disablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+        disablePlugin(plugin, PluginHelper.getPluginData(plugin));
     }
 
     public static void disablePlugin(final WildBotAbstractPlugin plugin) {
@@ -67,7 +72,7 @@ public class PluginManager {
             return;
         }
 
-        disablePlugin(plugin, plugin.getClass().getAnnotation(WildBotPluginData.class));
+        disablePlugin(plugin, PluginHelper.getPluginData(plugin));
     }
 
     private static void disablePlugin(final WildBotAbstractPlugin plugin, final WildBotPluginData pluginData) {
@@ -87,11 +92,28 @@ public class PluginManager {
 
     public static void loadPlugins() {
         final File[] files = loadJarFiles();
-        for (File file : files) {
-            queueJarIfPlugin(file);
-        }
+        for (File file : files) queueJarIfPlugin(file);
 
         sortPluginsQueue();
+
+        for (JavaPluginInQueue plugin : pluginsLoadQueue) loadPlugin(plugin);
+    }
+
+    private static void loadPlugin(final JavaPluginInQueue pluginInQueue) {
+        Tracer.info("Loading plugin \"" + pluginInQueue.getJarName() + "\"");
+        try {
+            pluginInQueue.loadClasses();
+            Tracer.info("Plugin \"" + pluginInQueue.getJarName() + "\" has been successfully loaded");
+
+            Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = pluginInQueue.getPluginsClasses();
+            for (Class<? extends WildBotJavaPlugin> pluginsClass : pluginsClasses) {
+                Tracer.info("Enabling plugin \"" + pluginInQueue.getJarName() + "\"");
+                enablePlugin(pluginsClass.newInstance(), PluginHelper.getPluginData(pluginsClass));
+                Tracer.info("Plugin \"" + pluginInQueue.getJarName() + "\" has been successfully enabled");
+            }
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to enable plugin: ", e);
+        }
     }
 
     private static File[] loadJarFiles() {
@@ -99,43 +121,32 @@ public class PluginManager {
         if (!folder.isDirectory() && !folder.exists()) if (folder.mkdirs()) Tracer
                 .info("\"/plugins\" folder has been created");
 
-        final List<File> files = new ArrayList<>();
-        File[] filesArray = folder.listFiles();
+        File[] filesArray = folder.listFiles(); // Holds all files in /plugins/ folder
+        final List<File> jarFiles = new ArrayList<>(); // Lists all `.jar` files
 
         if (filesArray == null) {
             Tracer.error("List of plugins happened to be null, aborting loading of plugins");
-            return (File[]) files.toArray();
+            return new File[0];
         }
 
-        Tracer.info("List of plugins happened to be null, aborting loading of plugins");
-
-        files.addAll(Arrays.asList(filesArray));
-
-        filesArray = new File[files.size()];
-
-        int i = 0;
-        for (File file : files) {
+        for (File file : filesArray) {
             if (file.isDirectory()) continue;
             if (FilenameUtils.isExtension(file.getName(), "jar")) {
-                Tracer.info("Successfully found plugin \"" + file.getName() + "\"");
-                filesArray[i] = file;
-                i++;
+                Tracer.info("Successfully found jar-file \"" + file.getName() + "\"");
+                jarFiles.add(file);
             }
         }
 
-        final StringBuilder filesNames = new StringBuilder(AnsiCodes.FG_YELLOW);
+        Tracer.info("Succesfully found " + jarFiles.size() + " .jar files in `/plugins/` folder: "
+                + jarFiles.toString());
 
-        for (i = 0; i < filesArray.length; i++) filesNames.append(filesArray[i].getName())
-                .append((i < filesArray.length - 1) ? ", " : AnsiCodes.RESET);
-
-        Tracer.info("Successfully found " + filesArray.length + " JarFiles in directory:", filesNames);
-
-        return filesArray;
+        return jarFiles.toArray(new File[jarFiles.size()]);
     }
 
     public static final String PLUGIN_MAIN_FILE_NAME = "main.wildbot";
     public static final String PLUGIN_DEPENDENCIES_FILE_NAME = "depend.wildbot";
     public static final String PLUGIN_SOFT_DEPENDENCIES_FILE_NAME = "softdepend.wildbot";
+    public static final String PLUGIN_LOAD_BEFORE_DEPENDENCIES_FILE_NAME = "loadbefore.wildbot";
 
     private static void queueJarIfPlugin(File file) {
         final JarFile jarFile;
@@ -165,21 +176,30 @@ public class PluginManager {
             if ((jarEntry = jarFile.getJarEntry(PLUGIN_DEPENDENCIES_FILE_NAME)) != null) {
                 dependencies = FileHelper.readLines(jarFile, jarEntry);
                 Tracer.info("Found " + dependencies.size()
-                        + " dependencies for Plugin \"" + file.getName() + "\"");
+                        + " dependencies for Plugin \"" + file.getName() + "\": " + dependencies.toString());
             } else dependencies = new ArrayList<>();
 
             // "softdepend.wildbot" loading
             final List<String> softDependencies;
             if ((jarEntry = jarFile.getJarEntry(PLUGIN_SOFT_DEPENDENCIES_FILE_NAME)) != null) {
                 softDependencies = FileHelper.readLines(jarFile, jarEntry);
-                Tracer.info("Found " + dependencies.size()
-                        + " dependencies for Plugin \"" + file.getName() + "\"");
+                Tracer.info("Found " + softDependencies.size()
+                        + " soft dependencies for Plugin \"" + file.getName() + "\": " + softDependencies.toString());
             } else softDependencies = new ArrayList<>();
 
+            // "loadbefore.wildbot" loading
+            final List<String> loadBefore;
+            if ((jarEntry = jarFile.getJarEntry(PLUGIN_LOAD_BEFORE_DEPENDENCIES_FILE_NAME)) != null) {
+                loadBefore = FileHelper.readLines(jarFile, jarEntry);
+                Tracer.info("Found " + dependencies.size()
+                        + " load-before's for Plugin \"" + file.getName() + "\": " + loadBefore.toString());
+            } else loadBefore = new ArrayList<>();
+
             // Queue
-            final JavaPluginInQueue pluginInQueue = new JavaPluginInQueue(file, jarFile, mainClasses, dependencies,
-                    softDependencies);
+            final JavaPluginInQueue pluginInQueue = new JavaPluginInQueue(file, jarFile, mainClasses,
+                    dependencies, softDependencies, loadBefore);
             pluginsLoadQueue.add(pluginInQueue);
+            Tracer.info("Plugin \"" + file.getName() + "\" was successfully added to queue");
 
         } else Tracer.warn("File \"/plugins/" + file.getName()
                 + "\" does not contain main.wildbot, ignoring it");
@@ -190,16 +210,8 @@ public class PluginManager {
     }*/
 
     public static void sortPluginsQueue() {
-        final Set<JavaPluginInQueue> queue = new LinkedHashSet<>();
-        for (JavaPluginInQueue plugin : pluginsLoadQueue) {
-            if (plugin.getDependencies().isEmpty() && plugin.getSoftDependencies().isEmpty()) {
-                queue.add(plugin);
-                infoPluginAddedToQueue(plugin);
-                plugin.loadClasses();
-            }
-        }
-    }
-    private static void infoPluginAddedToQueue(JavaPluginInQueue pluginInQueue) {
-        Tracer.info("Plugin \"" + pluginInQueue + "\" was added to the queue");
+        Tracer.info("Sorting plugins' load-order");
+        PluginQueueHelper.sortPluginsInQueue(pluginsLoadQueue);
+        Tracer.info("Plugins' load-order has been successfully sorted");
     }
 }

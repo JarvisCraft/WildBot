@@ -5,14 +5,14 @@ import lombok.NonNull;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public class Analytics {
-    @Getter private static long startNanoTime;
+    @Getter private static long timeMark;
 
     public static void updateStartTime() {
-        startNanoTime = System.currentTimeMillis();
+        timeMark = System.currentTimeMillis();
     }
 
-    public static final long getUptime() {
-        return System.currentTimeMillis() - startNanoTime;
+    public static long getUptime() {
+        return System.currentTimeMillis() - timeMark;
     }
 
     @NonNull public static String getUptimeFormatted() {

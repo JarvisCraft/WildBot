@@ -1,6 +1,6 @@
 package ru.wildcubes.wildbot.api.plugin;
 
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 
 public abstract class WildBotJavaPlugin extends WildBotAbstractPlugin {
     @Override

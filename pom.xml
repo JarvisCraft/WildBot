@@ -21,6 +21,13 @@
     <build>
         <defaultGoal>clean package install javadoc:javadoc</defaultGoal>
 
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
         <plugins>
             <!-- Compilation -->
             <plugin>
@@ -95,7 +102,7 @@
                         </goals>
                         <configuration>
                             <files>
-                                <file>properties/private.properties</file>
+                                <file>properties/main.properties</file>
                             </files>
                         </configuration>
                     </execution>

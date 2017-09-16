@@ -1,8 +1,9 @@
-package ru.wildcubes.wildbot.logging;
+package ru.wildcubes.wildbot.console.logging;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import lombok.Getter;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import ru.wildcubes.wildbot.WildBotCore;
 
 import java.io.*;
@@ -39,45 +40,63 @@ public class Tracer {
 
     //Warnings
     public static void warn(Collection<Object> objects) {
-        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
+        }
     }
     public static void warn(Object... objects) {
-        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
+        }
     }
     //Warnings
     public static void warnF(Collection<Object> objects, Collection<Object> args) {
-        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
-                .warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
+        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
+        }
     }
     //Warnings
     public static void warnP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isWarnEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
+            for (Object object : objects) {
+                if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+                logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
+            }
         }
     }
 
     //Error
     public static void error(Collection<Object> objects) {
-        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
+        }
     }
     public static void error(Object... objects) {
-        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
+        }
     }
     //Error
     public static void errorF(Collection<Object> objects, Collection<Object> args) {
-        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
-                .error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
+        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) {
+            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+            logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
+        }
     }
     //Error
     public static void errorP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isErrorEnabled()) {
             objects = formatWithPlaceholders(objects, args);
-            for (Object object : objects) logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
+            for (Object object : objects) {
+                if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
+                logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
+            }
         }
     }
 
@@ -196,7 +215,7 @@ public class Tracer {
         info("<" + new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss").format(new Date()) + ">");
     }
 
-    private static final Object[] ASCII_LOGO = {"${kappaPride}",// TODO: 15.09.2017 Remove
+    private static final Object[] ASCII_LOGO = {
             "                                                                              ",
             "oooooo   oooooo     oooo  o8o  oooo        .o8  oooooooooo.                .  ",
             " `888.    `888.     .8'   `\"'  `888       \"888  `888'   `Y8b             .o8  ",

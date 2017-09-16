@@ -1,6 +1,7 @@
 package ru.wildcubes.wildbot.util;
 
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
+@UtilityClass
 public class FileHelper {
     @NonNull public static List<String> readLines(final JarFile jarFile, final ZipEntry entry) {
         try {

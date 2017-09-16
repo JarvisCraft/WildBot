@@ -2,7 +2,7 @@ package ru.wildcubes.wildbot.vk.server;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import ru.wildcubes.wildbot.logging.Tracer;
+import ru.wildcubes.wildbot.console.logging.Tracer;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
