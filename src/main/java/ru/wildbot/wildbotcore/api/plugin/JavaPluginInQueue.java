@@ -257,7 +257,7 @@ class JavaPluginInQueue {
         try {
             classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
         } catch (IOException e) {
-            Tracer.error("An exception occureed while trying to load a plugin: ", e.getCause());
+            Tracer.error("An exception occureed while trying to load a plugin: ", e);
             return;
         }
 

@@ -215,11 +215,13 @@ import java.util.List;
 public class EventListenersQueue extends ArrayList<Class<?>> {
     @Getter private List<EventHandlerMethod> handlers = new ArrayList<>();
 
-    public EventListenersQueue(List<Object> eventListeners) {
+    public EventListenersQueue(final WildBotEvent event, final List<Object> eventListeners) {
         // Get all handler methods
         for (val listener : eventListeners) {
             val methods = listener.getClass().getMethods();
-            for (val method : methods) if (method.isAnnotationPresent(EventHandler.class)) handlers
+            for (val method : methods) if (method.isAnnotationPresent(EventHandler.class)
+                    && method.getParameterCount() == 1
+                    && event.getClass().isAssignableFrom(method.getParameters()[0].getType())) handlers
                     .add(new EventHandlerMethod(method, listener, method.getAnnotation(EventHandler.class).order()));
         }
 
@@ -228,13 +230,11 @@ public class EventListenersQueue extends ArrayList<Class<?>> {
     }
 
     private void sortHandlers() {
-        for (int i = 0; i < handlers.size(); i++) {
-            for (int j = 0; j < handlers.size(); j++) {
-                if (handlers.get(j).getValue() > handlers.get(i).getValue()) {
-                    val bigger = handlers.get(j);
-                    handlers.set(j, handlers.get(i));
-                    handlers.set(i, bigger);
-                }
+        for (int i = 0; i < handlers.size(); i++) for (int j = 0; j < handlers.size(); j++) {
+            if (handlers.get(j).getValue() > handlers.get(i).getValue()) {
+                val bigger = handlers.get(j);
+                handlers.set(j, handlers.get(i));
+                handlers.set(i, bigger);
             }
         }
     }

@@ -202,59 +202,26 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.api.event;
+package ru.wildbot.wildbotcore.logging;
 
-import lombok.Getter;
-import lombok.val;
+import org.junit.Test;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 
-public class EventManager {
-    @Getter private Map<Class<? extends WildBotEvent>, List<Object>> eventListeners = new HashMap<>();
-
-    public void registerListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        registerEventIfAbsent(event);
-        eventListeners.get(event).addAll(Arrays.asList(listeners));
+public class TestTracer {
+    @Test
+    public void testInfo() {
+        Tracer.info("Tracer.info(String) Test successful");
+        Tracer.info(this);
+        Tracer.info(Collections.singleton("Tracer.info(Collection<Object>, Object...) {}"), "successful");
+        Tracer.infoF(Collections.singleton("Tracer.infoF(Collection<Object>, Object...) %s"), "successful");
+        Tracer.infoP(Collections.singleton("Test {key}"), Arrays.asList(new String[]{"{key}", "{key}", "successful"}));
     }
 
-    public void unregisterListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        if (!eventListeners.containsKey(event)) return;
-        eventListeners.get(event).removeAll(Arrays.asList(listeners));
-    }
-
-    public void registerEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) registerEventIfAbsent(event);
-    }
-
-    public void unregisterEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) eventListeners.remove(event);
-    }
-
-    public void callEvents(WildBotEvent... events) {
-        for (val event : events) {
-            // Register if not (for further usage)
-            registerEventIfAbsent(event.getClass());
-
-            // Queue
-            val listener = eventListeners.get(event.getClass());
-            val handlers = new EventListenersQueue(event, listener).getHandlers();
-            for (val handler : handlers)
-                try {
-                    val method = handler.getKey().getKey();
-                    val accessible = method.isAccessible();
-
-                    method.setAccessible(true);
-                    method.invoke(handler.getKey().getValue(), event);
-                    method.setAccessible(accessible);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    Tracer.error("An exception occurred while trying to call event:", e);
-                }
-        }
-    }
-
-    private void registerEventIfAbsent(Class<? extends WildBotEvent> event) {
-        eventListeners.putIfAbsent(event, new ArrayList<>());
+    @Override
+    public String toString() {
+        return "Tracer.info(Object) Test successful";
     }
 }

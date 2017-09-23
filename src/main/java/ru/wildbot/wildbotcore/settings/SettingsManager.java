@@ -231,13 +231,15 @@ public class SettingsManager {
 
     private static void loadSettings() throws RuntimeException {
         Tracer.info("Loading Settings");
-        File file = new File(FILE_NAME);
+        val file = new File(FILE_NAME);
         if (!file.exists() || file.isDirectory()) {
             Tracer.info("Could not find File \"settings.properties\", creating it now");
-            file = createSettingsFile();
+            try {
+                createSettingsFile(file);
+            } catch (IOException e) {
+                throw new RuntimeException("Error while loading \"settings.properties\" File");
+            }
         }
-
-        if (file == null) throw new RuntimeException("Error while loading \"settings.properties\" File");
 
         Properties settings = new Properties();
         try {
@@ -266,16 +268,13 @@ public class SettingsManager {
         Tracer.info("Settings have been loaded successfully");
     }
 
-    private static File createSettingsFile() {
+    private static void createSettingsFile(final File file) throws IOException {
         Tracer.info("Creating default File \"setting.properties\"");
         try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            // outputStream.close(); TODO remove as @Cleanup is used
-            return new File(FILE_NAME);
+            new FileOutputStream(file).close();
         } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File");
-            e.printStackTrace();
-            return null;
+            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
+            throw new IOException("File could not be created");
         }
     }
 
@@ -318,7 +317,7 @@ public class SettingsManager {
             @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
             settings.store(outputStream, SETTINGS_COMMENT);
         } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e.getCause());
+            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
         }
     }
 }

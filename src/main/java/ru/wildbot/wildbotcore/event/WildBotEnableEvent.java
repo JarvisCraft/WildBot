@@ -206,9 +206,4 @@ package ru.wildbot.wildbotcore.event;
 
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-public class WildBotEnableEvent implements WildBotEvent {
-    @Override
-    public Object[] getParams() {
-        return new Object[0];
-    }
-}
+public class WildBotEnableEvent implements WildBotEvent {}

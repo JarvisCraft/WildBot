@@ -232,9 +232,8 @@ public class VkApiManager {
 
     private static String GROUP_KEY;
 
-    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: "
-            + System.currentTimeMillis();
+    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\" +\n" +
+            "            \"\\nName: ${name}\\nVersion: ${version}\\nProtocol: WildBot-CustomProtocol\\nSystemTime: ";
 
     public static void authorise() {
         final int GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
@@ -249,12 +248,10 @@ public class VkApiManager {
                             "by the following criteria:",
                     "ID: " + GROUP_ID, "Key: " + GROUP_KEY);
 
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(402833125).message(HELLO_WORLD).execute());
-
-            vkApi.messages().send(actor).userId(402833125).message("Эээй, у меня вообще-то чувства есть :(").execute();
+            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
+                    .execute());
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:",
-                    e.getCause());
+            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
         }
     }
 }

@@ -223,7 +223,7 @@
     <packaging>jar</packaging>
 
     <build>
-        <defaultGoal>clean package install javadoc:javadoc</defaultGoal>
+        <defaultGoal>clean test package install javadoc:javadoc</defaultGoal>
 
         <resources>
             <resource>
@@ -292,8 +292,7 @@
                 </executions>
             </plugin>
 
-            <!-- Settings from outer files
-            Used for private data (e.g. auth keys) TODO-->
+            <!-- Settings from outer files -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
@@ -311,6 +310,40 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- SureFire -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
+
+                <configuration>
+                    <forkCount>0</forkCount>
+                </configuration>
+            </plugin>
+
+            <!-- <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <configuration>
+                    <forkMode>once</forkMode>
+                </configuration>
+            </plugin>-->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.20.1</version>
             </plugin>
         </plugins>
     </build>
@@ -343,20 +376,21 @@
             <version>2.8.2</version>
         </dependency>
 
-        <!-- Universal Console Colors -->
-        <dependency>
-            <groupId>com.diogonunes</groupId>
-            <artifactId>JCDP</artifactId>
-            <version>2.0.3.1</version>
-        </dependency>
-
-        <!-- Jetty (Server) -->
+        <!-- Jetty (Server) TODO remake with Netty -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
             <version>9.4.7.RC0</version>
             <scope>compile</scope>
         </dependency>
+
+        <!-- Netty -.->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.15.Final</version>
+            <scope>compile</scope>
+        </dependency>-->
 
         <!-- Project LOMBOK -->
         <dependency>
@@ -371,6 +405,14 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.18</version>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

@@ -202,59 +202,159 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.api.event;
+package ru.wildbot.wildbotcore.api.plugin;
 
-import lombok.Getter;
 import lombok.val;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-public class EventManager {
-    @Getter private Map<Class<? extends WildBotEvent>, List<Object>> eventListeners = new HashMap<>();
+public class PluginQueueSorter {
+    private final Set<JavaPluginInQueue> pluginsQueue;
 
-    public void registerListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        registerEventIfAbsent(event);
-        eventListeners.get(event).addAll(Arrays.asList(listeners));
+    public PluginQueueSorter(Set<JavaPluginInQueue> plugins) {
+        if (plugins == null) pluginsQueue = new HashSet<>();
+        else pluginsQueue = plugins;
     }
 
-    public void unregisterListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        if (!eventListeners.containsKey(event)) return;
-        eventListeners.get(event).removeAll(Arrays.asList(listeners));
-    }
+    public Set<JavaPluginInQueue> sort() {
+        // Skip all actions if there are no plugins in queue
+        if (pluginsQueue.isEmpty()) return pluginsQueue;
 
-    public void registerEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) registerEventIfAbsent(event);
-    }
+        infoPlugins(pluginsQueue, "to queue");
 
-    public void unregisterEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) eventListeners.remove(event);
-    }
+        val pluginsUnordered = new LinkedHashSet<JavaPluginInQueue>(pluginsQueue);
 
-    public void callEvents(WildBotEvent... events) {
-        for (val event : events) {
-            // Register if not (for further usage)
-            registerEventIfAbsent(event.getClass());
+        // First all plugins are separated on groups and then added to `pluginsOrdered` Set
+        val pluginsOrdered = new LinkedHashSet<JavaPluginInQueue>();
 
-            // Queue
-            val listener = eventListeners.get(event.getClass());
-            val handlers = new EventListenersQueue(event, listener).getHandlers();
-            for (val handler : handlers)
-                try {
-                    val method = handler.getKey().getKey();
-                    val accessible = method.isAccessible();
+        sorting: {
+            Tracer.info("Starting the process of sorting");
+            infoPlugins(pluginsUnordered, "unordered");
+            infoPlugins(pluginsOrdered, "ordered");
 
-                    method.setAccessible(true);
-                    method.invoke(handler.getKey().getValue(), event);
-                    method.setAccessible(accessible);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    Tracer.error("An exception occurred while trying to call event:", e);
-                }
+            // Remove all plugins which can not be sorted (having hard dependencies without dependencies present
+            Tracer.info("Removing unloadable plugins from queue");
+            pluginsUnordered.removeAll(getUnloadablePlugins());
+            infoPlugins(pluginsUnordered, "unordered");
+            infoPlugins(pluginsOrdered, "ordered");
+            if (pluginsUnordered.isEmpty()) break sorting;
+
+            // Get all plugins without dependencies and remove them from `unorderedPlugins` Set
+            final LinkedHashSet<JavaPluginInQueue> independentPlugins = getIndependentPlugins(pluginsUnordered);
+            pluginsUnordered.removeAll(independentPlugins);
+            pluginsOrdered.addAll(independentPlugins);
+
+            infoPlugins(pluginsOrdered, "independent ordered");
+            infoPlugins(pluginsUnordered, "unordered");
+            infoPlugins(pluginsOrdered, "ordered");
+            // First all plugins without dependencies get added
+
+            // TODO: 16.09.2017
+
+            //plugins.clear();
+            //plugins.addAll(pluginsOrdered);
         }
+
+        return pluginsOrdered;
     }
 
-    private void registerEventIfAbsent(Class<? extends WildBotEvent> event) {
-        eventListeners.putIfAbsent(event, new ArrayList<>());
+    private Set<JavaPluginInQueue> getUnloadablePlugins() {
+        val unloadablePlugins = new HashSet<JavaPluginInQueue>();
+        val pluginNames = getPluginNames(pluginsQueue);
+
+        pluginCheck:
+        for (val plugin : pluginsQueue) {
+            for (val dependency : plugin.getDependencies()) {
+                if (!pluginNames.contains(dependency)) {
+                    unloadablePlugins.add(plugin);
+                    break pluginCheck;
+                }
+            }
+        }
+
+        return unloadablePlugins;
+    }
+
+    private LinkedHashSet<JavaPluginInQueue> getIndependentPlugins(final Set<JavaPluginInQueue> plugins) {
+        val independentPlugins = new LinkedHashSet<JavaPluginInQueue>();
+
+        for (val plugin : plugins) if (plugin.getDependencies().isEmpty()
+                && plugin.getSoftDependencies().isEmpty()) independentPlugins.add(plugin);
+
+        return independentPlugins;
+    }
+
+    private LinkedHashMap<JavaPluginInQueue, Set<String>> getPluginsDependencies(
+            final Set<JavaPluginInQueue> plugins) {
+        final LinkedHashMap<JavaPluginInQueue, Set<String>> dependentPlugins = new LinkedHashMap<>();
+
+        for (JavaPluginInQueue plugin : plugins) {
+            val dependencies = new HashSet<String>();
+
+            if (!plugin.getDependencies().isEmpty()) dependencies.addAll(plugin.getDependencies());
+            if (!plugin.getSoftDependencies().isEmpty()) dependencies.addAll(plugin.getSoftDependencies());
+
+            dependentPlugins.put(plugin, dependencies);
+        }
+
+        return dependentPlugins;
+    }
+
+    private Set<String> getPluginNames(final Set<JavaPluginInQueue> plugins) {
+            val pluginNames = new HashSet<String>();
+
+        for (JavaPluginInQueue plugin : plugins) {
+            val pluginsClasses = plugin.getPluginsClasses();
+            for (val pluginsClass : pluginsClasses) pluginNames.add(PluginHelper.getPluginData(pluginsClass).name());
+        }
+
+        return pluginNames;
+    }
+
+    private LinkedHashMap<JavaPluginInQueue, Set<String>> getPluginNamesMap(final Set<JavaPluginInQueue> plugins) {
+        val pluginNames = new LinkedHashMap<JavaPluginInQueue, Set<String>>();
+
+        for (JavaPluginInQueue plugin : plugins) {
+            val pluginsClasses = plugin.getPluginsClasses();
+            val names = new HashSet<String>();
+
+            for (val pluginsClass : pluginsClasses) names.add(PluginHelper.getPluginData(pluginsClass).name());
+
+            pluginNames.put(plugin, names);
+        }
+
+        return pluginNames;
+    }
+
+    private LinkedHashMap<JavaPluginInQueue, List<String>> getStartablePlugins(
+            final Set<JavaPluginInQueue> plugins) {
+        val startablePlugins = new LinkedHashMap<JavaPluginInQueue, List<String>>();
+
+        for (val plugin : plugins) if (!plugin.getDependencies().isEmpty()) startablePlugins
+                .put(plugin, plugin.getDependencies());
+
+        return startablePlugins;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Info
+    ///////////////////////////////////////////////////////////////////////////
+
+    private static String getPluginsListed(final Set<JavaPluginInQueue> plugins) {
+        val pluginsList = new ArrayList<JavaPluginInQueue>(plugins);
+
+        val pluginsListed = new StringBuilder();
+        for (int i = 0; i < pluginsList.size(); i++)
+            pluginsListed.append(pluginsList.get(i).getJarName())
+                    .append(i < plugins.size() - 1 ? ", " : "");
+
+        return pluginsListed.toString();
+    }
+
+    private static void infoPlugins(final Set<JavaPluginInQueue> plugins, String type) {
+        if (plugins.size() >= 1) Tracer.info("Plugins " + type + " (" + plugins.size() + "): "
+                + getPluginsListed(plugins));
+        Tracer.info("No plugins " + type + " found");
     }
 }

@@ -206,9 +206,7 @@ package ru.wildbot.wildbotcore.console.logging;
 
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
-import lombok.Cleanup;
-import lombok.Getter;
-import lombok.val;
+import lombok.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ru.wildbot.wildbotcore.WildBotCore;
 
@@ -220,30 +218,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Tracer {
-    @Getter
-    public static final InternalLogger logger = Log4J2LoggerFactory.getInstance(WildBotCore.class);
+    @Getter public static final InternalLogger logger = Log4J2LoggerFactory.getInstance("WildBotCore");
 
-    //General info
+    ///////////////////////////////////////////////////////////////////////////
+    // Info
+    ///////////////////////////////////////////////////////////////////////////
+
     public static void info(Collection<Object> objects) {
-        if (objects != null && logger.isInfoEnabled()) for (Object object : objects)
-            logger
-                    .info(String.valueOf(object));
+        if (objects != null && logger.isInfoEnabled()) for (Object object : objects) logger
+                .info(String.valueOf(object));
     }
 
     public static void info(Object... objects) {
-        if (objects != null && logger.isInfoEnabled()) for (Object object : objects)
-            logger
-                    .info(String.valueOf(object));
+        if (objects != null && logger.isInfoEnabled()) for (Object object : objects) logger
+                .info(String.valueOf(object));
     }
 
-    //General info
-    public static void infoF(Collection<Object> objects, Collection<Object> args) {
-        if (objects != null && logger.isInfoEnabled()) for (Object object : objects)
-            logger
-                    .info(String.valueOf(object), args);
+    public static void info(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isInfoEnabled()) for (Object object : objects) logger
+                .info(String.valueOf(object), args);
     }
 
-    //General info
+    public static void infoF(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isInfoEnabled()) for (Object object : objects) logger
+                .info(String.format(String.valueOf(object), args));
+    }
+
     public static void infoP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isInfoEnabled()) {
             objects = formatWithPlaceholders(objects, args);
@@ -251,7 +251,10 @@ public class Tracer {
         }
     }
 
-    //Warnings
+    ///////////////////////////////////////////////////////////////////////////
+    // Warn
+    ///////////////////////////////////////////////////////////////////////////
+
     public static void warn(Collection<Object> objects) {
         if (objects != null && logger.isWarnEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
@@ -266,15 +269,18 @@ public class Tracer {
         }
     }
 
-    //Warnings
-    public static void warnF(Collection<Object> objects, Collection<Object> args) {
+    public static void warn(Collection<Object> objects, Object... args) {
         if (objects != null && logger.isWarnEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             logger.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
-    //Warnings
+    public static void warnF(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isWarnEnabled()) for (Object object : objects) logger
+                .warn(String.format(String.valueOf(object), args));
+    }
+
     public static void warnP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isWarnEnabled()) {
             objects = formatWithPlaceholders(objects, args);
@@ -285,7 +291,10 @@ public class Tracer {
         }
     }
 
-    //Error
+    ///////////////////////////////////////////////////////////////////////////
+    // Error
+    ///////////////////////////////////////////////////////////////////////////
+
     public static void error(Collection<Object> objects) {
         if (objects != null && logger.isErrorEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
@@ -300,15 +309,18 @@ public class Tracer {
         }
     }
 
-    //Error
-    public static void errorF(Collection<Object> objects, Collection<Object> args) {
+    public static void error(Collection<Object> objects, Object... args) {
         if (objects != null && logger.isErrorEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             logger.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
-    //Error
+    public static void errorF(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isErrorEnabled()) for (Object object : objects) logger
+                .error(String.format(String.valueOf(object), args));
+    }
+
     public static void errorP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isErrorEnabled()) {
             objects = formatWithPlaceholders(objects, args);
@@ -319,27 +331,30 @@ public class Tracer {
         }
     }
 
-    //General debug
+    ///////////////////////////////////////////////////////////////////////////
+    // Debug
+    ///////////////////////////////////////////////////////////////////////////
+
     public static void debug(Collection<Object> objects) {
-        if (objects != null && logger.isDebugEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
     }
 
     public static void debug(Object... objects) {
-        if (objects != null && logger.isDebugEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
     }
 
-    //General debug
-    public static void debugF(Collection<Object> objects, Collection<Object> args) {
-        if (objects != null && logger.isDebugEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
+    public static void debug(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
     }
 
-    //General debug
+    public static void debugF(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isDebugEnabled()) for (Object object : objects) logger
+                .debug(String.format(String.valueOf(object), args));
+    }
+
     public static void debugP(Collection<Object> objects, Collection<Object> args) {
         if (objects != null && logger.isDebugEnabled()) {
             objects = formatWithPlaceholders(objects, args);
@@ -348,24 +363,28 @@ public class Tracer {
         }
     }
 
-    //All important debug
+    ///////////////////////////////////////////////////////////////////////////
+    // Trace
+    ///////////////////////////////////////////////////////////////////////////
+
     public static void trace(Collection<Object> objects) {
-        if (objects != null && logger.isTraceEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
     }
 
     public static void trace(Object... objects) {
-        if (objects != null && logger.isTraceEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
+        if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
     }
 
-    //All important debug
-    public static void traceF(Collection<Object> objects, Collection<Object> args) {
-        if (objects != null && logger.isTraceEnabled()) for (Object object : objects)
-            logger
-                    .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
+    public static void trace(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
+                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
+    }
+
+    public static void traceF(Collection<Object> objects, Object... args) {
+        if (objects != null && logger.isTraceEnabled()) for (Object object : objects) logger
+                .trace(String.format(String.valueOf(object), args));
     }
 
     //All important debug
@@ -376,6 +395,10 @@ public class Tracer {
                 logger.debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Util
+    ///////////////////////////////////////////////////////////////////////////
 
     public static Map<String, String> toPlaceholders(Object... args) {
         final Map<String, String> placeholders = new HashMap<>(args.length);
@@ -403,6 +426,10 @@ public class Tracer {
 
         return objects;
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Setup
+    ///////////////////////////////////////////////////////////////////////////
 
     public static void outputLogo() {
         info(ASCII_LOGO);

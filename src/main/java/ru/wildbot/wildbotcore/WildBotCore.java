@@ -256,7 +256,7 @@ public class WildBotCore {
         try {
             VkCallbackServerManager.init();
         } catch (ApiException | ClientException e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e.getCause());
+            Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
         }
     }
 }

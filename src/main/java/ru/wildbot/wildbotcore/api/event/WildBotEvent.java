@@ -207,10 +207,6 @@ package ru.wildbot.wildbotcore.api.event;
 import ru.wildbot.wildbotcore.WildBotCore;
 
 public interface WildBotEvent {
-    default Object[] getParams() {
-        return new Object[0];
-    }
-
     default void call() {
         WildBotCore.get_instance().getEventManager().callEvents(this);
     }

@@ -248,6 +248,7 @@ public class VkCallbackServerManager {
         handlers.addHandler(new VkCallbackRequestHandler());
 
         server = new Server(port);
+        server.setErrorHandler(new VkCallbackServerErrorHandler());
         server.setHandler(handlers);
 
         // Find CallBack server in Group's list
@@ -263,7 +264,7 @@ public class VkCallbackServerManager {
 
             server.join();
         } catch (Exception e) {//TODO
-            Tracer.info("An exception occurred while Starting VK-Callback Server:", e.getCause());
+            Tracer.info("An exception occurred while Starting VK-Callback Server:", e);
         }
     }
 

@@ -222,8 +222,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginManager {
-    private final HashSet<JavaPluginInQueue> pluginsLoadQueue
-            = new LinkedHashSet<>();
+    private Set<JavaPluginInQueue> pluginsLoadQueue = new LinkedHashSet<>();
 
     @Getter
     private final CaseInsensitiveMap<String, WildBotAbstractPlugin> plugins = new CaseInsensitiveMap<>();
@@ -232,11 +231,11 @@ public class PluginManager {
         return plugins.get(name);
     }
 
-    public WildBotAbstractPlugin getPlugin(final Class<? extends WildBotAbstractPlugin> plugin) {
-        for (Map.Entry<String, WildBotAbstractPlugin> pluginEntry : plugins.entrySet())
-            if (plugin.isAssignableFrom(
-                    pluginEntry.getValue().getClass())) return pluginEntry.getValue();
-        return null;
+    public List<WildBotAbstractPlugin> getPlugins(final Class<? extends WildBotAbstractPlugin> pluginClass) {
+        val pluginsList = new ArrayList<WildBotAbstractPlugin>();
+        for (Map.Entry<String, WildBotAbstractPlugin> plugin : plugins.entrySet())
+            if (pluginClass.isAssignableFrom(plugin.getValue().getClass())) pluginsList.add(plugin.getValue());
+        return pluginsList;
     }
 
     public void enablePlugin(WildBotAbstractPlugin plugin) {
@@ -373,7 +372,7 @@ public class PluginManager {
             jarFile = new JarFile(file);
         } catch (IOException e) {
             Tracer.error("An exception occurred while trying to load plugin from .jar \""
-                    + file.getName() + "\":", e.getCause());
+                    + file.getName() + "\":", e);
             return;
         }
 
@@ -430,7 +429,7 @@ public class PluginManager {
 
     public void sortPluginsQueue() {
         Tracer.info("Sorting plugins' load-order");
-        PluginQueueHelper.sortPluginsInQueue(pluginsLoadQueue);
+        pluginsLoadQueue = new PluginQueueSorter(pluginsLoadQueue).sort();
         Tracer.info("Plugins' load-order has been successfully sorted");
     }
 }

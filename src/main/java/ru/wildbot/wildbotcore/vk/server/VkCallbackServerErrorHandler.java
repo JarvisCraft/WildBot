@@ -202,59 +202,50 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.api.event;
+package ru.wildbot.wildbotcore.vk.server;
 
+import lombok.Cleanup;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
 
-public class EventManager {
-    @Getter private Map<Class<? extends WildBotEvent>, List<Object>> eventListeners = new HashMap<>();
+public class VkCallbackServerErrorHandler extends ErrorHandler {
+    @Getter @Setter private List<String> htmlContent = Arrays.asList("<html>", "<h1>This project is using WildBot</h1>",
+            "<h2>by JARvis (Peter P.) PROgrammer</h2>", "</html>");
 
-    public void registerListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        registerEventIfAbsent(event);
-        eventListeners.get(event).addAll(Arrays.asList(listeners));
-    }
+    public static final String ERROR_HTML_FILE_NAME = "error.html";
 
-    public void unregisterListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        if (!eventListeners.containsKey(event)) return;
-        eventListeners.get(event).removeAll(Arrays.asList(listeners));
-    }
+    public VkCallbackServerErrorHandler() {
+        File errorFile = new File(ERROR_HTML_FILE_NAME);
 
-    public void registerEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) registerEventIfAbsent(event);
-    }
+        try {
+            if (!errorFile.exists() || errorFile.isDirectory()) {
+                Tracer.info("Could not find File \"error.html\", creating it now");
 
-    public void unregisterEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) eventListeners.remove(event);
-    }
+                @Cleanup val outputStream = new FileOutputStream(errorFile);
+                for (String htmlLine : htmlContent) outputStream.write(htmlLine.getBytes());
 
-    public void callEvents(WildBotEvent... events) {
-        for (val event : events) {
-            // Register if not (for further usage)
-            registerEventIfAbsent(event.getClass());
+                Tracer.info("File \"error.html\" has been successfully created");
+            }
 
-            // Queue
-            val listener = eventListeners.get(event.getClass());
-            val handlers = new EventListenersQueue(event, listener).getHandlers();
-            for (val handler : handlers)
-                try {
-                    val method = handler.getKey().getKey();
-                    val accessible = method.isAccessible();
-
-                    method.setAccessible(true);
-                    method.invoke(handler.getKey().getValue(), event);
-                    method.setAccessible(accessible);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    Tracer.error("An exception occurred while trying to call event:", e);
-                }
+            htmlContent = Files.readAllLines(errorFile.toPath());
+        } catch (IOException e) {
+            Tracer.error("An exception occurred while trying to load error-HTML page", e, "Using default one");
         }
     }
 
-    private void registerEventIfAbsent(Class<? extends WildBotEvent> event) {
-        eventListeners.putIfAbsent(event, new ArrayList<>());
+    @Override
+    protected void writeErrorPage(HttpServletRequest request, Writer writer, int code, String message,
+                                  boolean showStacks) throws IOException {
+
+        for (String htmlLine : htmlContent) writer.write(htmlLine);
     }
 }

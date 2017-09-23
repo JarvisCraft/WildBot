@@ -219,13 +219,13 @@ public class SettingsReader {
         add(Setting.builder().name("group-id").inputType(Setting.InputType.INT)
                 .requestInputMessage("Enter your Group ID")
                 .wrongInputMessage("Not valid Group ID .")
-                .successInputMessage("Group ID set to TODO")
+                .successInputMessage("Group ID set to {setting_value}")
                 .build()
         );
         add(Setting.builder().name("group-key").inputType(Setting.InputType.SINGLE_STRING)
                 .requestInputMessage("Enter your Group Access Key")
                 .wrongInputMessage("Invalid Group Access Key")
-                .successInputMessage("Group Access Key set to TODO")
+                .successInputMessage("Group Access Key set to {setting_value}")
                 .build()
         );
 

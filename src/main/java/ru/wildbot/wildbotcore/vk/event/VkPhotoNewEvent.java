@@ -202,59 +202,16 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.api.event;
+package ru.wildbot.wildbotcore.vk.event;
 
+import com.vk.api.sdk.objects.photos.Photo;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.val;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import lombok.Setter;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
-public class EventManager {
-    @Getter private Map<Class<? extends WildBotEvent>, List<Object>> eventListeners = new HashMap<>();
-
-    public void registerListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        registerEventIfAbsent(event);
-        eventListeners.get(event).addAll(Arrays.asList(listeners));
-    }
-
-    public void unregisterListeners(Class<? extends WildBotEvent> event, Object... listeners) {
-        if (!eventListeners.containsKey(event)) return;
-        eventListeners.get(event).removeAll(Arrays.asList(listeners));
-    }
-
-    public void registerEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) registerEventIfAbsent(event);
-    }
-
-    public void unregisterEvents(Class<? extends WildBotEvent>... events) {
-        for (val event : events) eventListeners.remove(event);
-    }
-
-    public void callEvents(WildBotEvent... events) {
-        for (val event : events) {
-            // Register if not (for further usage)
-            registerEventIfAbsent(event.getClass());
-
-            // Queue
-            val listener = eventListeners.get(event.getClass());
-            val handlers = new EventListenersQueue(event, listener).getHandlers();
-            for (val handler : handlers)
-                try {
-                    val method = handler.getKey().getKey();
-                    val accessible = method.isAccessible();
-
-                    method.setAccessible(true);
-                    method.invoke(handler.getKey().getValue(), event);
-                    method.setAccessible(accessible);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    Tracer.error("An exception occurred while trying to call event:", e);
-                }
-        }
-    }
-
-    private void registerEventIfAbsent(Class<? extends WildBotEvent> event) {
-        eventListeners.putIfAbsent(event, new ArrayList<>());
-    }
+@AllArgsConstructor
+public class VkPhotoNewEvent implements WildBotEvent {
+    @Getter @Setter private Integer groupId;
+    @Getter @Setter private Photo message;
 }
