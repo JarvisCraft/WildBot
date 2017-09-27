@@ -225,6 +225,8 @@ public class SettingsManager {
         setProperty("server-start-test-tries", "8");
         setProperty("server-start-test-sleep", "1000");
         setProperty("language", "en_US");
+        setProperty("netty-boss-threads", "0");
+        setProperty("netty-worker-threads", "0");
     }};
 
     private static Properties settings;

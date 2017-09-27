@@ -202,56 +202,165 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk;
+package ru.wildbot.wildbotcore.vk.server;
 
-import com.vk.api.sdk.client.VkApiClient;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.groups.GroupFull;
-import lombok.Getter;
-import lombok.Setter;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessage;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessageType;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.*;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.settings.SettingsManager;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
-public class VkApiManager {
-    @Getter
-    private static final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
-    @Getter
-    @Setter
-    private static GroupActor actor;
-    @Getter
-    @Setter
-    private static GroupFull group;
+import static io.netty.buffer.Unpooled.copiedBuffer;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Secure
-    ///////////////////////////////////////////////////////////////////////////
+public class VkHttpHandler extends ChannelInboundHandlerAdapter {
+    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
+    private final Gson gson = new Gson();
+    private final VkCallbackApiHandler callbackApiHandler = new VkCallbackApiHandler();
 
-    private static String GROUP_KEY;
+    @NonNull private final String confirmationCode;
+    @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
+            "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
+    @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
+    public static final String ERROR_HTML_FILE_NAME = "error.html";
 
-    public static void authorise() {
-        final int GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
-        GROUP_KEY = SettingsManager.getSetting("group-key");
+    public VkHttpHandler(final String confirmationCode) {
+        if (confirmationCode == null) throw new NullPointerException("No confirmation code present");
+        this.confirmationCode = confirmationCode;
+
+        File errorFile = new File(ERROR_HTML_FILE_NAME);
 
         try {
-            actor = new GroupActor(GROUP_ID, GROUP_KEY);
+            if (!errorFile.exists() || errorFile.isDirectory()) {
+                Tracer.info("Could not find File \"error.html\", creating it now");
 
-            group = vkApi.groups().getById(actor).groupId("wild_cubes").execute().get(0);
+                @Cleanup val outputStream = new FileOutputStream(errorFile);
+                outputStream.write(htmlErrorContent.getBytes());
 
-            Tracer.info("Group \"" + group.getName()
-                            + "\" has been successfully authorised by the following criteria:",
-                    "ID: " + GROUP_ID, "Key: " + GROUP_KEY);
+                Tracer.info("File \"error.html\" has been successfully created");
+            }
 
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
-                    .execute());
-        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
+            val htmlLines = Files.readAllLines(errorFile.toPath());
+
+            val htmlErrorContentBuilder = new StringBuilder();
+            for (String htmlLine : htmlLines) htmlErrorContentBuilder.append(htmlLine);
+
+            htmlErrorContent = htmlErrorContentBuilder.toString();
+        } catch (IOException e) {
+            Tracer.error("An exception occurred while trying to load error-HTML page", e, "Using default one");
         }
+    }
+
+    @Override
+    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+        if (message instanceof FullHttpRequest) {
+            val request = (FullHttpRequest) message;
+
+            val requestContent = parseIfPossibleCallback(request);
+            CallbackMessage callback;
+            try {
+                callback = gson.fromJson(requestContent, new TypeToken<CallbackMessage<JsonObject>>(){}.getType());
+            } catch (JsonParseException e) {
+                callback = null;
+            }
+
+            // If is not callback (this HTTP is ONLY FOR CALLBACKS) than send error response
+            if (callback != null && callback.getGroupId().intValue() == VkApiManager.getGroup().getId()) {
+                if (callback.getType() == CallbackMessageType.CONFIRMATION) {
+                    sendConfirmationResponse(context, request);
+                    return;
+                } else {
+                    if (callbackApiHandler.parse(requestContent)) {
+                        sendOkResponse(context, request);
+                        return;
+                    }
+                }
+            }
+
+            sendErrorResponse(context, request);
+        } else {
+            Tracer.warn("Unexpected http-message appeared while handling vk-callback," +
+                    "using default handling method");
+            super.channelRead(context, message);
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext context) throws Exception {
+        context.flush();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+        context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
+    }
+
+    // Gets Callback (if everything OK and not confirmation)
+    private String parseIfPossibleCallback(final FullHttpRequest request) {
+        if (request == null || request.getMethod() != HttpMethod.POST) return null;
+        return request.content().toString(UTF_8_CHARSET);
+    }
+
+    // Response (confirmation code)
+    private void sendConfirmationResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(confirmationCode.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, confirmationCode.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
+    }
+
+    // Response (confirmation code)
+    private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, OK_RESPONSE.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
+    }
+
+    // Response (confirmation code)
+    private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, htmlErrorContent.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
     }
 }

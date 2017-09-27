@@ -207,21 +207,29 @@ package ru.wildbot.wildbotcore;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import lombok.Getter;
+import lombok.val;
 import ru.wildbot.wildbotcore.api.event.EventManager;
 import ru.wildbot.wildbotcore.api.plugin.PluginManager;
+import ru.wildbot.wildbotcore.console.command.CommandParser;
 import ru.wildbot.wildbotcore.console.command.CommandReader;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
+import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.settings.SettingsReader;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
 import ru.wildbot.wildbotcore.vk.server.VkCallbackServerManager;
 
+import java.util.Scanner;
+
+import static ru.wildbot.wildbotcore.console.command.CommandParser.parseCommand;
+
 public class WildBotCore {
     @Getter private static final WildBotCore _instance = new WildBotCore();
     @Getter private PluginManager pluginManager;
     @Getter private EventManager eventManager;
+    @Getter private NettyServerCore nettyServerCore;
 
     private CommandReader commandReader;
 
@@ -231,13 +239,15 @@ public class WildBotCore {
         Tracer.setupLogging();
         Tracer.outputLogo();
 
+        SettingsManager.init();
+        SettingsReader.readRequiredSettings();
+
         _instance.eventManager = new EventManager();
         _instance.pluginManager = new PluginManager() {{
             loadPlugins();
         }};
 
-        SettingsManager.init();
-        SettingsReader.readRequiredSettings();
+        initNetty();
 
         Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
                 + AnsiCodes.RESET);
@@ -249,14 +259,57 @@ public class WildBotCore {
             start();
         }};
 
+        Tracer.info("Starting Netty Server");
+
         new WildBotEnableEvent().call();
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
-
         try {
             VkCallbackServerManager.init();
-        } catch (ApiException | ClientException e) {
+        } catch (Exception e) {
             Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
+        }
+
+        readCommands(); // Used for reading commands and not exiting application
+
+        shutdown();
+    }
+
+    private static void initNetty() {
+        int bossThreads;
+        try {
+            bossThreads = Integer.valueOf(SettingsManager.getSetting("netty-boss-threads"));
+        } catch (NumberFormatException e) {
+            Tracer.warn("Not number given for field `netty-threads` in `settings.properties` file (using 0)");
+            bossThreads = 0;
+        }
+
+        int workerThreads;
+        try {
+            workerThreads = Integer.valueOf(SettingsManager.getSetting("netty-worker-threads"));
+        } catch (NumberFormatException e) {
+            Tracer.warn("Not number given for field `netty-threads` in `settings.properties` file (using 0)");
+            workerThreads = 0;
+        }
+
+        _instance.nettyServerCore = new NettyServerCore(bossThreads, workerThreads);
+    }
+
+    private static Scanner scanner = new Scanner(System.in);
+
+    public static final String STOP_COMMAND = "stop"; // TODO: 24.09.2017 Implement commands system
+
+    private static void readCommands() {
+        while (scanner.hasNextLine()) {
+            val command = scanner.nextLine();
+            if (command.equalsIgnoreCase(STOP_COMMAND)) break;
+            CommandParser.parseCommand(command);
+        }
+    }
+
+    private static void shutdown() {
+        while (scanner.hasNextLine()) {
+            parseCommand(scanner.nextLine());
         }
     }
 }

@@ -210,8 +210,11 @@ import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.groups.CallbackServer;
 import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerCollection;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.Getter;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
@@ -220,14 +223,12 @@ public class VkCallbackServerManager {
     // Server General
     private static int port;
     private static String host;
-    private static Server server;
-    private static HandlerCollection handlers;
-    private static int id;
+    @Getter private static int id;
     // VK API special
     private static CallbackServer callbackServer = null;
     private static String confirmationCode;
 
-    public static void init() throws ApiException, ClientException {
+    public static void init() throws Exception {
         // Shorthands
         final Groups group = VkApiManager.getVkApi().groups();
         final GroupActor actor = VkApiManager.getActor();
@@ -237,35 +238,24 @@ public class VkCallbackServerManager {
         port = Integer.valueOf(SettingsManager.getSetting("callback-server-port"));
         // Used for opening Jetty Server and as Callback Url
         host = SettingsManager.getSetting("callback-server-host");
-
-        Tracer.info("Using Host \"" + host + "\" for Callback Server");
-        handlers = new HandlerCollection();
-
+        // Confirmation code (taken from VK-group_
         confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
 
-        final VkConfirmationCodeHandler confirmationCodeHandler = new VkConfirmationCodeHandler(confirmationCode);
-        handlers.addHandler(confirmationCodeHandler);
-        handlers.addHandler(new VkCallbackRequestHandler());
+        startNettyServer();
+        findCallbackServer(group, actor);
+        registerCallbackServerIfAbsent(group, actor);
 
-        server = new Server(port);
-        server.setErrorHandler(new VkCallbackServerErrorHandler());
-        server.setHandler(handlers);
+        Tracer.info("Using Host \"" + host + "\" for Callback Server");
+    }
 
-        // Find CallBack server in Group's list
+    public static final String NETTY_CHANNEL_NAME = "vk_callback";
 
-        try {
-            server.start();
-
-            findCallbackServer(group, actor);
-            registerCallbackServer(group, actor);
-            confirmationCodeHandler.setConfirmationCode(group.getCallbackConfirmationCode(actor).execute().getCode());
-
-            group.setCallbackSettings(actor, id).messageNew(true).execute();
-
-            server.join();
-        } catch (Exception e) {//TODO
-            Tracer.info("An exception occurred while Starting VK-Callback Server:", e);
-        }
+    private static void startNettyServer() throws Exception {
+        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new VkCallbackNettyHttpHandler(confirmationCode))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
     }
 
     public static void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
@@ -283,7 +273,7 @@ public class VkCallbackServerManager {
             }
     }
 
-    public static void registerCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+    public static void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
         Tracer.info("Registering custom Callback Server");
 
         if (callbackServer == null) {

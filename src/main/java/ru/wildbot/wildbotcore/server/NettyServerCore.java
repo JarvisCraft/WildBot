@@ -202,56 +202,56 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk;
+package ru.wildbot.wildbotcore.server;
 
-import com.vk.api.sdk.client.VkApiClient;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.groups.GroupFull;
-import lombok.Getter;
-import lombok.Setter;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import lombok.val;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.settings.SettingsManager;
 
-public class VkApiManager {
-    @Getter
-    private static final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+public class NettyServerCore {
+    private final EventLoopGroup parentGroup;
+    private final EventLoopGroup childGroup;
 
-    @Getter
-    @Setter
-    private static GroupActor actor;
-    @Getter
-    @Setter
-    private static GroupFull group;
+    private final MultiValuedMap<String, ChannelFuture> channels = MultiMapUtils.newSetValuedHashMap();
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Secure
-    ///////////////////////////////////////////////////////////////////////////
+    public NettyServerCore() {
+        this(0, 0);
+    }
 
-    private static String GROUP_KEY;
+    public NettyServerCore(final int bossThreads, final int workerThreads) {
+        parentGroup = new NioEventLoopGroup(bossThreads);
+        childGroup = new NioEventLoopGroup(workerThreads);
 
-    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
+        // Hook to safe-stop server in case of process being shut-down
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
 
-    public static void authorise() {
-        final int GROUP_ID = Integer.parseInt(SettingsManager.getSetting("group-id"));
-        GROUP_KEY = SettingsManager.getSetting("group-key");
+    public void start(String name, final ServerBootstrap bootstrap, int port) throws Exception {
+        Tracer.info("Starting Netty Channel for name `" + name + "`");
 
-        try {
-            actor = new GroupActor(GROUP_ID, GROUP_KEY);
+        // Add parent and children for Bootstrap if none
+        if (bootstrap.group() == null || bootstrap.childGroup() == null) bootstrap.group(parentGroup, childGroup);
 
-            group = vkApi.groups().getById(actor).groupId("wild_cubes").execute().get(0);
+        channels.put(name, bootstrap.bind(port));
 
-            Tracer.info("Group \"" + group.getName()
-                            + "\" has been successfully authorised by the following criteria:",
-                    "ID: " + GROUP_ID, "Key: " + GROUP_KEY);
+        Tracer.info("Netty Channel for name `" + name + "` has been successfully started");
+    }
 
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
-                    .execute());
-        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
+    public void shutdown() {
+        childGroup.shutdownGracefully();
+        parentGroup.shutdownGracefully();
+
+        for (val channel : channels.values()) {try {
+                channel.channel().closeFuture().sync();
+            } catch (InterruptedException e) {
+                Tracer.error("An exception occurred while trying to stop Netty-Server. Aborting");
+                throw new RuntimeException("Unable to stop Netty");
+            }
         }
     }
 }

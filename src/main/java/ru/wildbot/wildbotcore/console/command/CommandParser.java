@@ -211,7 +211,7 @@ import ru.wildbot.wildbotcore.vk.VkApiManager;
 
 @UtilityClass
 public class CommandParser {
-    public static synchronized void parseCommand(String command) {
+    public static void parseCommand(String command) {
         LoggerFactory.getLogger("CommandParser").info("Command executed!");
         final String[] args = command.split(" ");
         if (command.startsWith("msg") && args.length >= 2) {

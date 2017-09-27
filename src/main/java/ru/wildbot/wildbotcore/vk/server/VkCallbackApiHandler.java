@@ -226,7 +226,7 @@ import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.video.Video;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.api.event.EventManager;
-import ru.wildbot.wildbotcore.vk.event.*;
+import ru.wildbot.wildbotcore.vk.callback.event.*;
 
 public class VkCallbackApiHandler extends CallbackApi {
     private EventManager eventManager;
