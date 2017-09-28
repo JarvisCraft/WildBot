@@ -202,51 +202,39 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk;
+package ru.wildbot.wildbotcore.rcon.server;
 
-import com.vk.api.sdk.client.VkApiClient;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.groups.GroupFull;
+import com.vk.api.sdk.objects.groups.CallbackServer;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
-public class VkApiManager {
-    ///////////////////////////////////////////////////////////////////////////
-    // Secure
-    ///////////////////////////////////////////////////////////////////////////
+public class RconServerManager {
+    // Server Details
+    // Used for Opening Server
+    @NonNull @Getter private final int port;
+    // VK API special
+    @NonNull @Getter private final String confirmationCode;
 
-    @Getter @NonNull private final int groupId;
-    @Getter @NonNull private final String groupKey;
+    public void init() throws Exception {
+        startNettyServer();
+    }
 
-    @Getter private final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+    public final String NETTY_CHANNEL_NAME = "rcon";
 
-    @Getter @Setter private GroupActor actor;
-    @Getter @Setter private GroupFull group;
-
-    public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
-
-    public void authorise() throws Exception {
-        try {
-            actor = new GroupActor(groupId, groupKey);
-
-            group = vkApi.groups().getById(actor).groupId(String.valueOf(groupId)).execute().get(0);
-
-            Tracer.info("Group \"" + group.getName()
-                            + "\" has been successfully authorised by the following criteria:",
-                    "ID: " + groupId, "Key: " + groupKey);
-
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
-                    .execute());
-        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
-        }
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting RCON server on port: " + port);
+        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new RconCallbackHttpHandler(confirmationCode))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("RCON server has been successfully started");
     }
 }

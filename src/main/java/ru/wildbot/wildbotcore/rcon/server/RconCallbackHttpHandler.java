@@ -202,51 +202,26 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk;
+package ru.wildbot.wildbotcore.rcon.server;
 
-import com.vk.api.sdk.client.VkApiClient;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.groups.GroupFull;
-import lombok.Getter;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
-public class VkApiManager {
-    ///////////////////////////////////////////////////////////////////////////
-    // Secure
-    ///////////////////////////////////////////////////////////////////////////
+public class RconCallbackHttpHandler extends ChannelInitializer {
+    @NonNull private final String secretKey;
 
-    @Getter @NonNull private final int groupId;
-    @Getter @NonNull private final String groupKey;
-
-    @Getter private final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
-
-    @Getter @Setter private GroupActor actor;
-    @Getter @Setter private GroupFull group;
-
-    public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
-
-    public void authorise() throws Exception {
-        try {
-            actor = new GroupActor(groupId, groupKey);
-
-            group = vkApi.groups().getById(actor).groupId(String.valueOf(groupId)).execute().get(0);
-
-            Tracer.info("Group \"" + group.getName()
-                            + "\" has been successfully authorised by the following criteria:",
-                    "ID: " + groupId, "Key: " + groupKey);
-
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
-                    .execute());
-        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
-        }
+    @Override
+    protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for Http-RCON handling");
+        // Codec -> Aggregator -> Confirmation -> Callback
+        channel.pipeline().addLast("codec", new HttpServerCodec());
+        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
+        channel.pipeline().addLast("vk", new RconHttpHandler(secretKey));
     }
 }

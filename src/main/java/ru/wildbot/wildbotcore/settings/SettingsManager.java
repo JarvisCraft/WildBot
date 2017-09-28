@@ -222,11 +222,12 @@ public class SettingsManager {
     }
 
     private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        setProperty("server-start-test-tries", "8");
-        setProperty("server-start-test-sleep", "1000");
         setProperty("language", "en_US");
         setProperty("netty-boss-threads", "0");
         setProperty("netty-worker-threads", "0");
+        setProperty("enable-rcon", "true");
+        setProperty("rcon-port", "19286");
+        setProperty("rcon-key", "");
     }};
 
     private static Properties settings;
@@ -253,8 +254,7 @@ public class SettingsManager {
 
         boolean isAddedNewProperty = false;
         for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings
-                    .containsKey(property.getKey())) {
+            if (!settings.containsKey(property.getKey())) {
                 settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
                 isAddedNewProperty = true;
             }
@@ -306,7 +306,7 @@ public class SettingsManager {
     }
 
     private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russiа, Moscow) " +
+            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
             "made specially for WildCubes Minecraft Project.\n" +
             "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
             "It is a free open-source project authored by a young developer.\n\n" +

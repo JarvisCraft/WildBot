@@ -205,25 +205,10 @@
 package ru.wildbot.wildbotcore.console.command;
 
 import lombok.experimental.UtilityClass;
-import org.slf4j.LoggerFactory;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
 
 @UtilityClass
 public class CommandParser {
-    public static void parseCommand(String command) {
-        LoggerFactory.getLogger("CommandParser").info("Command executed!");
-        final String[] args = command.split(" ");
-        if (command.startsWith("msg") && args.length >= 2) {
-            final StringBuilder message = new StringBuilder();
-            try {
-                for (int i = 2; i < args.length; i++) message.append(args[i]).append(i < args.length - 1 ? ' ' : "");
-            } catch (Exception ignored) {}
-            Tracer.info(message.toString());
-            try {
-                VkApiManager.getVkApi().messages().send(VkApiManager.getActor()).message(message.toString())
-                        .userId(Integer.parseInt(args[1])).execute();
-            } catch (Exception ignored) {}
-        }
+    public static void parseCommand(final String command) {
+        // TODO Command Managers
     }
 }

@@ -202,51 +202,25 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk;
+package ru.wildbot.wildbotcore.telegram;
 
-import com.vk.api.sdk.client.VkApiClient;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.groups.GroupFull;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.TelegramBotAdapter;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
-public class VkApiManager {
-    ///////////////////////////////////////////////////////////////////////////
-    // Secure
-    ///////////////////////////////////////////////////////////////////////////
+public class TelegramBotManager {
+    @NonNull private final String botToken;
 
-    @Getter @NonNull private final int groupId;
-    @Getter @NonNull private final String groupKey;
+    @Getter private TelegramBot bot;
 
-    @Getter private final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+    public void init() {
+        bot = TelegramBotAdapter.build(botToken);
+    }
 
-    @Getter @Setter private GroupActor actor;
-    @Getter @Setter private GroupFull group;
-
-    public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
-            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
-
-    public void authorise() throws Exception {
-        try {
-            actor = new GroupActor(groupId, groupKey);
-
-            group = vkApi.groups().getById(actor).groupId(String.valueOf(groupId)).execute().get(0);
-
-            Tracer.info("Group \"" + group.getName()
-                            + "\" has been successfully authorised by the following criteria:",
-                    "ID: " + groupId, "Key: " + groupKey);
-
-            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
-                    .execute());
-        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
-        }
+    public void execute(String request) {
+        // TODO final BaseRequest baseRequest = new BaseRe
     }
 }

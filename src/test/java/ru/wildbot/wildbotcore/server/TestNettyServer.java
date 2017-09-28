@@ -211,6 +211,7 @@ import org.junit.Test;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 public class TestNettyServer {
+    /*
     @Test
     public void testNettyStartupAndShutdown() throws Exception {
         Tracer.info("Testing Netty Server Core Construction");
@@ -251,5 +252,5 @@ public class TestNettyServer {
         Tracer.info("Testing Netty Server Core Shutdown");
         nettyServerCore.shutdown();
         Tracer.info("Test successful");
-    }
+    }*/
 }

@@ -224,6 +224,7 @@ public class NettyServerCore {
     }
 
     public NettyServerCore(final int bossThreads, final int workerThreads) {
+        // Parent (boss) and Child (worker) groups
         parentGroup = new NioEventLoopGroup(bossThreads);
         childGroup = new NioEventLoopGroup(workerThreads);
 
@@ -237,6 +238,7 @@ public class NettyServerCore {
         // Add parent and children for Bootstrap if none
         if (bootstrap.group() == null || bootstrap.childGroup() == null) bootstrap.group(parentGroup, childGroup);
 
+        // Registering in `channels` Map
         channels.put(name, bootstrap.bind(port));
 
         Tracer.info("Netty Channel for name `" + name + "` has been successfully started");
@@ -246,12 +248,11 @@ public class NettyServerCore {
         childGroup.shutdownGracefully();
         parentGroup.shutdownGracefully();
 
-        for (val channel : channels.values()) {try {
-                channel.channel().closeFuture().sync();
-            } catch (InterruptedException e) {
-                Tracer.error("An exception occurred while trying to stop Netty-Server. Aborting");
-                throw new RuntimeException("Unable to stop Netty");
-            }
+        // Closing all channels existing
+        for (val channel : channels.values()) try {
+            channel.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            Tracer.error("An exception occurred while trying to stop Netty-Server. Aborting");
         }
     }
 }

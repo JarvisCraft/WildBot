@@ -216,13 +216,13 @@ public class SettingsReader {
 
     private static List<Setting> requiredSettings = new ArrayList<Setting>() {{
         //VK API group access
-        add(Setting.builder().name("group-id").inputType(Setting.InputType.INT)
+        add(Setting.builder().name("vk-group-id").inputType(Setting.InputType.INT)
                 .requestInputMessage("Enter your Group ID")
                 .wrongInputMessage("Not valid Group ID .")
                 .successInputMessage("Group ID set to {setting_value}")
                 .build()
         );
-        add(Setting.builder().name("group-key").inputType(Setting.InputType.SINGLE_STRING)
+        add(Setting.builder().name("vk-group-key").inputType(Setting.InputType.SINGLE_STRING)
                 .requestInputMessage("Enter your Group Access Key")
                 .wrongInputMessage("Invalid Group Access Key")
                 .successInputMessage("Group Access Key set to {setting_value}")
@@ -230,13 +230,13 @@ public class SettingsReader {
         );
 
         // Callback Handling Server
-        add(Setting.builder().name("callback-server-host").inputType(Setting.InputType.SINGLE_STRING)
+        add(Setting.builder().name("vk-callback-server-host").inputType(Setting.InputType.SINGLE_STRING)
                 .requestInputMessage("Please specify the host you would like to use for Callback Handling")
                 .wrongInputMessage("Given value is not a valid host")
                 .successInputMessage("Callback Handling host set to {setting_value}")
                 .build()
         );
-        add(Setting.builder().name("callback-server-port").inputType(Setting.InputType.INT)
+        add(Setting.builder().name("vk-callback-server-port").inputType(Setting.InputType.INT)
                 .requestInputMessage("Please specify the port you would like to use for Callback Handling")
                 .wrongInputMessage("Given value is not a valid port")
                 .successInputMessage("Callback Handling port set to {setting_value}")

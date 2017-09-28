@@ -214,30 +214,33 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
 
+@RequiredArgsConstructor
 public class VkCallbackServerManager {
-    // Server General
-    private static int port;
-    private static String host;
-    @Getter private static int id;
+    @NonNull private final VkApiManager vkApiManager;
+
+    // Server Details
+    // Used for opening Server and as Callback Url
+    @NonNull private final String host;
+    // Used for Opening Jetty Server
+    @NonNull private final int port;
+
     // VK API special
-    private static CallbackServer callbackServer = null;
-    private static String confirmationCode;
+    private CallbackServer callbackServer = null;
+    private String confirmationCode;
+    @Getter private int id;
 
-    public static void init() throws Exception {
+    public void init() throws Exception {
         // Shorthands
-        final Groups group = VkApiManager.getVkApi().groups();
-        final GroupActor actor = VkApiManager.getActor();
+        final Groups group = vkApiManager.getVkApi().groups();
+        final GroupActor actor = vkApiManager.getActor();
 
-        // Server Details
-        // Used for Opening Jetty Server
-        port = Integer.valueOf(SettingsManager.getSetting("callback-server-port"));
-        // Used for opening Jetty Server and as Callback Url
-        host = SettingsManager.getSetting("callback-server-host");
         // Confirmation code (taken from VK-group_
         confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
 
@@ -248,17 +251,19 @@ public class VkCallbackServerManager {
         Tracer.info("Using Host \"" + host + "\" for Callback Server");
     }
 
-    public static final String NETTY_CHANNEL_NAME = "vk_callback";
+    public final String NETTY_CHANNEL_NAME = "vk_callback";
 
-    private static void startNettyServer() throws Exception {
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting VK-Callback server on port: " + port);
         WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new VkCallbackNettyHttpHandler(confirmationCode))
+                .childHandler(new VkCallbackNettyHttpHandler(vkApiManager, confirmationCode))
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("VK-Callback server has been successfully started");
     }
 
-    public static void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
         Tracer.info("Finding CallBack Server in the list of registered");
 
         final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
@@ -273,13 +278,14 @@ public class VkCallbackServerManager {
             }
     }
 
-    public static void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
+    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
         Tracer.info("Registering custom Callback Server");
 
         if (callbackServer == null) {
             Tracer.info("There were no registered CallbackServer with host " + host);
             id = group.addCallbackServer(actor, host, SettingsManager.getSetting("callback-server-title"))
-                    .execute().getServerId();
+                    .execute()
+                    .getServerId();
             findCallbackServer(group, actor);
         }
     }

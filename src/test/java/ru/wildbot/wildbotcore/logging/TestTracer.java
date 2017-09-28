@@ -211,14 +211,14 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class TestTracer {
-    @Test
+    /*@Test TODO return
     public void testInfo() {
         Tracer.info("Tracer.info(String) Test successful");
         Tracer.info(this);
         Tracer.info(Collections.singleton("Tracer.info(Collection<Object>, Object...) {}"), "successful");
         Tracer.infoF(Collections.singleton("Tracer.infoF(Collection<Object>, Object...) %s"), "successful");
         Tracer.infoP(Collections.singleton("Test {key}"), Arrays.asList(new String[]{"{key}", "{key}", "successful"}));
-    }
+    }*/
 
     @Override
     public String toString() {

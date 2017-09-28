@@ -211,19 +211,22 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.*;
 import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
 
 @RequiredArgsConstructor
 public class VkCallbackNettyHttpHandler extends ChannelInitializer {
 
+    @NonNull private final VkApiManager vkApiManeger;
     @NonNull private final String confirmationCode;
 
     @Override
     protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for VK-Callback handling");
         // Codec -> Aggregator -> Confirmation -> Callback
         channel.pipeline().addLast("codec", new HttpServerCodec());
         channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("vk", new VkHttpHandler(confirmationCode));
+        channel.pipeline().addLast("vk", new VkHttpHandler(vkApiManeger, confirmationCode));
     }
 }

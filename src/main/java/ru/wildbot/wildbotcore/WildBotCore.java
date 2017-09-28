@@ -204,8 +204,6 @@
 
 package ru.wildbot.wildbotcore;
 
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
 import lombok.Getter;
 import lombok.val;
 import ru.wildbot.wildbotcore.api.event.EventManager;
@@ -215,6 +213,7 @@ import ru.wildbot.wildbotcore.console.command.CommandReader;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
+import ru.wildbot.wildbotcore.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.settings.SettingsReader;
@@ -231,6 +230,12 @@ public class WildBotCore {
     @Getter private EventManager eventManager;
     @Getter private NettyServerCore nettyServerCore;
 
+    // RCON
+    @Getter private RconServerManager rconServerManager;
+    // Social
+    @Getter private VkApiManager vkApiManager;
+    @Getter private VkCallbackServerManager vkCallbackServerManager;
+
     private CommandReader commandReader;
 
     public static void main(String[] args) {
@@ -242,18 +247,45 @@ public class WildBotCore {
         SettingsManager.init();
         SettingsReader.readRequiredSettings();
 
+        Tracer.info("Enabling EventManager");
         _instance.eventManager = new EventManager();
+        Tracer.info("Enabling PluginManager");
         _instance.pluginManager = new PluginManager() {{
             loadPlugins();
         }};
 
+        Tracer.info("Enabling Netty-Server-Core");
         initNetty();
 
         Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
                 + AnsiCodes.RESET);
         Analytics.updateStartTime();
 
-        VkApiManager.authorise();
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-vk"))) {
+            Tracer.info("Enabling VK module");
+            try {
+                _instance.vkApiManager = new VkApiManager(
+                        Integer.parseInt(SettingsManager.getSetting("vk-group-id")),
+                        SettingsManager.getSetting("vk-group-key"));
+                _instance.vkApiManager.authorise();
+                _instance.vkCallbackServerManager = new VkCallbackServerManager(_instance.vkApiManager,
+                        SettingsManager.getSetting("vk-callback-server-host"),
+                        Integer.valueOf(SettingsManager.getSetting("vk-callback-server-port")));
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable VK module:", e);
+            }
+        }
+        Tracer.info(4);
+
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-rcon"))) {
+            Tracer.info("Enabling RCON module");
+            try {
+                _instance.rconServerManager = new RconServerManager(Integer.valueOf(SettingsManager
+                        .getSetting("rcon-port")), SettingsManager.getSetting("rcon-key"));
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable RCON module:", e);
+            }
+        }
 
         _instance.commandReader = new CommandReader() {{
             start();
@@ -265,9 +297,15 @@ public class WildBotCore {
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
         try {
-            VkCallbackServerManager.init();
+            if (_instance.vkCallbackServerManager != null) _instance.vkCallbackServerManager.init();
         } catch (Exception e) {
             Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
+        }
+
+        try {
+            if (_instance.rconServerManager != null) _instance.rconServerManager.init();
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
         }
 
         readCommands(); // Used for reading commands and not exiting application
@@ -308,8 +346,6 @@ public class WildBotCore {
     }
 
     private static void shutdown() {
-        while (scanner.hasNextLine()) {
-            parseCommand(scanner.nextLine());
-        }
+        Tracer.info("Shutting down");
     }
 }

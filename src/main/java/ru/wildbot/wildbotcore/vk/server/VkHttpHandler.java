@@ -227,31 +227,37 @@ import java.nio.file.Files;
 import static io.netty.buffer.Unpooled.copiedBuffer;
 
 public class VkHttpHandler extends ChannelInboundHandlerAdapter {
+    @NonNull private final VkApiManager vkApiManager;
+    @NonNull private final String confirmationCode;
+
     private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
     private final Gson gson = new Gson();
     private final VkCallbackApiHandler callbackApiHandler = new VkCallbackApiHandler();
 
-    @NonNull private final String confirmationCode;
     @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
     @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String ERROR_HTML_FILE_NAME = "error.html";
+    public static final String ERROR_HTML_FILE_NAME = "vk_callback_error.html";
 
-    public VkHttpHandler(final String confirmationCode) {
+    public VkHttpHandler(final VkApiManager vkApiManager, final String confirmationCode) {
+        Tracer.info("Initialising Handler for VK-Callbacks");
+
         if (confirmationCode == null) throw new NullPointerException("No confirmation code present");
         this.confirmationCode = confirmationCode;
+        if (vkApiManager == null) throw new NullPointerException("No vk api manager present");
+        this.vkApiManager = vkApiManager;
 
         File errorFile = new File(ERROR_HTML_FILE_NAME);
 
         try {
             if (!errorFile.exists() || errorFile.isDirectory()) {
-                Tracer.info("Could not find File \"error.html\", creating it now");
+                Tracer.info("Could not find File \"vk_callback_error.html\", creating it now");
 
                 @Cleanup val outputStream = new FileOutputStream(errorFile);
                 outputStream.write(htmlErrorContent.getBytes());
 
-                Tracer.info("File \"error.html\" has been successfully created");
+                Tracer.info("File \"vk_callback_error.html\" has been successfully created");
             }
 
             val htmlLines = Files.readAllLines(errorFile.toPath());
@@ -278,8 +284,8 @@ public class VkHttpHandler extends ChannelInboundHandlerAdapter {
                 callback = null;
             }
 
-            // If is not callback (this HTTP is ONLY FOR CALLBACKS) than send error response
-            if (callback != null && callback.getGroupId().intValue() == VkApiManager.getGroup().getId()) {
+            // If is not callback (this HTTP is ONLY FOR CALLBACKS) then send error response
+            if (callback != null && callback.getGroupId().equals(vkApiManager.getGroupId())) {
                 if (callback.getType() == CallbackMessageType.CONFIRMATION) {
                     sendConfirmationResponse(context, request);
                     return;
@@ -348,7 +354,7 @@ public class VkHttpHandler extends ChannelInboundHandlerAdapter {
         context.writeAndFlush(response);
     }
 
-    // Response (confirmation code)
+    // Response (error)
     private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,

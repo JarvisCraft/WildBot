@@ -223,7 +223,10 @@
     <packaging>jar</packaging>
 
     <build>
+        <defaultGoal>clean package install</defaultGoal>
+        <!--
         <defaultGoal>clean test package install javadoc:javadoc</defaultGoal>
+        -->
 
         <resources>
             <resource>
@@ -328,10 +331,19 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.20.1</version>
             </plugin>
+
+            <!-- JavaDocs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0-M1</version>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+        <!-- Social Networking -->
+
         <!-- VK API-->
         <dependency>
             <groupId>com.vk.api</groupId>
@@ -339,6 +351,14 @@
             <version>0.5.8</version>
             <scope>compile</scope>
         </dependency>
+
+        <!-- Telegram -->
+        <dependency>
+            <groupId>com.github.pengrad</groupId>
+            <artifactId>java-telegram-bot-api</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
 
         <!-- Logging -->
         <dependency>
