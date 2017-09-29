@@ -202,39 +202,26 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.rcon.server;
+package ru.wildbot.wildbotcore.httprcon.server;
 
-import com.vk.api.sdk.objects.groups.CallbackServer;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.Getter;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
-public class RconServerManager {
-    // Server Details
-    // Used for Opening Server
-    @NonNull @Getter private final int port;
-    // VK API special
-    @NonNull @Getter private final String confirmationCode;
+public class HttpRconChannelInitializer extends ChannelInitializer {
+    @NonNull private final String key;
 
-    public void init() throws Exception {
-        startNettyServer();
-    }
-
-    public final String NETTY_CHANNEL_NAME = "rcon";
-
-    private void startNettyServer() throws Exception {
-        Tracer.info("Starting RCON server on port: " + port);
-        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new RconCallbackHttpHandler(confirmationCode))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
-        Tracer.info("RCON server has been successfully started");
+    @Override
+    protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for Http-RCON handling");
+        // Codec -> Aggregator -> Confirmation -> Callback
+        channel.pipeline().addLast("codec", new HttpServerCodec());
+        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
+        channel.pipeline().addLast("http_rcon", new HttpRconHttpHandler(key));
     }
 }

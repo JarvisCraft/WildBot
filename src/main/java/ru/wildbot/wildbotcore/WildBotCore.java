@@ -213,16 +213,16 @@ import ru.wildbot.wildbotcore.console.command.CommandReader;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
-import ru.wildbot.wildbotcore.rcon.server.RconServerManager;
+import ru.wildbot.wildbotcore.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.settings.SettingsReader;
+import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
+import ru.wildbot.wildbotcore.telegram.event.TelegramBotManagerEnableEvent;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
 import ru.wildbot.wildbotcore.vk.server.VkCallbackServerManager;
 
 import java.util.Scanner;
-
-import static ru.wildbot.wildbotcore.console.command.CommandParser.parseCommand;
 
 public class WildBotCore {
     @Getter private static final WildBotCore _instance = new WildBotCore();
@@ -231,10 +231,13 @@ public class WildBotCore {
     @Getter private NettyServerCore nettyServerCore;
 
     // RCON
-    @Getter private RconServerManager rconServerManager;
+    @Getter private HttpRconServerManager rconServerManager;
     // Social
+    // VK
     @Getter private VkApiManager vkApiManager;
     @Getter private VkCallbackServerManager vkCallbackServerManager;
+    // Telegram
+    @Getter private TelegramBotManager telegramBotManager;
 
     private CommandReader commandReader;
 
@@ -275,15 +278,23 @@ public class WildBotCore {
                 Tracer.error("An exception occurred while trying to enable VK module:", e);
             }
         }
-        Tracer.info(4);
 
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-rcon"))) {
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-httprcon"))) {
             Tracer.info("Enabling RCON module");
             try {
-                _instance.rconServerManager = new RconServerManager(Integer.valueOf(SettingsManager
-                        .getSetting("rcon-port")), SettingsManager.getSetting("rcon-key"));
+                _instance.rconServerManager = new HttpRconServerManager(Integer.valueOf(SettingsManager
+                        .getSetting("httprcon-port")), SettingsManager.getSetting("httprcon-key"));
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable RCON module:", e);
+            }
+        }
+
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram"))) {
+            Tracer.info("Enabling Telegram module");
+            try {
+                _instance.telegramBotManager = new TelegramBotManager(SettingsManager.getSetting("telegram-token"));
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable Telegram module:", e);
             }
         }
 
@@ -304,6 +315,16 @@ public class WildBotCore {
 
         try {
             if (_instance.rconServerManager != null) _instance.rconServerManager.init();
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
+        }
+
+        try {
+            Tracer.info("Trying to enable telegram");
+            if (_instance.telegramBotManager != null) {
+                _instance.telegramBotManager.init();
+                _instance.eventManager.callEvents(new TelegramBotManagerEnableEvent(_instance.telegramBotManager));
+            }
         } catch (Exception e) {
             Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
         }

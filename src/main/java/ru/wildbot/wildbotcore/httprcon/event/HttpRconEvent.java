@@ -202,143 +202,15 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.rcon.server;
+package ru.wildbot.wildbotcore.httprcon.event;
 
-import com.google.gson.Gson;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.*;
 import lombok.*;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-
-import static io.netty.buffer.Unpooled.copiedBuffer;
-
-public class RconHttpHandler extends ChannelInboundHandlerAdapter {
-    @NonNull private final String confirmationCode;
-
-    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
-    private final Gson gson = new Gson();
-
-    @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
-            "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
-    @Getter private final String OK_RESPONSE = "ok";
-
-    public static final String ERROR_HTML_FILE_NAME = "rcon_error.html";
-
-    public RconHttpHandler(final String confirmationCode) {
-        Tracer.info("Initialising Handler for RCON");
-
-        if (confirmationCode == null) throw new NullPointerException("No confirmation code present");
-        this.confirmationCode = confirmationCode;
-
-        File errorFile = new File(ERROR_HTML_FILE_NAME);
-
-        try {
-            if (!errorFile.exists() || errorFile.isDirectory()) {
-                Tracer.info("Could not find File \"error.html\", creating it now");
-
-                @Cleanup val outputStream = new FileOutputStream(errorFile);
-                outputStream.write(htmlErrorContent.getBytes());
-
-                Tracer.info("File \"error.html\" has been successfully created");
-            }
-
-            val htmlLines = Files.readAllLines(errorFile.toPath());
-
-            val htmlErrorContentBuilder = new StringBuilder();
-            for (String htmlLine : htmlLines) htmlErrorContentBuilder.append(htmlLine);
-
-            htmlErrorContent = htmlErrorContentBuilder.toString();
-        } catch (IOException e) {
-            Tracer.error("An exception occurred while trying to load error-HTML page", e, "Using default one");
-        }
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-        if (message instanceof FullHttpRequest) {
-            val request = (FullHttpRequest) message;
-
-            Tracer.info("Possible RCON request");
-
-            val requestContent = parseIfPossibleCallback(request);
-
-            /*CallbackMessage callback;
-            try {
-                callback = gson.fromJson(requestContent, new TypeToken<CallbackMessage<JsonObject>>(){}.getType());
-            } catch (JsonParseException e) {
-                callback = null;
-            }
-
-            // If is not RCON (this HTTP is ONLY FOR RCON) then send error response
-            if (callback != null && callback.getGroupId().equals(vkApiManager.getGroupId())) {
-                if ()
-            }*/
-
-            // TODO: 28.09.2017 RCON logic
-
-            sendErrorResponse(context, request);
-        } else {
-            Tracer.warn("Unexpected http-message appeared while handling RCON," +
-                    "using default handling method");
-            super.channelRead(context, message);
-        }
-    }
-
-    // Response (confirmation code)
-    private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
-        //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes()));
-
-        // Required headers
-        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
-                HttpHeaders.Values.KEEP_ALIVE);
-        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
-        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, OK_RESPONSE.length());
-
-        // Write and Flush (send)
-        context.writeAndFlush(response);
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext context) throws Exception {
-        context.flush();
-    }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
-        context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
-    }
-
-
-    // Gets Callback (if everything OK and not confirmation)
-    private String parseIfPossibleCallback(final FullHttpRequest request) {
-        if (request == null || request.getMethod() != HttpMethod.POST) return null;
-        return request.content().toString(UTF_8_CHARSET);
-    }
-
-    // Response (error)
-    private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
-        //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
-
-        // Required headers
-        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
-                HttpHeaders.Values.KEEP_ALIVE);
-        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
-        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, htmlErrorContent.length());
-
-        // Write and Flush (send)
-        context.writeAndFlush(response);
-    }
+@RequiredArgsConstructor
+public class HttpRconEvent implements WildBotEvent {
+    @NonNull @Getter final private String name;
+    @NonNull @Getter final private String data;
+    @Getter @Setter private boolean handled = false;
+    @Getter @Setter private String htmlResponse = "";
 }

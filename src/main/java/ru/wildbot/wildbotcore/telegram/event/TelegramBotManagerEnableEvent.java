@@ -202,26 +202,14 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.rcon.server;
+package ru.wildbot.wildbotcore.telegram.event;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 
 @RequiredArgsConstructor
-public class RconCallbackHttpHandler extends ChannelInitializer {
-    @NonNull private final String secretKey;
-
-    @Override
-    protected void initChannel(Channel channel) throws Exception {
-        Tracer.info("Initialising channel for Http-RCON handling");
-        // Codec -> Aggregator -> Confirmation -> Callback
-        channel.pipeline().addLast("codec", new HttpServerCodec());
-        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("vk", new RconHttpHandler(secretKey));
-    }
+public class TelegramBotManagerEnableEvent implements WildBotEvent {
+    @NonNull private final TelegramBotManager botManager;
 }

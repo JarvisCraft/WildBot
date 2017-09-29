@@ -204,8 +204,11 @@
 
 package ru.wildbot.wildbotcore.telegram;
 
+import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.TelegramBotAdapter;
+import com.pengrad.telegrambot.request.BaseRequest;
+import com.pengrad.telegrambot.response.BaseResponse;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -220,7 +223,11 @@ public class TelegramBotManager {
         bot = TelegramBotAdapter.build(botToken);
     }
 
-    public void execute(String request) {
-        // TODO final BaseRequest baseRequest = new BaseRe
+    public <T extends BaseRequest, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
+        return bot.execute(request);
+    }
+
+    public <T extends BaseRequest<T, R>, R extends BaseResponse> void execute(final T request, final Callback<T, R> callback) {
+        bot.execute(request, callback);
     }
 }

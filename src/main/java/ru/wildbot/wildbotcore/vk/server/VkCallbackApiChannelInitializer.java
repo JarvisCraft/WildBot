@@ -202,84 +202,31 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.api.plugin;
+package ru.wildbot.wildbotcore.vk.server;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.*;
 import lombok.*;
-import ru.wildbot.wildbotcore.api.plugin.annotation.WildBotPluginData;
-import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.jar.JarFile;
+import static io.netty.buffer.Unpooled.copiedBuffer;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-@EqualsAndHashCode
-@ToString(exclude = {"jarFile", "data", "pluginsClasses"})
-class JavaPluginInQueue {
-    @NonNull @Getter private final File file;
-    @NonNull @Getter private final JarFile jarFile;
+@RequiredArgsConstructor
+public class VkCallbackApiChannelInitializer extends ChannelInitializer {
 
-    @NonNull @Getter @Setter private List<String> mainClasses;
-    @NonNull @Getter @Setter private List<String> dependencies;
-    @NonNull @Getter @Setter private List<String> softDependencies;
-    @NonNull @Getter @Setter private List<String> loadBefore;
+    @NonNull private final VkApiManager vkApiManeger;
+    @NonNull private final String confirmationCode;
 
-    @Getter
-    @Setter(value = AccessLevel.PRIVATE)
-    private WildBotPluginData data;
-
-
-    void loadClasses() {// TODO close
-        URLClassLoader classLoader;
-        try {
-            classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
-        } catch (IOException e) {
-            Tracer.error("An exception occureed while trying to load a plugin: ", e);
-            return;
-        }
-
-        for (String mainClass : mainClasses) {
-            try {
-                val jarClass = classLoader.loadClass(mainClass);
-                Tracer.info(jarClass.toString());
-
-                if (WildBotJavaPlugin.class.isAssignableFrom(jarClass)) {
-                    if (jarClass.isAnnotationPresent(WildBotPluginData.class)) {
-                        Tracer.info(AnsiCodes.FG_GREEN + "Registering Class " + jarClass.getSimpleName()
-                                + AnsiCodes.RESET);
-                        pluginsClasses.add(jarClass.asSubclass(WildBotJavaPlugin.class));
-
-                        Tracer.info(AnsiCodes.FG_GREEN + "Class " + jarClass.getSimpleName()
-                                + "has been registered" + AnsiCodes.RESET);
-                    } else Tracer.warn("Unable to load plugin's class \"" + mainClass
-                            + "\": not annotated with @WildBotPluginData");
-                } else Tracer.warn("Unable to load plugin's class \"" + mainClass
-                        + "\": not extending WildBotAbstractPlugin");
-            } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                Tracer.warn("Unable to load Class \"" + mainClass + "\" as it can't be found");
-            }
-        }
-
-        try {
-            classLoader.close();
-        } catch (IOException e) {
-            //todo
-        }
-    }
-
-    @Getter
-    @Setter
-    private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
-
-    String getJarName() {
-        val fileName = file.getName();
-        return fileName.substring(0, fileName.length() - 4);
+    @Override
+    protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for VK-Callback handling");
+        // Codec -> Aggregator -> Confirmation -> Callback
+        channel.pipeline().addLast("codec", new HttpServerCodec());
+        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
+        channel.pipeline().addLast("vk", new VkHttpHandler(vkApiManeger, confirmationCode));
     }
 }

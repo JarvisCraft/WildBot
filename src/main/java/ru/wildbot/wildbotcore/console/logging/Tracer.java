@@ -208,7 +208,6 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import lombok.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import ru.wildbot.wildbotcore.WildBotCore;
 
 import java.io.*;
 import java.nio.file.Files;

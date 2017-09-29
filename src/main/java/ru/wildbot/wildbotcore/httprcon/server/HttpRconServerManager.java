@@ -202,31 +202,38 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.server;
+package ru.wildbot.wildbotcore.httprcon.server;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.*;
-import lombok.*;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
-
-import static io.netty.buffer.Unpooled.copiedBuffer;
 
 @RequiredArgsConstructor
-public class VkCallbackNettyHttpHandler extends ChannelInitializer {
+public class HttpRconServerManager {
+    // Server Details
+    // Used for Opening Server
+    @NonNull @Getter private final int port;
+    // VK API special
+    @NonNull @Getter private final String key;
 
-    @NonNull private final VkApiManager vkApiManeger;
-    @NonNull private final String confirmationCode;
+    public void init() throws Exception {
+        startNettyServer();
+    }
 
-    @Override
-    protected void initChannel(Channel channel) throws Exception {
-        Tracer.info("Initialising channel for VK-Callback handling");
-        // Codec -> Aggregator -> Confirmation -> Callback
-        channel.pipeline().addLast("codec", new HttpServerCodec());
-        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("vk", new VkHttpHandler(vkApiManeger, confirmationCode));
+    public final String NETTY_CHANNEL_NAME = "http_rcon";
+
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting RCON server on port " + port + " by key: " + key);
+        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new HttpRconChannelInitializer(key))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("RCON server has been successfully started");
     }
 }

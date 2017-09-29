@@ -257,7 +257,7 @@ public class VkCallbackServerManager {
         Tracer.info("Starting VK-Callback server on port: " + port);
         WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new VkCallbackNettyHttpHandler(vkApiManager, confirmationCode))
+                .childHandler(new VkCallbackApiChannelInitializer(vkApiManager, confirmationCode))
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true), port);
         Tracer.info("VK-Callback server has been successfully started");

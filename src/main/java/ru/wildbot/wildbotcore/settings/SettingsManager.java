@@ -222,12 +222,21 @@ public class SettingsManager {
     }
 
     private static final Properties DEFAULT_SETTINGS = new Properties() {{
+        // Locale
         setProperty("language", "en_US");
+
+        // Netty
         setProperty("netty-boss-threads", "0");
         setProperty("netty-worker-threads", "0");
-        setProperty("enable-rcon", "true");
-        setProperty("rcon-port", "19286");
-        setProperty("rcon-key", "");
+
+        // Http RCON
+        setProperty("enable-httprcon", "true");
+        setProperty("httprcon-port", "19286");
+        setProperty("httprcon-key", "");
+
+        // Telegram
+        setProperty("enable-telegram", "true");
+        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
     }};
 
     private static Properties settings;
