@@ -202,91 +202,29 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.server;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import com.vk.api.sdk.actions.Groups;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.objects.groups.CallbackServer;
-import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.*;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
 
+import static io.netty.buffer.Unpooled.copiedBuffer;
+
 @RequiredArgsConstructor
-public class VkCallbackServerManager {
+public class VkCallbackChannelInitializer extends ChannelInitializer {
+
     @NonNull private final VkApiManager vkApiManager;
+    @NonNull private final String confirmationCode;
 
-    // Server Details
-    // Used for opening Server and as Callback Url
-    @NonNull private final String host;
-    // Used for Opening Jetty Server
-    @NonNull private final int port;
-
-    // VK API special
-    private CallbackServer callbackServer = null;
-    private String confirmationCode;
-    @Getter private int id;
-
-    public void init() throws Exception {
-        // Shorthands
-        final Groups group = vkApiManager.getVkApi().groups();
-        final GroupActor actor = vkApiManager.getActor();
-
-        // Confirmation code (taken from VK-group_
-        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
-
-        startNettyServer();
-        findCallbackServer(group, actor);
-        registerCallbackServerIfAbsent(group, actor);
-
-        Tracer.info("Using Host \"" + host + "\" for Callback Server");
-    }
-
-    public final String NETTY_CHANNEL_NAME = "vk_callback";
-
-    private void startNettyServer() throws Exception {
-        Tracer.info("Starting VK-Callback server on port: " + port);
-        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new VkCallbackApiChannelInitializer(vkApiManager, confirmationCode))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
-        Tracer.info("VK-Callback server has been successfully started");
-    }
-
-    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Finding CallBack Server in the list of registered");
-
-        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
-
-        for (CallbackServer callbackServerTested : servers.getItems())
-            if (callbackServerTested.getUrl()
-                    .equalsIgnoreCase(host)) {
-                Tracer.info("CallbackServer was found by host " + host);
-                callbackServer = callbackServerTested;
-                id = callbackServer.getId();
-                break;
-            }
-    }
-
-    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Registering custom Callback Server");
-
-        if (callbackServer == null) {
-            Tracer.info("There were no registered CallbackServer with host " + host);
-            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("callback-server-title"))
-                    .execute()
-                    .getServerId();
-            findCallbackServer(group, actor);
-        }
+    @Override
+    protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for VK-Callback handling");
+        // Codec -> Aggregator -> Confirmation -> Callback
+        channel.pipeline().addLast("codec", new HttpServerCodec());
+        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
+        channel.pipeline().addLast("vk", new VkCallbackHttpHandler(vkApiManager, confirmationCode));
     }
 }

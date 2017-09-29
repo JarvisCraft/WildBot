@@ -233,7 +233,7 @@ public class VkApiManager {
     public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
             "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
 
-    public void authorise() throws Exception {
+    public void init() throws Exception {
         try {
             actor = new GroupActor(groupId, groupKey);
 
@@ -246,7 +246,7 @@ public class VkApiManager {
             Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
                     .execute());
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to authorise VK.API, maybe wrong Group-ID / Group-Key was given:", e);
+            Tracer.error("Unable to init VK.API, maybe wrong Group-ID / Group-Key was given:", e);
         }
     }
 }

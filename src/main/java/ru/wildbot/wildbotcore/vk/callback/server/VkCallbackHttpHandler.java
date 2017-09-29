@@ -202,143 +202,171 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.settings;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import lombok.Cleanup;
-import lombok.val;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessage;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessageType;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.*;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
-public class SettingsManager {
-    private static final String FILE_NAME = "settings.properties";
+import static io.netty.buffer.Unpooled.copiedBuffer;
 
-    public static void init() {
-        Tracer.info("Loading SettingsManager");
-        loadSettings();
-        Tracer.info("SettingsManager has been successfully loaded");
+public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
+    @NonNull private final VkApiManager vkApiManager;
+    @NonNull private final String confirmationCode;
+
+    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
+    private final Gson gson = new Gson();
+    private final VkCallbackHandler callbackApiHandler = new VkCallbackHandler();
+
+    @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
+            "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
+    @Getter private final String OK_RESPONSE = "ok";
+
+    public static final String ERROR_HTML_FILE_NAME = "vk_callback_error.html";
+
+    public VkCallbackHttpHandler(final VkApiManager vkApiManager, final String confirmationCode) {
+        Tracer.info("Initialising Handler for VK-Callbacks");
+
+        if (confirmationCode == null) throw new NullPointerException("No confirmation code present");
+        this.confirmationCode = confirmationCode;
+        if (vkApiManager == null) throw new NullPointerException("No vk api manager present");
+        this.vkApiManager = vkApiManager;
+
+        File errorFile = new File(ERROR_HTML_FILE_NAME);
+
+        try {
+            if (!errorFile.exists() || errorFile.isDirectory()) {
+                Tracer.info("Could not find File \"vk_callback_error.html\", creating it now");
+
+                @Cleanup val outputStream = new FileOutputStream(errorFile);
+                outputStream.write(htmlErrorContent.getBytes());
+
+                Tracer.info("File \"vk_callback_error.html\" has been successfully created");
+            }
+
+            val htmlLines = Files.readAllLines(errorFile.toPath());
+
+            val htmlErrorContentBuilder = new StringBuilder();
+            for (String htmlLine : htmlLines) htmlErrorContentBuilder.append(htmlLine);
+
+            htmlErrorContent = htmlErrorContentBuilder.toString();
+        } catch (IOException e) {
+            Tracer.error("An exception occurred while trying to load error-HTML page", e, "Using default one");
+        }
     }
 
-    private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        // Locale
-        setProperty("language", "en_US");
+    @Override
+    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+        if (message instanceof FullHttpRequest) {
+            val request = (FullHttpRequest) message;
 
-        // Netty
-        setProperty("netty-boss-threads", "0");
-        setProperty("netty-worker-threads", "0");
-
-        // Telegram
-        setProperty("enable-telegram", "true");
-        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
-        // Telegram WebHook
-        setProperty("enable-telegram-webhook", "false");
-        setProperty("telegram-webhook-host", "http://example.com");
-        setProperty("telegram-webhook-port", "19287");
-        setProperty("telegram-webhook-max-connections", "40");
-        setProperty("telegram-webhook-updates", "*");
-
-        // Http RCON
-        setProperty("enable-httprcon", "true");
-        setProperty("httprcon-port", "19286");
-        setProperty("httprcon-key", "abcd1234");
-    }};
-
-    private static Properties settings;
-
-    private static void loadSettings() throws RuntimeException {
-        Tracer.info("Loading Settings");
-        val file = new File(FILE_NAME);
-        if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"settings.properties\", creating it now");
+            val requestContent = parseIfPossibleCallback(request);
+            CallbackMessage callback;
             try {
-                createSettingsFile(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"settings.properties\" File");
-            }
-        }
-
-        Properties settings = new Properties();
-        try {
-            @Cleanup val inputStream = new FileInputStream(file);
-            settings.load(inputStream);
-        } catch (IOException e) {
-            Tracer.error("Error while trying to load Properties");
-        }
-
-        boolean isAddedNewProperty = false;
-        for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings.containsKey(property.getKey())) {
-                settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
-                isAddedNewProperty = true;
+                callback = gson.fromJson(requestContent, new TypeToken<CallbackMessage<JsonObject>>(){}.getType());
+            } catch (JsonParseException e) {
+                callback = null;
             }
 
-        if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
-            settings.store(outputStream, "Main");
-        } catch (IOException e) {
-            Tracer.error("Error while trying to save default Properties");
-        }
+            // If is not callback (this HTTP is ONLY FOR CALLBACKS) then send error response
+            if (callback != null && callback.getGroupId().equals(vkApiManager.getGroupId())) {
+                if (callback.getType() == CallbackMessageType.CONFIRMATION) {
+                    sendConfirmationResponse(context, request);
+                    return;
+                } else {
+                    if (callbackApiHandler.parse(requestContent)) {
+                        sendOkResponse(context, request);
+                        return;
+                    }
+                }
+            }
 
-        SettingsManager.settings = settings;
-        Tracer.info("Settings have been loaded successfully");
-    }
-
-    private static void createSettingsFile(final File file) throws IOException {
-        Tracer.info("Creating default File \"setting.properties\"");
-        try {
-            new FileOutputStream(file).close();
-        } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
-            throw new IOException("File could not be created");
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Settings Read/Write
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static String getSetting(String key) {
-        if (!settings.containsKey(key)) {
-            settings.setProperty(key, "");
-            saveSettings();
-        }
-        return settings.getProperty(key);
-    }
-
-    public static <T> T getSetting(String settingKey, Class<? extends T> settingClass) {
-        final Object setting = settings.get(settingKey);
-        try {
-            return setting == null ? null : settingClass.cast(setting);
-        } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
-                    + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
-            return null;
+            sendErrorResponse(context, request);
+        } else {
+            Tracer.warn("Unexpected http-message appeared while handling vk-callback," +
+                    "using default handling method");
+            super.channelRead(context, message);
         }
     }
 
-    public static void setSetting(String key, Object value, boolean save) {
-        settings.setProperty(key, String.valueOf(value));
-
-        if (save) saveSettings();
+    @Override
+    public void channelReadComplete(ChannelHandlerContext context) throws Exception {
+        context.flush();
     }
 
-    private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
-            "made specially for WildCubes Minecraft Project.\n" +
-            "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
-            "It is a free open-source project authored by a young developer.\n\n" +
-            "For contacting the developer use:\n" +
-            "|_ mrjarviscraft@gmail.com\n" +
-            "|_ https://vk.com/PROgrm_JARvis\n";
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+        context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
+    }
 
-    public static void saveSettings() {
-        try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            settings.store(outputStream, SETTINGS_COMMENT);
-        } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
-        }
+    // Gets Callback (if everything OK and not confirmation)
+    private String parseIfPossibleCallback(final FullHttpRequest request) {
+        if (request == null || request.getMethod() != HttpMethod.POST) return null;
+        return request.content().toString(UTF_8_CHARSET);
+    }
+
+    // Response (confirmation code)
+    private void sendConfirmationResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(confirmationCode.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, confirmationCode.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
+    }
+
+    // Response (confirmation code)
+    private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, OK_RESPONSE.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
+    }
+
+    // Response (error)
+    private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, htmlErrorContent.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
     }
 }

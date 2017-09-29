@@ -284,6 +284,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                             val event = new HttpRconEvent(name, data);
                             WildBotCore.get_instance().getEventManager().callEvents(event);
                             sendOkResponse(context, request, event.getHtmlResponse());
+                            return;
                         } catch (Exception e) {
                             Tracer.error("An exception occurred while trying to call to HttpRconEvent:", e);
                         }

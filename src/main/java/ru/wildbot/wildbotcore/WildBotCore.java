@@ -209,7 +209,6 @@ import lombok.val;
 import ru.wildbot.wildbotcore.api.event.EventManager;
 import ru.wildbot.wildbotcore.api.plugin.PluginManager;
 import ru.wildbot.wildbotcore.console.command.CommandParser;
-import ru.wildbot.wildbotcore.console.command.CommandReader;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
@@ -218,9 +217,9 @@ import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.settings.SettingsManager;
 import ru.wildbot.wildbotcore.settings.SettingsReader;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
-import ru.wildbot.wildbotcore.telegram.event.TelegramBotManagerEnableEvent;
+import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManager;
 import ru.wildbot.wildbotcore.vk.VkApiManager;
-import ru.wildbot.wildbotcore.vk.server.VkCallbackServerManager;
+import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManager;
 
 import java.util.Scanner;
 
@@ -230,111 +229,82 @@ public class WildBotCore {
     @Getter private EventManager eventManager;
     @Getter private NettyServerCore nettyServerCore;
 
-    // RCON
-    @Getter private HttpRconServerManager rconServerManager;
-    // Social
+    // Messengers
     // VK
     @Getter private VkApiManager vkApiManager;
     @Getter private VkCallbackServerManager vkCallbackServerManager;
     // Telegram
     @Getter private TelegramBotManager telegramBotManager;
+    @Getter private TelegramWebhookManager telegramWebhookManager;
 
-    private CommandReader commandReader;
+    // HTTP-RCON
+    @Getter private HttpRconServerManager rconServerManager;
+
+    // private CommandReader commandReader; TODO implement
 
     public static void main(String[] args) {
+        // Analytics initialisation
         Analytics.updateStartTime();
 
+        // Tracer initialisation
         Tracer.setupLogging();
         Tracer.outputLogo();
 
+        // Settings Manager (static)
         SettingsManager.init();
         SettingsReader.readRequiredSettings();
 
+        // Core Managers
+
         Tracer.info("Enabling EventManager");
         _instance.eventManager = new EventManager();
+        Tracer.info("EventManager has been successfully enabled");
+
         Tracer.info("Enabling PluginManager");
-        _instance.pluginManager = new PluginManager() {{
-            loadPlugins();
-        }};
+        _instance.pluginManager = new PluginManager();
+        Tracer.info("PluginManager has been successfully enabled");
 
-        Tracer.info("Enabling Netty-Server-Core");
-        initNetty();
+        // Netty Server Core
+        _instance.initNetty();
 
-        Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
-                + AnsiCodes.RESET);
-        Analytics.updateStartTime();
+        /*_instance.commandReader = new CommandReader() {{
+            start(); TODO implement CommandReader
+        }};*/
 
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-vk"))) {
-            Tracer.info("Enabling VK module");
-            try {
-                _instance.vkApiManager = new VkApiManager(
-                        Integer.parseInt(SettingsManager.getSetting("vk-group-id")),
-                        SettingsManager.getSetting("vk-group-key"));
-                _instance.vkApiManager.authorise();
-                _instance.vkCallbackServerManager = new VkCallbackServerManager(_instance.vkApiManager,
-                        SettingsManager.getSetting("vk-callback-server-host"),
-                        Integer.valueOf(SettingsManager.getSetting("vk-callback-server-port")));
-            } catch (Exception e) {
-                Tracer.error("An exception occurred while trying to enable VK module:", e);
-            }
-        }
-
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-httprcon"))) {
-            Tracer.info("Enabling RCON module");
-            try {
-                _instance.rconServerManager = new HttpRconServerManager(Integer.valueOf(SettingsManager
-                        .getSetting("httprcon-port")), SettingsManager.getSetting("httprcon-key"));
-            } catch (Exception e) {
-                Tracer.error("An exception occurred while trying to enable RCON module:", e);
-            }
-        }
-
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram"))) {
-            Tracer.info("Enabling Telegram module");
-            try {
-                _instance.telegramBotManager = new TelegramBotManager(SettingsManager.getSetting("telegram-token"));
-            } catch (Exception e) {
-                Tracer.error("An exception occurred while trying to enable Telegram module:", e);
-            }
-        }
-
-        _instance.commandReader = new CommandReader() {{
-            start();
-        }};
-
-        Tracer.info("Starting Netty Server");
+        _instance.initMessengers();
+        _instance.initHttpRcon();
 
         new WildBotEnableEvent().call();
+
+        // Info on basic components initialised
+        Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
+                + AnsiCodes.RESET);
+
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
-        try {
-            if (_instance.vkCallbackServerManager != null) _instance.vkCallbackServerManager.init();
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
-        }
-
-        try {
-            if (_instance.rconServerManager != null) _instance.rconServerManager.init();
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
-        }
-
-        try {
-            Tracer.info("Trying to enable telegram");
-            if (_instance.telegramBotManager != null) {
-                _instance.telegramBotManager.init();
-                _instance.eventManager.callEvents(new TelegramBotManagerEnableEvent(_instance.telegramBotManager));
-            }
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
-        }
+        _instance.loadPlugins();
 
         readCommands(); // Used for reading commands and not exiting application
 
         shutdown();
     }
 
-    private static void initNetty() {
+    ///////////////////////////////////////////////////////////////////////////
+    // Plugin Manager
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void loadPlugins() {
+        Tracer.info("Loading plugins...");
+        pluginManager.loadPlugins();
+        Tracer.info("All possible plugins have been loaded");
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Netty Server Core
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void initNetty() {
+        Tracer.info("Initialising NettyServerCore");
         int bossThreads;
         try {
             bossThreads = Integer.valueOf(SettingsManager.getSetting("netty-boss-threads"));
@@ -351,8 +321,114 @@ public class WildBotCore {
             workerThreads = 0;
         }
 
-        _instance.nettyServerCore = new NettyServerCore(bossThreads, workerThreads);
+        nettyServerCore = new NettyServerCore(bossThreads, workerThreads);
+
+        Tracer.info("NettyServerCore has been successfully initialised");
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Messengers
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void initMessengers() {
+        Tracer.info("Enabling Messengers");
+        initVk();
+        initTelegram();
+        initVkCallback();
+        initTelegramWebhook();
+        Tracer.info("All possible Messengers have been enabled");
+    }
+
+    private void initVk() {
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-vk"))) {
+            Tracer.info("Enabling VK module");
+            try {
+                vkApiManager = new VkApiManager(
+                        Integer.parseInt(SettingsManager.getSetting("vk-group-id")),
+                        SettingsManager.getSetting("vk-group-key"));
+                vkApiManager.init();
+                Tracer.info("VK module has been successfully enabled");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable VK module:", e);
+            }
+        }
+    }
+
+
+    private void initVkCallback() {
+        try {
+            if (vkApiManager != null && Boolean.parseBoolean(SettingsManager
+                    .getSetting("enable-vk-callback"))) {
+                Tracer.info("Enabling VK Callbacks");
+                vkCallbackServerManager = new VkCallbackServerManager(vkApiManager,
+                        SettingsManager.getSetting("vk-callback-server-host"),
+                        Integer.valueOf(SettingsManager.getSetting("vk-callback-server-port")));
+                vkCallbackServerManager.init();
+                Tracer.info("VK Callbacks have been successfully enabled");
+            }
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
+        }
+
+    }
+
+    private void initTelegram() {
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram"))) {
+            Tracer.info("Enabling Telegram module");
+            try {
+                telegramBotManager = new TelegramBotManager(SettingsManager.getSetting("telegram-token"));
+                telegramBotManager.init();
+                Tracer.info("Telegram module has been successfully initialised");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable Telegram module:", e);
+            }
+        }
+    }
+
+    private void initTelegramWebhook() {
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram-webhook"))) {
+            Tracer.info("Enabling Telegram Webhook");
+            try {
+                telegramWebhookManager = new TelegramWebhookManager(telegramBotManager,
+                        SettingsManager.getSetting("telegram-webhook-host"),
+                        Integer.parseInt(SettingsManager.getSetting("telegram-webhook-port")),
+                        Integer.parseInt(SettingsManager.getSetting("telegram-webhook-max-connections")),
+                        SettingsManager.getSetting("telegram-webhook-updates").split(","));
+                telegramWebhookManager.init();
+                Tracer.info("Telegram module has been successfully initialised");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable Telegram Webhook:", e);
+            }
+        }
+        try {
+            Tracer.info("Enabling Telegram module");
+
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // HTTP-RCON
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void initHttpRcon() {
+        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-httprcon"))) {
+            Tracer.info("Enabling HTTP-RCON");
+            try {
+                rconServerManager = new HttpRconServerManager(Integer.valueOf(SettingsManager
+                        .getSetting("httprcon-port")), SettingsManager.getSetting("httprcon-key"));
+                rconServerManager.init();
+                Tracer.info("HTTP-RCON has been successfully enabled");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable HTTP-RCON: ", e);
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Commands (todo Remove)
+    ///////////////////////////////////////////////////////////////////////////
 
     private static Scanner scanner = new Scanner(System.in);
 

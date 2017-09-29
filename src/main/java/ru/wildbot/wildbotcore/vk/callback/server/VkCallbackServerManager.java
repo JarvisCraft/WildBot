@@ -202,211 +202,91 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.server;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import com.vk.api.sdk.callback.CallbackApi;
-import com.vk.api.sdk.callback.objects.board.CallbackBoardPostDelete;
-import com.vk.api.sdk.callback.objects.group.*;
-import com.vk.api.sdk.callback.objects.market.CallbackMarketComment;
-import com.vk.api.sdk.callback.objects.market.CallbackMarketCommentDelete;
-import com.vk.api.sdk.callback.objects.messages.CallbackMessageAllow;
-import com.vk.api.sdk.callback.objects.messages.CallbackMessageDeny;
-import com.vk.api.sdk.callback.objects.photo.CallbackPhotoComment;
-import com.vk.api.sdk.callback.objects.photo.CallbackPhotoCommentDelete;
-import com.vk.api.sdk.callback.objects.poll.CallbackPollVoteNew;
-import com.vk.api.sdk.callback.objects.video.CallbackVideoComment;
-import com.vk.api.sdk.callback.objects.video.CallbackVideoCommentDelete;
-import com.vk.api.sdk.callback.objects.wall.CallbackWallComment;
-import com.vk.api.sdk.callback.objects.wall.CallbackWallCommentDelete;
-import com.vk.api.sdk.callback.objects.wall.CallbackWallPost;
-import com.vk.api.sdk.objects.audio.Audio;
-import com.vk.api.sdk.objects.board.TopicComment;
-import com.vk.api.sdk.objects.messages.Message;
-import com.vk.api.sdk.objects.photos.Photo;
-import com.vk.api.sdk.objects.video.Video;
+import com.vk.api.sdk.actions.Groups;
+import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.objects.groups.CallbackServer;
+import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.api.event.EventManager;
-import ru.wildbot.wildbotcore.vk.callback.event.*;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.settings.SettingsManager;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
-public class VkCallbackApiHandler extends CallbackApi {
-    private EventManager eventManager;
+@RequiredArgsConstructor
+public class VkCallbackServerManager {
+    @NonNull private final VkApiManager vkApiManager;
 
-    public VkCallbackApiHandler() {
-        this.eventManager = WildBotCore.get_instance().getEventManager();
+    // Server Details
+    // Used for opening Server and as Callback Url
+    @NonNull private final String host;
+    // Used for Opening Jetty Server
+    @NonNull private final int port;
+
+    // VK API special
+    private CallbackServer callbackServer = null;
+    private String confirmationCode;
+    @Getter private int id;
+
+    public void init() throws Exception {
+        // Shorthands
+        final Groups group = vkApiManager.getVkApi().groups();
+        final GroupActor actor = vkApiManager.getActor();
+
+        // Confirmation code (taken from VK-group_
+        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
+
+        startNettyServer();
+        findCallbackServer(group, actor);
+        registerCallbackServerIfAbsent(group, actor);
+
+        Tracer.info("Using Host \"" + host + "\" for Callback Server");
     }
 
-    @Override
-    public void messageNew(Integer groupId, Message message) {
-        eventManager.callEvents(new VkMessageNewEvent(groupId, message));
+    public final String NETTY_CHANNEL_NAME = "vk_callback";
+
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting VK-Callback server on port: " + port);
+        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new VkCallbackChannelInitializer(vkApiManager, confirmationCode))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("VK-Callback server has been successfully started");
     }
 
-    @Override
-    public void messageReply(Integer groupId, Message message) {
-        eventManager.callEvents(new VkMessageReplyEvent(groupId, message));
+    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Finding CallBack Server in the list of registered");
+
+        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
+
+        for (CallbackServer callbackServerTested : servers.getItems())
+            if (callbackServerTested.getUrl()
+                    .equalsIgnoreCase(host)) {
+                Tracer.info("CallbackServer was found by host " + host);
+                callbackServer = callbackServerTested;
+                id = callbackServer.getId();
+                break;
+            }
     }
 
-    @Override
-    public void messageAllow(Integer groupId, CallbackMessageAllow message) {
-        eventManager.callEvents(new VkMessageAllowEvent(groupId, message));
-    }
+    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Registering custom Callback Server");
 
-    @Override
-    public void messageDeny(Integer groupId, CallbackMessageDeny message) {
-        eventManager.callEvents(new VkMessageDenyEvent(groupId, message));
-    }
-
-    @Override
-    public void photoNew(Integer groupId, Photo message) {
-        eventManager.callEvents(new VkPhotoNewEvent(groupId, message));
-    }
-
-    @Override
-    public void photoCommentNew(Integer groupId, CallbackPhotoComment message) {
-        eventManager.callEvents(new VkPhotoCommandNewEvent(groupId, message));
-    }
-
-    @Override
-    public void photoCommentEdit(Integer groupId, CallbackPhotoComment message) {
-        eventManager.callEvents(new VkPhotoCommentEditEvent(groupId, message));
-    }
-
-    @Override
-    public void photoCommentRestore(Integer groupId, CallbackPhotoComment message) {
-        eventManager.callEvents(new VkPhotoCommentRestoreEvent(groupId, message));
-    }
-
-    @Override
-    public void photoCommentDelete(Integer groupId, CallbackPhotoCommentDelete message) {
-        eventManager.callEvents(new VkphotoCommentDeleteEvent(groupId, message));
-    }
-
-    @Override
-    public void audioNew(Integer groupId, Audio message) {
-        eventManager.callEvents(new VkAudioNewEvent(groupId, message));
-    }
-
-    @Override
-    public void videoNew(Integer groupId, Video message) {
-        eventManager.callEvents(new VkVideoNewEvent(groupId, message));
-    }
-
-    @Override
-    public void videoCommentNew(Integer groupId, CallbackVideoComment message) {
-        eventManager.callEvents(new VkVideoCommentNewEvent(groupId, message));
-    }
-
-    @Override
-    public void videoCommentEdit(Integer groupId, CallbackVideoComment message) {
-        eventManager.callEvents(new VkVideoCommentEditEvent(groupId, message));
-    }
-
-    @Override
-    public void videoCommentRestore(Integer groupId, CallbackVideoComment message) {
-        eventManager.callEvents(new VkVideoCommentRestoreEvent(groupId, message));
-    }
-
-    @Override
-    public void videoCommentDelete(Integer groupId, CallbackVideoCommentDelete message) {
-        eventManager.callEvents(new VkVideoCommentDeleteEvent(groupId, message));
-    }
-
-    @Override
-    public void wallPostNew(Integer groupId, CallbackWallPost message) {
-        eventManager.callEvents(new VkWallPostNewEvent(groupId, message));
-    }
-
-    @Override
-    public void wallRepost(Integer groupId, CallbackWallPost message) {
-        eventManager.callEvents(new VkWallRepostEvent(groupId, message));
-    }
-
-    @Override
-    public void wallReplyNew(Integer groupId, CallbackWallComment object) {
-        eventManager.callEvents(new VkWallReplyNewEvent(groupId, object));
-    }
-
-    @Override
-    public void wallReplyEdit(Integer groupId, CallbackWallComment message) {
-        eventManager.callEvents(new VkWallReplyEditEvent(groupId, message));
-    }
-
-    @Override
-    public void wallReplyRestore(Integer groupId, CallbackWallComment message) {
-        eventManager.callEvents(new VkWallReplyRestoreEvent(groupId, message));
-    }
-
-    @Override
-    public void wallReplyDelete(Integer groupId, CallbackWallCommentDelete message) {
-        eventManager.callEvents(new VkWallReplyDeleteEvent(groupId, message));
-    }
-
-    @Override
-    public void boardPostNew(Integer groupId, TopicComment message) {
-        eventManager.callEvents(new VkBoardPostNewEvent(groupId, message));
-    }
-
-    @Override
-    public void boardPostEdit(Integer groupId, TopicComment message) {
-        eventManager.callEvents(new VkBoardPostEditEvent(groupId, message));
-    }
-
-    @Override
-    public void boardPostRestore(Integer groupId, TopicComment message) {
-        eventManager.callEvents(new VkBoardPostRestoreEvent(groupId, message));
-    }
-
-    @Override
-    public void boardPostDelete(Integer groupId, CallbackBoardPostDelete message) {
-        eventManager.callEvents(new VkBoardPostDeleteEvent(groupId, message));
-    }
-
-    @Override
-    public void marketCommentNew(Integer groupId, CallbackMarketComment message) {
-        eventManager.callEvents(new VkMarketCommentNewEvent(groupId, message));
-    }
-
-    @Override
-    public void marketCommentEdit(Integer groupId, CallbackMarketComment message) {
-        eventManager.callEvents(new VkMarketCommentEditEvent(groupId, message));
-    }
-
-    @Override
-    public void marketCommentRestore(Integer groupId, CallbackMarketComment message) {
-        eventManager.callEvents(new VkMarketCommentRestoreEvent(groupId, message));
-    }
-
-    @Override
-    public void marketCommentDelete(Integer groupId, CallbackMarketCommentDelete message) {
-        eventManager.callEvents(new VkMarketCommentDeleteEvent(groupId, message));
-    }
-
-    @Override
-    public void groupLeave(Integer groupId, CallbackGroupLeave message) {
-        eventManager.callEvents(new VkGroupLeaveEvent(groupId, message));
-    }
-
-    @Override
-    public void groupJoin(Integer groupId, CallbackGroupJoin message) {
-        eventManager.callEvents(new VkGroupJoinEvent(groupId, message));
-    }
-
-    @Override
-    public void groupChangeSettings(Integer groupId, CallbackGroupChangeSettings message) {
-        eventManager.callEvents(new VkGroupChangeSettingsEvent(groupId, message));
-    }
-
-    @Override
-    public void groupChangePhoto(Integer groupId, CallbackGroupChangePhoto message) {
-        eventManager.callEvents(new VkGroupChangePhotoEvent(groupId, message));
-    }
-
-    @Override
-    public void groupOfficersEdit(Integer groupId, CallbackGroupOfficersEdit message) {
-        eventManager.callEvents(new VkGroupOfficersEditEvent(groupId, message));
-    }
-
-    @Override
-    public void pollVoteNew(Integer groupId, CallbackPollVoteNew message) {
-        eventManager.callEvents(new VkPollVoteNewEvent(groupId, message));
+        if (callbackServer == null) {
+            Tracer.info("There were no registered CallbackServer with host " + host);
+            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("vk-callback-server-title"))
+                    .execute()
+                    .getServerId();
+            findCallbackServer(group, actor);
+        }
     }
 }

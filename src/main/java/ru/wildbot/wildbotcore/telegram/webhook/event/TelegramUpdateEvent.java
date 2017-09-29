@@ -202,31 +202,15 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.server;
+package ru.wildbot.wildbotcore.telegram.webhook.event;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.*;
-import lombok.*;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
-
-import static io.netty.buffer.Unpooled.copiedBuffer;
+import com.pengrad.telegrambot.model.Update;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @RequiredArgsConstructor
-public class VkCallbackApiChannelInitializer extends ChannelInitializer {
-
-    @NonNull private final VkApiManager vkApiManeger;
-    @NonNull private final String confirmationCode;
-
-    @Override
-    protected void initChannel(Channel channel) throws Exception {
-        Tracer.info("Initialising channel for VK-Callback handling");
-        // Codec -> Aggregator -> Confirmation -> Callback
-        channel.pipeline().addLast("codec", new HttpServerCodec());
-        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("vk", new VkHttpHandler(vkApiManeger, confirmationCode));
-    }
+public class TelegramUpdateEvent implements WildBotEvent {
+    @NonNull @Getter private final Update update;
 }

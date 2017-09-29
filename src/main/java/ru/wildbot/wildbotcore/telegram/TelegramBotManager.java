@@ -219,6 +219,9 @@ public class TelegramBotManager {
 
     @Getter private TelegramBot bot;
 
+    /**
+     * Initialises Telegram Bot (for outcoming data)
+     */
     public void init() {
         bot = TelegramBotAdapter.build(botToken);
     }
