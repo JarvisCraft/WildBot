@@ -211,6 +211,7 @@ import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -223,13 +224,29 @@ import java.util.jar.JarFile;
 @EqualsAndHashCode
 @ToString(exclude = {"jarFile", "data", "pluginsClasses"})
 class JavaPluginInQueue {
-    @NonNull @Getter private final File file;
-    @NonNull @Getter private final JarFile jarFile;
+    @NonNull
+    @Getter
+    private final File file;
+    @NonNull
+    @Getter
+    private final JarFile jarFile;
 
-    @NonNull @Getter @Setter private List<String> mainClasses;
-    @NonNull @Getter @Setter private List<String> dependencies;
-    @NonNull @Getter @Setter private List<String> softDependencies;
-    @NonNull @Getter @Setter private List<String> loadBefore;
+    @NonNull
+    @Getter
+    @Setter
+    private List<String> mainClasses;
+    @NonNull
+    @Getter
+    @Setter
+    private List<String> dependencies;
+    @NonNull
+    @Getter
+    @Setter
+    private List<String> softDependencies;
+    @NonNull
+    @Getter
+    @Setter
+    private List<String> loadBefore;
 
     @Getter
     @Setter(value = AccessLevel.PRIVATE)
@@ -237,14 +254,13 @@ class JavaPluginInQueue {
 
 
     void loadClasses() {// TODO close
-        URLClassLoader classLoader;
         try {
-            classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
-        } catch (IOException e) {
-            Tracer.error("An exception occureed while trying to load a plugin: ", e);
-            return;
+            injectFile(file);
+        } catch (Exception e) {
+            Tracer.error("Error occured while file injecting.");
+            e.printStackTrace();
         }
-
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         for (String mainClass : mainClasses) {
             try {
                 val jarClass = classLoader.loadClass(mainClass);
@@ -267,11 +283,6 @@ class JavaPluginInQueue {
             }
         }
 
-        try {
-            classLoader.close();
-        } catch (IOException e) {
-            //todo
-        }
     }
 
     @Getter
@@ -281,5 +292,11 @@ class JavaPluginInQueue {
     String getJarName() {
         val fileName = file.getName();
         return fileName.substring(0, fileName.length() - 4);
+    }
+
+    private static void injectFile(File file) throws Exception {
+        Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        method.setAccessible(true);
+        method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());
     }
 }
