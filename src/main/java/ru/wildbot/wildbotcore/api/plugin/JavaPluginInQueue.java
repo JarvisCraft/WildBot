@@ -236,7 +236,7 @@ class JavaPluginInQueue {
     private WildBotPluginData data;
 
 
-    void loadClasses() {// TODO close
+    void loadClasses() {// TODO close using Lombok
         URLClassLoader classLoader;
         try {
             classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
