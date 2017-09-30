@@ -261,7 +261,7 @@ class JavaPluginInQueue {
                 } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                         + "\": not extending WildBotAbstractPlugin");
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                Tracer.warn("Unable to load Class \"" + mainClass + "\" as it can't be found");
+                Tracer.warn("Unable to load Class for name \"" + mainClass + "\" as it can't be found");
             }
         }
 
