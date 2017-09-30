@@ -224,40 +224,22 @@ import java.util.jar.JarFile;
 @EqualsAndHashCode
 @ToString(exclude = {"jarFile", "data", "pluginsClasses"})
 class JavaPluginInQueue {
-    @NonNull
-    @Getter
-    private final File file;
-    @NonNull
-    @Getter
-    private final JarFile jarFile;
+    @NonNull @Getter private final File file;
+    @NonNull @Getter private final JarFile jarFile;
 
-    @NonNull
-    @Getter
-    @Setter
-    private List<String> mainClasses;
-    @NonNull
-    @Getter
-    @Setter
-    private List<String> dependencies;
-    @NonNull
-    @Getter
-    @Setter
-    private List<String> softDependencies;
-    @NonNull
-    @Getter
-    @Setter
-    private List<String> loadBefore;
+    @NonNull @Getter @Setter private List<String> mainClasses;
+    @NonNull @Getter @Setter private List<String> dependencies;
+    @NonNull @Getter @Setter private List<String> softDependencies;
+    @NonNull @Getter @Setter private List<String> loadBefore;
 
-    @Getter
-    @Setter(value = AccessLevel.PRIVATE)
+    @Getter @Setter(value = AccessLevel.PRIVATE)
     private WildBotPluginData data;
-
 
     void loadClasses() {// TODO close
         try {
             injectFile(file);
         } catch (Exception e) {
-            Tracer.error("Error occured while file injecting.");
+            Tracer.error("Error occurred while file injecting.");
             e.printStackTrace();
         }
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
@@ -273,21 +255,19 @@ class JavaPluginInQueue {
                         pluginsClasses.add(jarClass.asSubclass(WildBotJavaPlugin.class));
 
                         Tracer.info(AnsiCodes.FG_GREEN + "Class " + jarClass.getSimpleName()
-                                + "has been registered" + AnsiCodes.RESET);
+                                + " has been registered" + AnsiCodes.RESET);
                     } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                             + "\": not annotated with @WildBotPluginData");
                 } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                         + "\": not extending WildBotAbstractPlugin");
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                Tracer.warn("Unable to load Class \"" + mainClass + "\" as it can't be found");
+                Tracer.warn("Unable to load Class for name \"" + mainClass + "\" as it can't be found");
             }
         }
 
     }
 
-    @Getter
-    @Setter
-    private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
+    @Getter @Setter private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
 
     String getJarName() {
         val fileName = file.getName();
@@ -295,7 +275,7 @@ class JavaPluginInQueue {
     }
 
     private static void injectFile(File file) throws Exception {
-        Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        val method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
         method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());
     }

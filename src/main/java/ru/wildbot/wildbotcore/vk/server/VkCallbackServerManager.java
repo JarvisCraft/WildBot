@@ -283,7 +283,7 @@ public class VkCallbackServerManager {
 
         if (callbackServer == null) {
             Tracer.info("There were no registered CallbackServer with host " + host);
-            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("callback-server-title"))
+            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("vk-callback-server-title"))
                     .execute()
                     .getServerId();
             findCallbackServer(group, actor);
