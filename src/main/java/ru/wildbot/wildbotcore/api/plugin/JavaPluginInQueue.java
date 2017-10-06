@@ -211,6 +211,7 @@ import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -231,20 +232,17 @@ class JavaPluginInQueue {
     @NonNull @Getter @Setter private List<String> softDependencies;
     @NonNull @Getter @Setter private List<String> loadBefore;
 
-    @Getter
-    @Setter(value = AccessLevel.PRIVATE)
+    @Getter @Setter(value = AccessLevel.PRIVATE)
     private WildBotPluginData data;
 
-
     void loadClasses() {// TODO close
-        URLClassLoader classLoader;
         try {
-            classLoader = URLClassLoader.newInstance(new URL[]{file.toURI().toURL()});
-        } catch (IOException e) {
-            Tracer.error("An exception occureed while trying to load a plugin: ", e);
-            return;
+            injectFile(file);
+        } catch (Exception e) {
+            Tracer.error("Error occurred while file injecting.");
+            e.printStackTrace();
         }
-
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         for (String mainClass : mainClasses) {
             try {
                 val jarClass = classLoader.loadClass(mainClass);
@@ -257,29 +255,28 @@ class JavaPluginInQueue {
                         pluginsClasses.add(jarClass.asSubclass(WildBotJavaPlugin.class));
 
                         Tracer.info(AnsiCodes.FG_GREEN + "Class " + jarClass.getSimpleName()
-                                + "has been registered" + AnsiCodes.RESET);
+                                + " has been registered" + AnsiCodes.RESET);
                     } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                             + "\": not annotated with @WildBotPluginData");
                 } else Tracer.warn("Unable to load plugin's class \"" + mainClass
                         + "\": not extending WildBotAbstractPlugin");
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                Tracer.warn("Unable to load Class \"" + mainClass + "\" as it can't be found");
+                Tracer.warn("Unable to load Class for name \"" + mainClass + "\" as it can't be found");
             }
         }
 
-        try {
-            classLoader.close();
-        } catch (IOException e) {
-            //todo
-        }
     }
 
-    @Getter
-    @Setter
-    private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
+    @Getter @Setter private Set<Class<? extends WildBotJavaPlugin>> pluginsClasses = new LinkedHashSet<>();
 
     String getJarName() {
         val fileName = file.getName();
         return fileName.substring(0, fileName.length() - 4);
+    }
+
+    private static void injectFile(File file) throws Exception {
+        val method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        method.setAccessible(true);
+        method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());
     }
 }
