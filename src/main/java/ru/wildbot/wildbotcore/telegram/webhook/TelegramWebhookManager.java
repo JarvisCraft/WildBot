@@ -202,143 +202,59 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.settings;
+package ru.wildbot.wildbotcore.telegram.webhook;
 
-import lombok.Cleanup;
+import com.pengrad.telegrambot.request.GetWebhookInfo;
+import com.pengrad.telegrambot.request.SetWebhook;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
+import ru.wildbot.wildbotcore.util.DataFormatter;
+import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackChannelInitializer;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+@RequiredArgsConstructor
+public class TelegramWebhookManager {
+    @NonNull @Getter private TelegramBotManager botManager;
+    @NonNull @Getter private final String host;
+    @NonNull @Getter private final int port;
+    @NonNull @Getter private final int maxConnections;
+    @NonNull @Getter private final String[] updates;
+    // private File file = new File()
+    // TODO: 29.09.2017 certificate-file
 
-public class SettingsManager {
-    private static final String FILE_NAME = "settings.properties";
+    public void init() throws Exception {
+        val url = DataFormatter.toRootHttpUrl(host, port);
+        Tracer.info("URL: " + url);
+        if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(url)) {
+            Tracer.info("Setting Telegram WebHook URL to: " + url);
 
-    public static void init() {
-        Tracer.info("Loading SettingsManager");
-        loadSettings();
-        Tracer.info("SettingsManager has been successfully loaded");
+            botManager.execute(new SetWebhook().url(url).allowedUpdates(updates)
+                    .maxConnections(maxConnections));
+
+            Tracer.info("Telegram WebHook URL has been successfully is now set to: "
+                    + botManager.execute(new GetWebhookInfo()).webhookInfo().url());
+        }
+        botManager.execute(new SetWebhook().url(DataFormatter.toRootHttpUrl(url, port)));
+
+        startNettyServer();
     }
 
-    private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        // Locale
-        setProperty("language", "en_US");
+    public final String NETTY_CHANNEL_NAME = "telegram_webhook";
 
-        // Netty
-        setProperty("netty-boss-threads", "0");
-        setProperty("netty-worker-threads", "0");
-
-        // Telegram
-        setProperty("enable-telegram", "true");
-        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
-        // Telegram WebHook
-        setProperty("enable-telegram-webhook", "false");
-        setProperty("telegram-webhook-host", "http://example.com");
-        setProperty("telegram-webhook-port", "19287");
-        setProperty("telegram-webhook-max-connections", "40");
-        setProperty("telegram-webhook-updates", "*");
-
-        // Http RCON
-        setProperty("enable-httprcon", "true");
-        setProperty("httprcon-port", "19286");
-        setProperty("httprcon-key", "abcd1234");
-    }};
-
-    private static Properties settings;
-
-    private static void loadSettings() throws RuntimeException {
-        Tracer.info("Loading Settings");
-        val file = new File(FILE_NAME);
-        if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"settings.properties\", creating it now");
-            try {
-                createSettingsFile(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"settings.properties\" File");
-            }
-        }
-
-        Properties settings = new Properties();
-        try {
-            @Cleanup val inputStream = new FileInputStream(file);
-            settings.load(inputStream);
-        } catch (IOException e) {
-            Tracer.error("Error while trying to load Properties");
-        }
-
-        boolean isAddedNewProperty = false;
-        for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings.containsKey(property.getKey())) {
-                settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
-                isAddedNewProperty = true;
-            }
-
-        if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
-            settings.store(outputStream, "Main");
-        } catch (IOException e) {
-            Tracer.error("Error while trying to save default Properties");
-        }
-
-        SettingsManager.settings = settings;
-        Tracer.info("Settings have been loaded successfully");
-    }
-
-    private static void createSettingsFile(final File file) throws IOException {
-        Tracer.info("Creating default File \"setting.properties\"");
-        try {
-            new FileOutputStream(file).close();
-        } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
-            throw new IOException("File could not be created");
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Settings Read/Write
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static String getSetting(String key) {
-        if (!settings.containsKey(key)) {
-            settings.setProperty(key, "");
-            saveSettings();
-        }
-        return settings.getProperty(key);
-    }
-
-    public static <T> T getSetting(String settingKey, Class<? extends T> settingClass) {
-        final Object setting = settings.get(settingKey);
-        try {
-            return setting == null ? null : settingClass.cast(setting);
-        } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
-                    + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
-            return null;
-        }
-    }
-
-    public static void setSetting(String key, Object value, boolean save) {
-        settings.setProperty(key, String.valueOf(value));
-
-        if (save) saveSettings();
-    }
-
-    private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
-            "made specially for WildCubes Minecraft Project.\n" +
-            "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
-            "It is a free open-source project authored by a young developer.\n\n" +
-            "For contacting the developer use:\n" +
-            "|_ mrjarviscraft@gmail.com\n" +
-            "|_ https://vk.com/PROgrm_JARvis\n";
-
-    public static void saveSettings() {
-        try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            settings.store(outputStream, SETTINGS_COMMENT);
-        } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
-        }
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting Telegram-Webhook server on port: " + port);
+        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new TelegramWebhookChannelInitializer(botManager))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("Telegram-Webhook server has been successfully started");
     }
 }

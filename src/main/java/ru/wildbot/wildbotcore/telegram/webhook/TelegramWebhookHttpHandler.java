@@ -202,31 +202,142 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.server;
+package ru.wildbot.wildbotcore.telegram.webhook;
 
-import io.netty.channel.Channel;
+import com.google.gson.JsonParseException;
+import com.pengrad.telegrambot.BotUtils;
+import com.pengrad.telegrambot.model.Update;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.*;
 import lombok.*;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
+import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
+import ru.wildbot.wildbotcore.telegram.webhook.event.TelegramUpdateEvent;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
 
-@RequiredArgsConstructor
-public class VkCallbackApiChannelInitializer extends ChannelInitializer {
+public class TelegramWebhookHttpHandler extends ChannelInboundHandlerAdapter {
+    @NonNull private final TelegramBotManager botManager;
 
-    @NonNull private final VkApiManager vkApiManeger;
-    @NonNull private final String confirmationCode;
+    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
+
+    @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
+            "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
+    @Getter private final String OK_RESPONSE = "ok";
+
+    public static final String ERROR_HTML_FILE_NAME = "telegram_webhook_error.html";
+
+    public TelegramWebhookHttpHandler(final TelegramBotManager botManager) {
+        Tracer.info("Initialising Handler for Webhooks");
+
+        if (botManager == null) throw new NullPointerException("No Telegram Bot Manager present");
+        this.botManager = botManager;
+
+        File errorFile = new File(ERROR_HTML_FILE_NAME);
+
+        try {
+            if (!errorFile.exists() || errorFile.isDirectory()) {
+                Tracer.info("Could not find File \"vk_callback_error.html\", creating it now");
+
+                @Cleanup val outputStream = new FileOutputStream(errorFile);
+                outputStream.write(htmlErrorContent.getBytes());
+
+                Tracer.info("File \"vk_callback_error.html\" has been successfully created");
+            }
+
+            val htmlLines = Files.readAllLines(errorFile.toPath());
+
+            val htmlErrorContentBuilder = new StringBuilder();
+            for (String htmlLine : htmlLines) htmlErrorContentBuilder.append(htmlLine);
+
+            htmlErrorContent = htmlErrorContentBuilder.toString();
+        } catch (IOException e) {
+            Tracer.error("An exception occurred while trying to load error-HTML page", e, "Using default one");
+        }
+    }
 
     @Override
-    protected void initChannel(Channel channel) throws Exception {
-        Tracer.info("Initialising channel for VK-Callback handling");
-        // Codec -> Aggregator -> Confirmation -> Callback
-        channel.pipeline().addLast("codec", new HttpServerCodec());
-        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("vk", new VkHttpHandler(vkApiManeger, confirmationCode));
+    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+        if (message instanceof FullHttpRequest) {
+            val request = (FullHttpRequest) message;
+
+            val requestContent = parseIfPossibleUpdate(request);
+            Update update;
+            try {
+                update = BotUtils.parseUpdate(requestContent);
+            } catch (JsonParseException e) {
+                update = null;
+            }
+
+            // If is not callback (this HTTP is ONLY FOR WEBHOOKS) then send error response
+            if (update != null) {
+                WildBotCore.getInstance().getEventManager().callEvents(new TelegramUpdateEvent(update));
+                sendOkResponse(context, request);
+                return;
+            }
+
+            sendErrorResponse(context, request);
+        } else {
+            Tracer.warn("Unexpected http-message appeared while handling vk-callback," +
+                    "using default handling method");
+            super.channelRead(context, message);
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext context) throws Exception {
+        context.flush();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+        context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
+    }
+
+    // Gets Update (if everything OK and not confirmation)
+    private String parseIfPossibleUpdate(final FullHttpRequest request) {
+        if (request == null || request.getMethod() != HttpMethod.POST) return null;
+        return request.content().toString(UTF_8_CHARSET);
+    }
+
+    private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, OK_RESPONSE.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
+    }
+
+    // Response (error)
+    private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
+        //Main content
+        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
+
+        // Required headers
+        if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
+                HttpHeaders.Values.KEEP_ALIVE);
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, htmlErrorContent.length());
+
+        // Write and Flush (send)
+        context.writeAndFlush(response);
     }
 }

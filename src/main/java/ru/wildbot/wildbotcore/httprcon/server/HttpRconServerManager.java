@@ -229,7 +229,7 @@ public class HttpRconServerManager {
 
     private void startNettyServer() throws Exception {
         Tracer.info("Starting RCON server on port " + port + " by key: " + key);
-        WildBotCore.get_instance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new HttpRconChannelInitializer(key))
                 .option(ChannelOption.SO_BACKLOG, 128)

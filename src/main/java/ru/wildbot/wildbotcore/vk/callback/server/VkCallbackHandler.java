@@ -202,143 +202,211 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.settings;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import lombok.Cleanup;
-import lombok.val;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import com.vk.api.sdk.callback.CallbackApi;
+import com.vk.api.sdk.callback.objects.board.CallbackBoardPostDelete;
+import com.vk.api.sdk.callback.objects.group.*;
+import com.vk.api.sdk.callback.objects.market.CallbackMarketComment;
+import com.vk.api.sdk.callback.objects.market.CallbackMarketCommentDelete;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessageAllow;
+import com.vk.api.sdk.callback.objects.messages.CallbackMessageDeny;
+import com.vk.api.sdk.callback.objects.photo.CallbackPhotoComment;
+import com.vk.api.sdk.callback.objects.photo.CallbackPhotoCommentDelete;
+import com.vk.api.sdk.callback.objects.poll.CallbackPollVoteNew;
+import com.vk.api.sdk.callback.objects.video.CallbackVideoComment;
+import com.vk.api.sdk.callback.objects.video.CallbackVideoCommentDelete;
+import com.vk.api.sdk.callback.objects.wall.CallbackWallComment;
+import com.vk.api.sdk.callback.objects.wall.CallbackWallCommentDelete;
+import com.vk.api.sdk.callback.objects.wall.CallbackWallPost;
+import com.vk.api.sdk.objects.audio.Audio;
+import com.vk.api.sdk.objects.board.TopicComment;
+import com.vk.api.sdk.objects.messages.Message;
+import com.vk.api.sdk.objects.photos.Photo;
+import com.vk.api.sdk.objects.video.Video;
+import ru.wildbot.wildbotcore.WildBotCore;
+import ru.wildbot.wildbotcore.api.event.EventManager;
+import ru.wildbot.wildbotcore.vk.callback.event.*;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+public class VkCallbackHandler extends CallbackApi {
+    private EventManager eventManager;
 
-public class SettingsManager {
-    private static final String FILE_NAME = "settings.properties";
-
-    public static void init() {
-        Tracer.info("Loading SettingsManager");
-        loadSettings();
-        Tracer.info("SettingsManager has been successfully loaded");
+    public VkCallbackHandler() {
+        this.eventManager = WildBotCore.getInstance().getEventManager();
     }
 
-    private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        // Locale
-        setProperty("language", "en_US");
-
-        // Netty
-        setProperty("netty-boss-threads", "0");
-        setProperty("netty-worker-threads", "0");
-
-        // Telegram
-        setProperty("enable-telegram", "true");
-        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
-        // Telegram WebHook
-        setProperty("enable-telegram-webhook", "false");
-        setProperty("telegram-webhook-host", "http://example.com");
-        setProperty("telegram-webhook-port", "19287");
-        setProperty("telegram-webhook-max-connections", "40");
-        setProperty("telegram-webhook-updates", "*");
-
-        // Http RCON
-        setProperty("enable-httprcon", "true");
-        setProperty("httprcon-port", "19286");
-        setProperty("httprcon-key", "abcd1234");
-    }};
-
-    private static Properties settings;
-
-    private static void loadSettings() throws RuntimeException {
-        Tracer.info("Loading Settings");
-        val file = new File(FILE_NAME);
-        if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"settings.properties\", creating it now");
-            try {
-                createSettingsFile(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"settings.properties\" File");
-            }
-        }
-
-        Properties settings = new Properties();
-        try {
-            @Cleanup val inputStream = new FileInputStream(file);
-            settings.load(inputStream);
-        } catch (IOException e) {
-            Tracer.error("Error while trying to load Properties");
-        }
-
-        boolean isAddedNewProperty = false;
-        for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings.containsKey(property.getKey())) {
-                settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
-                isAddedNewProperty = true;
-            }
-
-        if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
-            settings.store(outputStream, "Main");
-        } catch (IOException e) {
-            Tracer.error("Error while trying to save default Properties");
-        }
-
-        SettingsManager.settings = settings;
-        Tracer.info("Settings have been loaded successfully");
+    @Override
+    public void messageNew(Integer groupId, Message message) {
+        eventManager.callEvents(new VkMessageNewEvent(groupId, message));
     }
 
-    private static void createSettingsFile(final File file) throws IOException {
-        Tracer.info("Creating default File \"setting.properties\"");
-        try {
-            new FileOutputStream(file).close();
-        } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
-            throw new IOException("File could not be created");
-        }
+    @Override
+    public void messageReply(Integer groupId, Message message) {
+        eventManager.callEvents(new VkMessageReplyEvent(groupId, message));
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Settings Read/Write
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static String getSetting(String key) {
-        if (!settings.containsKey(key)) {
-            settings.setProperty(key, "");
-            saveSettings();
-        }
-        return settings.getProperty(key);
+    @Override
+    public void messageAllow(Integer groupId, CallbackMessageAllow message) {
+        eventManager.callEvents(new VkMessageAllowEvent(groupId, message));
     }
 
-    public static <T> T getSetting(String settingKey, Class<? extends T> settingClass) {
-        final Object setting = settings.get(settingKey);
-        try {
-            return setting == null ? null : settingClass.cast(setting);
-        } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
-                    + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
-            return null;
-        }
+    @Override
+    public void messageDeny(Integer groupId, CallbackMessageDeny message) {
+        eventManager.callEvents(new VkMessageDenyEvent(groupId, message));
     }
 
-    public static void setSetting(String key, Object value, boolean save) {
-        settings.setProperty(key, String.valueOf(value));
-
-        if (save) saveSettings();
+    @Override
+    public void photoNew(Integer groupId, Photo message) {
+        eventManager.callEvents(new VkPhotoNewEvent(groupId, message));
     }
 
-    private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
-            "made specially for WildCubes Minecraft Project.\n" +
-            "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
-            "It is a free open-source project authored by a young developer.\n\n" +
-            "For contacting the developer use:\n" +
-            "|_ mrjarviscraft@gmail.com\n" +
-            "|_ https://vk.com/PROgrm_JARvis\n";
+    @Override
+    public void photoCommentNew(Integer groupId, CallbackPhotoComment message) {
+        eventManager.callEvents(new VkPhotoCommandNewEvent(groupId, message));
+    }
 
-    public static void saveSettings() {
-        try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            settings.store(outputStream, SETTINGS_COMMENT);
-        } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
-        }
+    @Override
+    public void photoCommentEdit(Integer groupId, CallbackPhotoComment message) {
+        eventManager.callEvents(new VkPhotoCommentEditEvent(groupId, message));
+    }
+
+    @Override
+    public void photoCommentRestore(Integer groupId, CallbackPhotoComment message) {
+        eventManager.callEvents(new VkPhotoCommentRestoreEvent(groupId, message));
+    }
+
+    @Override
+    public void photoCommentDelete(Integer groupId, CallbackPhotoCommentDelete message) {
+        eventManager.callEvents(new VkphotoCommentDeleteEvent(groupId, message));
+    }
+
+    @Override
+    public void audioNew(Integer groupId, Audio message) {
+        eventManager.callEvents(new VkAudioNewEvent(groupId, message));
+    }
+
+    @Override
+    public void videoNew(Integer groupId, Video message) {
+        eventManager.callEvents(new VkVideoNewEvent(groupId, message));
+    }
+
+    @Override
+    public void videoCommentNew(Integer groupId, CallbackVideoComment message) {
+        eventManager.callEvents(new VkVideoCommentNewEvent(groupId, message));
+    }
+
+    @Override
+    public void videoCommentEdit(Integer groupId, CallbackVideoComment message) {
+        eventManager.callEvents(new VkVideoCommentEditEvent(groupId, message));
+    }
+
+    @Override
+    public void videoCommentRestore(Integer groupId, CallbackVideoComment message) {
+        eventManager.callEvents(new VkVideoCommentRestoreEvent(groupId, message));
+    }
+
+    @Override
+    public void videoCommentDelete(Integer groupId, CallbackVideoCommentDelete message) {
+        eventManager.callEvents(new VkVideoCommentDeleteEvent(groupId, message));
+    }
+
+    @Override
+    public void wallPostNew(Integer groupId, CallbackWallPost message) {
+        eventManager.callEvents(new VkWallPostNewEvent(groupId, message));
+    }
+
+    @Override
+    public void wallRepost(Integer groupId, CallbackWallPost message) {
+        eventManager.callEvents(new VkWallRepostEvent(groupId, message));
+    }
+
+    @Override
+    public void wallReplyNew(Integer groupId, CallbackWallComment object) {
+        eventManager.callEvents(new VkWallReplyNewEvent(groupId, object));
+    }
+
+    @Override
+    public void wallReplyEdit(Integer groupId, CallbackWallComment message) {
+        eventManager.callEvents(new VkWallReplyEditEvent(groupId, message));
+    }
+
+    @Override
+    public void wallReplyRestore(Integer groupId, CallbackWallComment message) {
+        eventManager.callEvents(new VkWallReplyRestoreEvent(groupId, message));
+    }
+
+    @Override
+    public void wallReplyDelete(Integer groupId, CallbackWallCommentDelete message) {
+        eventManager.callEvents(new VkWallReplyDeleteEvent(groupId, message));
+    }
+
+    @Override
+    public void boardPostNew(Integer groupId, TopicComment message) {
+        eventManager.callEvents(new VkBoardPostNewEvent(groupId, message));
+    }
+
+    @Override
+    public void boardPostEdit(Integer groupId, TopicComment message) {
+        eventManager.callEvents(new VkBoardPostEditEvent(groupId, message));
+    }
+
+    @Override
+    public void boardPostRestore(Integer groupId, TopicComment message) {
+        eventManager.callEvents(new VkBoardPostRestoreEvent(groupId, message));
+    }
+
+    @Override
+    public void boardPostDelete(Integer groupId, CallbackBoardPostDelete message) {
+        eventManager.callEvents(new VkBoardPostDeleteEvent(groupId, message));
+    }
+
+    @Override
+    public void marketCommentNew(Integer groupId, CallbackMarketComment message) {
+        eventManager.callEvents(new VkMarketCommentNewEvent(groupId, message));
+    }
+
+    @Override
+    public void marketCommentEdit(Integer groupId, CallbackMarketComment message) {
+        eventManager.callEvents(new VkMarketCommentEditEvent(groupId, message));
+    }
+
+    @Override
+    public void marketCommentRestore(Integer groupId, CallbackMarketComment message) {
+        eventManager.callEvents(new VkMarketCommentRestoreEvent(groupId, message));
+    }
+
+    @Override
+    public void marketCommentDelete(Integer groupId, CallbackMarketCommentDelete message) {
+        eventManager.callEvents(new VkMarketCommentDeleteEvent(groupId, message));
+    }
+
+    @Override
+    public void groupLeave(Integer groupId, CallbackGroupLeave message) {
+        eventManager.callEvents(new VkGroupLeaveEvent(groupId, message));
+    }
+
+    @Override
+    public void groupJoin(Integer groupId, CallbackGroupJoin message) {
+        eventManager.callEvents(new VkGroupJoinEvent(groupId, message));
+    }
+
+    @Override
+    public void groupChangeSettings(Integer groupId, CallbackGroupChangeSettings message) {
+        eventManager.callEvents(new VkGroupChangeSettingsEvent(groupId, message));
+    }
+
+    @Override
+    public void groupChangePhoto(Integer groupId, CallbackGroupChangePhoto message) {
+        eventManager.callEvents(new VkGroupChangePhotoEvent(groupId, message));
+    }
+
+    @Override
+    public void groupOfficersEdit(Integer groupId, CallbackGroupOfficersEdit message) {
+        eventManager.callEvents(new VkGroupOfficersEditEvent(groupId, message));
+    }
+
+    @Override
+    public void pollVoteNew(Integer groupId, CallbackPollVoteNew message) {
+        eventManager.callEvents(new VkPollVoteNewEvent(groupId, message));
     }
 }

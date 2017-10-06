@@ -202,143 +202,91 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.settings;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import lombok.Cleanup;
-import lombok.val;
+import com.vk.api.sdk.actions.Groups;
+import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.objects.groups.CallbackServer;
+import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.settings.SettingsManager;
+import ru.wildbot.wildbotcore.vk.VkApiManager;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+@RequiredArgsConstructor
+public class VkCallbackServerManager {
+    @NonNull private final VkApiManager vkApiManager;
 
-public class SettingsManager {
-    private static final String FILE_NAME = "settings.properties";
+    // Server Details
+    // Used for opening Server and as Callback Url
+    @NonNull private final String host;
+    // Used for Opening Jetty Server
+    @NonNull private final int port;
 
-    public static void init() {
-        Tracer.info("Loading SettingsManager");
-        loadSettings();
-        Tracer.info("SettingsManager has been successfully loaded");
+    // VK API special
+    private CallbackServer callbackServer = null;
+    private String confirmationCode;
+    @Getter private int id;
+
+    public void init() throws Exception {
+        // Shorthands
+        final Groups group = vkApiManager.getVkApi().groups();
+        final GroupActor actor = vkApiManager.getActor();
+
+        // Confirmation code (taken from VK-group_
+        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
+
+        startNettyServer();
+        findCallbackServer(group, actor);
+        registerCallbackServerIfAbsent(group, actor);
+
+        Tracer.info("Using Host \"" + host + "\" for Callback Server");
     }
 
-    private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        // Locale
-        setProperty("language", "en_US");
+    public final String NETTY_CHANNEL_NAME = "vk_callback";
 
-        // Netty
-        setProperty("netty-boss-threads", "0");
-        setProperty("netty-worker-threads", "0");
+    private void startNettyServer() throws Exception {
+        Tracer.info("Starting VK-Callback server on port: " + port);
+        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new VkCallbackChannelInitializer(vkApiManager, confirmationCode))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+        Tracer.info("VK-Callback server has been successfully started");
+    }
 
-        // Telegram
-        setProperty("enable-telegram", "true");
-        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
-        // Telegram WebHook
-        setProperty("enable-telegram-webhook", "false");
-        setProperty("telegram-webhook-host", "http://example.com");
-        setProperty("telegram-webhook-port", "19287");
-        setProperty("telegram-webhook-max-connections", "40");
-        setProperty("telegram-webhook-updates", "*");
+    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Finding CallBack Server in the list of registered");
 
-        // Http RCON
-        setProperty("enable-httprcon", "true");
-        setProperty("httprcon-port", "19286");
-        setProperty("httprcon-key", "abcd1234");
-    }};
+        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
 
-    private static Properties settings;
-
-    private static void loadSettings() throws RuntimeException {
-        Tracer.info("Loading Settings");
-        val file = new File(FILE_NAME);
-        if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"settings.properties\", creating it now");
-            try {
-                createSettingsFile(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"settings.properties\" File");
+        for (CallbackServer callbackServerTested : servers.getItems())
+            if (callbackServerTested.getUrl()
+                    .equalsIgnoreCase(host)) {
+                Tracer.info("CallbackServer was found by host " + host);
+                callbackServer = callbackServerTested;
+                id = callbackServer.getId();
+                break;
             }
-        }
-
-        Properties settings = new Properties();
-        try {
-            @Cleanup val inputStream = new FileInputStream(file);
-            settings.load(inputStream);
-        } catch (IOException e) {
-            Tracer.error("Error while trying to load Properties");
-        }
-
-        boolean isAddedNewProperty = false;
-        for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings.containsKey(property.getKey())) {
-                settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
-                isAddedNewProperty = true;
-            }
-
-        if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
-            settings.store(outputStream, "Main");
-        } catch (IOException e) {
-            Tracer.error("Error while trying to save default Properties");
-        }
-
-        SettingsManager.settings = settings;
-        Tracer.info("Settings have been loaded successfully");
     }
 
-    private static void createSettingsFile(final File file) throws IOException {
-        Tracer.info("Creating default File \"setting.properties\"");
-        try {
-            new FileOutputStream(file).close();
-        } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
-            throw new IOException("File could not be created");
-        }
-    }
+    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
+        Tracer.info("Registering custom Callback Server");
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Settings Read/Write
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static String getSetting(String key) {
-        if (!settings.containsKey(key)) {
-            settings.setProperty(key, "");
-            saveSettings();
-        }
-        return settings.getProperty(key);
-    }
-
-    public static <T> T getSetting(String settingKey, Class<? extends T> settingClass) {
-        final Object setting = settings.get(settingKey);
-        try {
-            return setting == null ? null : settingClass.cast(setting);
-        } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
-                    + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
-            return null;
-        }
-    }
-
-    public static void setSetting(String key, Object value, boolean save) {
-        settings.setProperty(key, String.valueOf(value));
-
-        if (save) saveSettings();
-    }
-
-    private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
-            "made specially for WildCubes Minecraft Project.\n" +
-            "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
-            "It is a free open-source project authored by a young developer.\n\n" +
-            "For contacting the developer use:\n" +
-            "|_ mrjarviscraft@gmail.com\n" +
-            "|_ https://vk.com/PROgrm_JARvis\n";
-
-    public static void saveSettings() {
-        try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            settings.store(outputStream, SETTINGS_COMMENT);
-        } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
+        if (callbackServer == null) {
+            Tracer.info("There were no registered CallbackServer with host " + host);
+            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("vk-callback-server-title"))
+                    .execute()
+                    .getServerId();
+            findCallbackServer(group, actor);
         }
     }
 }

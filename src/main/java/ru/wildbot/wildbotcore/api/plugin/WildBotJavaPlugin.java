@@ -210,11 +210,11 @@ public abstract class WildBotJavaPlugin extends WildBotAbstractPlugin {
 
     @Override
     protected void enable() {
-        WildBotCore.get_instance().getPluginManager().enablePlugin(this);
+        WildBotCore.getInstance().getPluginManager().enablePlugin(this);
     }
 
     @Override
     protected void disable() {
-        WildBotCore.get_instance().getPluginManager().disablePlugin(this);
+        WildBotCore.getInstance().getPluginManager().disablePlugin(this);
     }
 }
