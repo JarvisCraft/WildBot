@@ -234,6 +234,9 @@ public class SettingsManager {
         setProperty("httprcon-port", "19286");
         setProperty("httprcon-key", "");
 
+        // VK
+        setProperty("vk-callback-server-title", "WildBot");
+
         // Telegram
         setProperty("enable-telegram", "true");
         setProperty("telegram-token", "127:NullDotuNUlldoTOne");
