@@ -232,7 +232,7 @@ public class VkCallbackHandler extends CallbackApi {
     private EventManager eventManager;
 
     public VkCallbackHandler() {
-        this.eventManager = WildBotCore.get_instance().getEventManager();
+        this.eventManager = WildBotCore.getInstance().getEventManager();
     }
 
     @Override

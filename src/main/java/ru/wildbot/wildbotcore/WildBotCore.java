@@ -224,7 +224,7 @@ import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManager;
 import java.util.Scanner;
 
 public class WildBotCore {
-    @Getter private static final WildBotCore _instance = new WildBotCore();
+    @Getter private static final WildBotCore instance = new WildBotCore();
     @Getter private PluginManager pluginManager;
     @Getter private EventManager eventManager;
     @Getter private NettyServerCore nettyServerCore;
@@ -257,22 +257,22 @@ public class WildBotCore {
         // Core Managers
 
         Tracer.info("Enabling EventManager");
-        _instance.eventManager = new EventManager();
+        instance.eventManager = new EventManager();
         Tracer.info("EventManager has been successfully enabled");
 
         Tracer.info("Enabling PluginManager");
-        _instance.pluginManager = new PluginManager();
+        instance.pluginManager = new PluginManager();
         Tracer.info("PluginManager has been successfully enabled");
 
         // Netty Server Core
-        _instance.initNetty();
+        instance.initNetty();
 
         /*_instance.commandReader = new CommandReader() {{
             start(); TODO implement CommandReader
         }};*/
 
-        _instance.initMessengers();
-        _instance.initHttpRcon();
+        instance.initMessengers();
+        instance.initHttpRcon();
 
         new WildBotEnableEvent().call();
 
@@ -282,7 +282,7 @@ public class WildBotCore {
 
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
-        _instance.loadPlugins();
+        instance.loadPlugins();
 
         readCommands(); // Used for reading commands and not exiting application
 
