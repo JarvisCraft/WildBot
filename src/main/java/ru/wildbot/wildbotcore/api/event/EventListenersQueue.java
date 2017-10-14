@@ -240,7 +240,7 @@ public class EventListenersQueue extends ArrayList<Class<?>> {
     }
 
     public class EventHandlerMethod extends Pair<Pair<Method, Object>, Integer> {
-        public EventHandlerMethod(Method handler, Object listener, Integer order) {
+        public EventHandlerMethod(final Method handler, final Object listener, final Integer order) {
             super(new Pair<>(handler, listener), order);
         }
     }

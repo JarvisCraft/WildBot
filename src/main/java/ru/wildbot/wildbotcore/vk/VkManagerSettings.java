@@ -202,16 +202,17 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.vk;
 
-import com.vk.api.sdk.objects.wall.WallPost;
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import lombok.NoArgsConstructor;
+import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
+@NoArgsConstructor
 @AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+public class VkManagerSettings extends AbstractJsonData {
+    @SerializedName("group-id") @Getter private int groupId = 123456789;
+    @SerializedName("group-key") @Getter private String groupKey = "1234567890abcdefghABcdEFgh0192";
 }

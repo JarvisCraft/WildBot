@@ -204,44 +204,48 @@
 
 package ru.wildbot.wildbotcore;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.vk.api.sdk.client.VkApiClient;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.val;
 import ru.wildbot.wildbotcore.api.event.EventManager;
 import ru.wildbot.wildbotcore.api.plugin.PluginManager;
 import ru.wildbot.wildbotcore.console.command.CommandParser;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.annotation.Shorthand;
+import ru.wildbot.wildbotcore.data.json.JsonDataManager;
+import ru.wildbot.wildbotcore.data.json.JsonNotPresentException;
+import ru.wildbot.wildbotcore.data.properties.PropertiesDataManager;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
-import ru.wildbot.wildbotcore.httprcon.server.HttpRconServerManager;
+import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
+import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
-import ru.wildbot.wildbotcore.settings.SettingsManager;
-import ru.wildbot.wildbotcore.settings.SettingsReader;
+import ru.wildbot.wildbotcore.data.properties.PropertiesDataReader;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
+import ru.wildbot.wildbotcore.telegram.TelegramBotManagerSettings;
 import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManager;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
+import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManagerSettings;
+import ru.wildbot.wildbotcore.vk.VkManager;
+import ru.wildbot.wildbotcore.vk.VkManagerSettings;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManager;
+import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManagerSettings;
 
 import java.util.Scanner;
 
 public class WildBotCore {
-    @Getter private static final WildBotCore instance = new WildBotCore();
-    @Getter private PluginManager pluginManager;
-    @Getter private EventManager eventManager;
-    @Getter private NettyServerCore nettyServerCore;
+    ///////////////////////////////////////////////////////////////////////////
+    // Singleton
+    ///////////////////////////////////////////////////////////////////////////
 
-    // Messengers
-    // VK
-    @Getter private VkApiManager vkApiManager;
-    @Getter private VkCallbackServerManager vkCallbackServerManager;
-    // Telegram
-    @Getter private TelegramBotManager telegramBotManager;
-    @Getter private TelegramWebhookManager telegramWebhookManager;
+    // Singleton Instance
+    @NonNull @Getter private static final WildBotCore instance = new WildBotCore();
 
-    // HTTP-RCON
-    @Getter private HttpRconServerManager rconServerManager;
-
-    // private CommandReader commandReader; TODO implement
-
+    ///////////////////////////////////////////////////////////////////////////
+    // Main method
+    ///////////////////////////////////////////////////////////////////////////
+    
     public static void main(String[] args) {
         // Analytics initialisation
         Analytics.updateStartTime();
@@ -251,8 +255,8 @@ public class WildBotCore {
         Tracer.outputLogo();
 
         // Settings Manager (static)
-        SettingsManager.init();
-        SettingsReader.readRequiredSettings();
+        PropertiesDataManager.init();
+        PropertiesDataReader.readRequiredSettings();
 
         // Core Managers
 
@@ -264,8 +268,12 @@ public class WildBotCore {
         instance.pluginManager = new PluginManager();
         Tracer.info("PluginManager has been successfully enabled");
 
+        new WildBotEnableEvent(WildBotEnableEvent.Phase.REQUIRED_MANAGERS).call();
+
         // Netty Server Core
         instance.initNetty();
+
+        new WildBotEnableEvent(WildBotEnableEvent.Phase.NETTY).call();
 
         /*_instance.commandReader = new CommandReader() {{
             start(); TODO implement CommandReader
@@ -274,19 +282,43 @@ public class WildBotCore {
         instance.initMessengers();
         instance.initHttpRcon();
 
-        new WildBotEnableEvent().call();
+        new WildBotEnableEvent(WildBotEnableEvent.Phase.OPTIONAL_MANAGERS).call();
 
         // Info on basic components initialised
         Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
                 + AnsiCodes.RESET);
-
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
         instance.loadPlugins();
 
+        new WildBotEnableEvent(WildBotEnableEvent.Phase.PLUGINS).call();
+
+        Tracer.info("All components have been loaded successfully!");
+
+        new WildBotEnableEvent(WildBotEnableEvent.Phase.READY).call();
+
         readCommands(); // Used for reading commands and not exiting application
 
         shutdown();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Core Managers
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Basic managers
+    @Getter private PluginManager pluginManager;
+    @Shorthand public static PluginManager pluginManager() {
+        return instance.pluginManager;
+    }
+    @Getter private EventManager eventManager;
+    @Shorthand public static EventManager eventManager() {
+        return instance.eventManager;
+    }
+
+    @Getter private NettyServerCore nettyServerCore;
+    @Shorthand public static NettyServerCore nettyServerCore() {
+        return instance.nettyServerCore;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -307,17 +339,17 @@ public class WildBotCore {
         Tracer.info("Initialising NettyServerCore");
         int bossThreads;
         try {
-            bossThreads = Integer.valueOf(SettingsManager.getSetting("netty-boss-threads"));
+            bossThreads = Integer.valueOf(PropertiesDataManager.getSetting("netty-boss-threads"));
         } catch (NumberFormatException e) {
-            Tracer.warn("Not number given for field `netty-threads` in `settings.properties` file (using 0)");
+            Tracer.warn("Not number given for field `netty-threads` in `data.properties` file (using 0)");
             bossThreads = 0;
         }
 
         int workerThreads;
         try {
-            workerThreads = Integer.valueOf(SettingsManager.getSetting("netty-worker-threads"));
+            workerThreads = Integer.valueOf(PropertiesDataManager.getSetting("netty-worker-threads"));
         } catch (NumberFormatException e) {
-            Tracer.warn("Not number given for field `netty-threads` in `settings.properties` file (using 0)");
+            Tracer.warn("Not number given for field `netty-threads` in `data.properties` file (using 0)");
             workerThreads = 0;
         }
 
@@ -327,26 +359,69 @@ public class WildBotCore {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Default Social Networks, Messengers and Other
+    ///////////////////////////////////////////////////////////////////////////
+
     // Messengers
+    // VK
+    @Getter private VkManager vkManager;
+    @Shorthand public static VkManager vkApiManager() {
+        return instance.vkManager;
+    }
+    @Shorthand public static VkApiClient vkApi() {
+        return instance.vkManager.getVkApi();
+    }
+
+    @Getter private VkCallbackServerManager vkCallbackServerManager;
+    @Shorthand public static VkCallbackServerManager vkCallbackServerManager() {
+        return instance.vkCallbackServerManager;
+    }
+    // Telegram
+    @Getter private TelegramBotManager telegramBotManager;
+    @Shorthand public static TelegramBotManager telegramBotManager() {
+        return instance.telegramBotManager;
+    }
+    @Shorthand public static TelegramBot telegramBot() {
+        return instance.telegramBotManager.getBot();
+    }
+    @Getter private TelegramWebhookManager telegramWebhookManager;
+    @Shorthand public static TelegramWebhookManager telegramWebhookManager() {
+        return instance.telegramWebhookManager;
+    }
+
+    // HTTP-RCON
+    @Getter private HttpRconServerManager rconServerManager;
+    @Shorthand public static HttpRconServerManager rconServerManager() {
+        return instance.rconServerManager;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Initialisations
     ///////////////////////////////////////////////////////////////////////////
 
     private void initMessengers() {
         Tracer.info("Enabling Messengers");
+        // Output
         initVk();
         initTelegram();
+
+        // Input
         initVkCallback();
         initTelegramWebhook();
         Tracer.info("All possible Messengers have been enabled");
     }
 
     private void initVk() {
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-vk"))) {
+        if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk"))) {
             Tracer.info("Enabling VK module");
             try {
-                vkApiManager = new VkApiManager(
-                        Integer.parseInt(SettingsManager.getSetting("vk-group-id")),
-                        SettingsManager.getSetting("vk-group-key"));
-                vkApiManager.init();
+                val settings = JsonDataManager.read("settings\\vk\\bot.json",
+                        VkManagerSettings.class).orElseThrow(JsonNotPresentException::new);
+
+                settings.save("settings\\vk\\bot.json");
+
+                vkManager = new VkManager(settings);
+                vkManager.init();
                 Tracer.info("VK module has been successfully enabled");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable VK module:", e);
@@ -356,27 +431,33 @@ public class WildBotCore {
 
 
     private void initVkCallback() {
-        try {
-            if (vkApiManager != null && Boolean.parseBoolean(SettingsManager
-                    .getSetting("enable-vk-callback"))) {
-                Tracer.info("Enabling VK Callbacks");
-                vkCallbackServerManager = new VkCallbackServerManager(vkApiManager,
-                        SettingsManager.getSetting("vk-callback-server-host"),
-                        Integer.valueOf(SettingsManager.getSetting("vk-callback-server-port")));
+        if (vkManager != null && Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk-callback"))) {
+            Tracer.info("Enabling VK Callbacks");
+            try {
+                val settings = JsonDataManager.read("settings\\vk\\callback.json",
+                        VkCallbackServerManagerSettings.class).orElseThrow(JsonNotPresentException::new);
+
+                settings.save("settings\\vk\\callback.json");
+
+                vkCallbackServerManager = new VkCallbackServerManager(vkManager, settings);
                 vkCallbackServerManager.init();
                 Tracer.info("VK Callbacks have been successfully enabled");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
             }
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
         }
-
     }
 
     private void initTelegram() {
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram"))) {
+        if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram"))) {
             Tracer.info("Enabling Telegram module");
             try {
-                telegramBotManager = new TelegramBotManager(SettingsManager.getSetting("telegram-token"));
+                val settings = JsonDataManager.read("settings\\telegram\\bot.json",
+                        TelegramBotManagerSettings.class).orElseThrow(JsonNotPresentException::new);
+
+                settings.save("settings\\telegram\\bot.json");
+
+                telegramBotManager = new TelegramBotManager(settings);
                 telegramBotManager.init();
                 Tracer.info("Telegram module has been successfully initialised");
             } catch (Exception e) {
@@ -386,25 +467,20 @@ public class WildBotCore {
     }
 
     private void initTelegramWebhook() {
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-telegram-webhook"))) {
+        if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram-webhook"))) {
             Tracer.info("Enabling Telegram Webhook");
             try {
-                telegramWebhookManager = new TelegramWebhookManager(telegramBotManager,
-                        SettingsManager.getSetting("telegram-webhook-host"),
-                        Integer.parseInt(SettingsManager.getSetting("telegram-webhook-port")),
-                        Integer.parseInt(SettingsManager.getSetting("telegram-webhook-max-connections")),
-                        SettingsManager.getSetting("telegram-webhook-updates").split(","));
+                val settings = JsonDataManager.read("settings\\telegram\\webhook.json",
+                        TelegramWebhookManagerSettings.class).orElseThrow(JsonNotPresentException::new);
+
+                settings.save("settings\\telegram\\webhook.json");
+
+                telegramWebhookManager = new TelegramWebhookManager(telegramBotManager, settings);
                 telegramWebhookManager.init();
-                Tracer.info("Telegram module has been successfully initialised");
+                Tracer.info("Telegram Webhook module has been successfully initialised");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable Telegram Webhook:", e);
             }
-        }
-        try {
-            Tracer.info("Enabling Telegram module");
-
-        } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to enable HTTP-RCON server: ", e);
         }
     }
 
@@ -413,11 +489,15 @@ public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
 
     private void initHttpRcon() {
-        if (Boolean.parseBoolean(SettingsManager.getSetting("enable-httprcon"))) {
+        if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-httprcon"))) {
             Tracer.info("Enabling HTTP-RCON");
             try {
-                rconServerManager = new HttpRconServerManager(Integer.valueOf(SettingsManager
-                        .getSetting("httprcon-port")), SettingsManager.getSetting("httprcon-key"));
+                val settings = JsonDataManager.read("settings\\rcon\\httprcon.json",
+                        HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new);
+
+                settings.save("settings\\rcon\\httprcon.json");
+
+                rconServerManager = new HttpRconServerManager(settings);
                 rconServerManager.init();
                 Tracer.info("HTTP-RCON has been successfully enabled");
             } catch (Exception e) {

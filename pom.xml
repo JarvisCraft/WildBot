@@ -212,6 +212,14 @@
     <artifactId>wildbot-core</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <developers>
         <developer>
             <id>PROgrm_JARvis</id>
@@ -348,7 +356,7 @@
         <dependency>
             <groupId>com.vk.api</groupId>
             <artifactId>sdk</artifactId>
-            <version>0.5.8</version>
+            <version>0.5.9</version>
             <scope>compile</scope>
         </dependency>
 

@@ -235,14 +235,15 @@ class JavaPluginInQueue {
     @Getter @Setter(value = AccessLevel.PRIVATE)
     private WildBotPluginData data;
 
-    void loadClasses() {// TODO close
+    void loadClasses() {
         try {
             injectFile(file);
         } catch (Exception e) {
-            Tracer.error("Error occurred while file injecting.");
-            e.printStackTrace();
+            Tracer.error("An error occurred while trying to inject file \"" + file.getName() + "\":", e);
         }
+
         ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+
         for (String mainClass : mainClasses) {
             try {
                 val jarClass = classLoader.loadClass(mainClass);
@@ -274,7 +275,7 @@ class JavaPluginInQueue {
         return fileName.substring(0, fileName.length() - 4);
     }
 
-    private static void injectFile(File file) throws Exception {
+    private static void injectFile(final File file) throws Exception {
         val method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
         method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());

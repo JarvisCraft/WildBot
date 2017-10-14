@@ -204,7 +204,7 @@
 
 package ru.wildbot.wildbotcore.vk.callback.event;
 
-import com.vk.api.sdk.callback.objects.wall.CallbackWallPost;
+import com.vk.api.sdk.objects.wall.WallPost;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -213,5 +213,5 @@ import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 @AllArgsConstructor
 public class VkWallRepostEvent implements WildBotEvent {
     @Getter @Setter private Integer groupId;
-    @Getter @Setter private CallbackWallPost message;
+    @Getter @Setter private WallPost message;
 }

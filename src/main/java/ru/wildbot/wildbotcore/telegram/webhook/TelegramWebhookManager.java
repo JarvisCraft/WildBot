@@ -215,46 +215,52 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.util.DataFormatter;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackChannelInitializer;
 
 @RequiredArgsConstructor
-public class TelegramWebhookManager {
-    @NonNull @Getter private TelegramBotManager botManager;
-    @NonNull @Getter private final String host;
-    @NonNull @Getter private final int port;
-    @NonNull @Getter private final int maxConnections;
-    @NonNull @Getter private final String[] updates;
-    // private File file = new File()
-    // TODO: 29.09.2017 certificate-file
+public class TelegramWebhookManager implements NettyBasedManager {
+    @Getter private boolean isInit = false;
+    @Getter private boolean isNettyInit = false;
 
+    @NonNull @Getter private final TelegramBotManager botManager;
+    @NonNull @Getter private final TelegramWebhookManagerSettings settings;
+
+    @Override
     public void init() throws Exception {
-        val url = DataFormatter.toRootHttpUrl(host, port);
-        Tracer.info("URL: " + url);
-        if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(url)) {
-            Tracer.info("Setting Telegram WebHook URL to: " + url);
+        checkInit();
 
-            botManager.execute(new SetWebhook().url(url).allowedUpdates(updates)
-                    .maxConnections(maxConnections));
+        if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(settings.getHost())) {
+            Tracer.info("PropertiesDataRequired Telegram WebHook URL to: " + settings.getHost());
+
+            botManager.execute(new SetWebhook().url(settings.getHost()).allowedUpdates(settings.getUpdates())
+                    .maxConnections(settings.getMaxConnections()));
 
             Tracer.info("Telegram WebHook URL has been successfully is now set to: "
                     + botManager.execute(new GetWebhookInfo()).webhookInfo().url());
         }
-        botManager.execute(new SetWebhook().url(DataFormatter.toRootHttpUrl(url, port)));
 
-        startNettyServer();
+        initNetty();
+
+        isInit = true;
     }
 
     public final String NETTY_CHANNEL_NAME = "telegram_webhook";
 
-    private void startNettyServer() throws Exception {
-        Tracer.info("Starting Telegram-Webhook server on port: " + port);
+    @Override
+    public void initNetty() throws Exception {
+        checkNettyInit();
+
+        Tracer.info("Starting Telegram-Webhook server on port: " + settings.getPort());
         WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new TelegramWebhookChannelInitializer(botManager))
                 .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
         Tracer.info("Telegram-Webhook server has been successfully started");
+
+        isNettyInit = true;
     }
 }

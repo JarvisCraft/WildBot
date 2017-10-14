@@ -218,49 +218,58 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.settings.SettingsManager;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
+import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
+import ru.wildbot.wildbotcore.data.properties.PropertiesDataManager;
+import ru.wildbot.wildbotcore.vk.VkManager;
 
 @RequiredArgsConstructor
-public class VkCallbackServerManager {
-    @NonNull private final VkApiManager vkApiManager;
+public class VkCallbackServerManager implements NettyBasedManager {
+    @Getter private boolean isInit = false;
+    @Getter private boolean isNettyInit = false;
 
-    // Server Details
-    // Used for opening Server and as Callback Url
-    @NonNull private final String host;
-    // Used for Opening Jetty Server
-    @NonNull private final int port;
+    @NonNull private final VkManager vkManager;
+    @NonNull private final VkCallbackServerManagerSettings settings;
 
     // VK API special
     private CallbackServer callbackServer = null;
     private String confirmationCode;
     @Getter private int id;
 
+    @Override
     public void init() throws Exception {
-        // Shorthands
-        final Groups group = vkApiManager.getVkApi().groups();
-        final GroupActor actor = vkApiManager.getActor();
+        checkInit();
 
-        // Confirmation code (taken from VK-group_
+        // Shorthands
+        final Groups group = vkManager.getVkApi().groups();
+        final GroupActor actor = vkManager.getActor();
+
+        // Confirmation code (taken from VK-group)
         confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
 
-        startNettyServer();
+        initNetty();
         findCallbackServer(group, actor);
         registerCallbackServerIfAbsent(group, actor);
 
-        Tracer.info("Using Host \"" + host + "\" for Callback Server");
+        Tracer.info("Using Host \"" + settings.getHost() + "\" for Callback Server");
+
+        isInit = true;
     }
 
     public final String NETTY_CHANNEL_NAME = "vk_callback";
 
-    private void startNettyServer() throws Exception {
-        Tracer.info("Starting VK-Callback server on port: " + port);
+    @Override
+    public void initNetty() throws Exception {
+        checkNettyInit();
+
+        Tracer.info("Starting VK-Callback server on port: " + settings.getPort());
         WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new VkCallbackChannelInitializer(vkApiManager, confirmationCode))
+                .childHandler(new VkCallbackChannelInitializer(vkManager, confirmationCode))
                 .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
         Tracer.info("VK-Callback server has been successfully started");
+
+        isNettyInit = true;
     }
 
     public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
@@ -270,8 +279,8 @@ public class VkCallbackServerManager {
 
         for (CallbackServer callbackServerTested : servers.getItems())
             if (callbackServerTested.getUrl()
-                    .equalsIgnoreCase(host)) {
-                Tracer.info("CallbackServer was found by host " + host);
+                    .equalsIgnoreCase(settings.getHost())) {
+                Tracer.info("CallbackServer was found by host \"" + settings.getHost() + "\"");
                 callbackServer = callbackServerTested;
                 id = callbackServer.getId();
                 break;
@@ -282,10 +291,8 @@ public class VkCallbackServerManager {
         Tracer.info("Registering custom Callback Server");
 
         if (callbackServer == null) {
-            Tracer.info("There were no registered CallbackServer with host " + host);
-            id = group.addCallbackServer(actor, host, SettingsManager.getSetting("vk-callback-server-title"))
-                    .execute()
-                    .getServerId();
+            Tracer.info("There were no registered CallbackServer with host " + settings.getHost());
+            id = group.addCallbackServer(actor, settings.getHost(), settings.getTitle()).execute().getServerId();
             findCallbackServer(group, actor);
         }
     }

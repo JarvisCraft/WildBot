@@ -202,16 +202,48 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
-import com.vk.api.sdk.objects.wall.WallPost;
-import lombok.AllArgsConstructor;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.WildBotCore;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
 
-@AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+@RequiredArgsConstructor
+public class HttpRconServerManager implements NettyBasedManager {
+    @Getter private boolean isInit = false;
+    @Getter private boolean isNettyInit = false;
+
+    @NonNull @Getter private final HttpRconServerManagerSettings settings;
+
+    @Override
+    public void init() throws Exception {
+        checkInit();
+
+        initNetty();
+
+        isInit = true;
+    }
+
+    public final String NETTY_CHANNEL_NAME = "http_rcon";
+
+    @Override
+    public void initNetty() throws Exception {
+        checkNettyInit();
+
+        Tracer.info("Starting RCON server on port " + settings.getPort() + " by key: " + settings.getKey());
+        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new HttpRconChannelInitializer(settings.getKey()))
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
+        Tracer.info("RCON server has been successfully started");
+
+        isNettyInit = true;
+    }
 }

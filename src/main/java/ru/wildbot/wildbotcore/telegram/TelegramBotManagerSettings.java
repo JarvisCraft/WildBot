@@ -202,16 +202,16 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.telegram;
 
-import com.vk.api.sdk.objects.wall.WallPost;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
+@NoArgsConstructor
 @AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+public class TelegramBotManagerSettings extends AbstractJsonData {
+    @NonNull @Getter private String token = "127345678:Ab7890Ef123456Cd";
 }

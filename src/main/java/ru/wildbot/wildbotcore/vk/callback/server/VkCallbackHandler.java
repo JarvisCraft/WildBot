@@ -218,12 +218,12 @@ import com.vk.api.sdk.callback.objects.video.CallbackVideoComment;
 import com.vk.api.sdk.callback.objects.video.CallbackVideoCommentDelete;
 import com.vk.api.sdk.callback.objects.wall.CallbackWallComment;
 import com.vk.api.sdk.callback.objects.wall.CallbackWallCommentDelete;
-import com.vk.api.sdk.callback.objects.wall.CallbackWallPost;
 import com.vk.api.sdk.objects.audio.Audio;
 import com.vk.api.sdk.objects.board.TopicComment;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.video.Video;
+import com.vk.api.sdk.objects.wall.WallPost;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.api.event.EventManager;
 import ru.wildbot.wildbotcore.vk.callback.event.*;
@@ -311,12 +311,12 @@ public class VkCallbackHandler extends CallbackApi {
     }
 
     @Override
-    public void wallPostNew(Integer groupId, CallbackWallPost message) {
+    public void wallPostNew(Integer groupId, WallPost message) {
         eventManager.callEvents(new VkWallPostNewEvent(groupId, message));
     }
 
     @Override
-    public void wallRepost(Integer groupId, CallbackWallPost message) {
+    public void wallRepost(Integer groupId, WallPost message) {
         eventManager.callEvents(new VkWallRepostEvent(groupId, message));
     }
 

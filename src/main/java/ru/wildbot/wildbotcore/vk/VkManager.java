@@ -202,26 +202,56 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.httprcon.server;
+package ru.wildbot.wildbotcore.vk;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import com.google.gson.annotations.SerializedName;
+import com.vk.api.sdk.client.VkApiClient;
+import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.httpclient.HttpTransportClient;
+import com.vk.api.sdk.objects.groups.GroupFull;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
 
 @RequiredArgsConstructor
-public class HttpRconChannelInitializer extends ChannelInitializer {
-    @NonNull private final String key;
+public class VkManager implements ManagerInitialisable {
+    @Getter private boolean isInit = false;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Secure
+    ///////////////////////////////////////////////////////////////////////////
+
+    @NonNull @Getter private final VkManagerSettings settings;
+
+    @Getter private final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+
+    @Getter @Setter private GroupActor actor;
+    @Getter @Setter private GroupFull group;
+
+    public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
+            "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
 
     @Override
-    protected void initChannel(Channel channel) throws Exception {
-        Tracer.info("Initialising channel for Http-RCON handling");
-        // Codec -> Aggregator -> Confirmation -> Callback
-        channel.pipeline().addLast("codec", new HttpServerCodec());
-        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("http_rcon", new HttpRconHttpHandler(key));
+    public void init() throws Exception {
+        checkInit();
+
+        try {
+            actor = new GroupActor(settings.getGroupId(), settings.getGroupKey());
+
+            group = vkApi.groups().getById(actor).groupId(String.valueOf(settings.getGroupId())).execute().get(0);
+
+            Tracer.info("Group \"" + group.getName()
+                            + "\" has been successfully authorised by the following criteria:",
+                    "ID: " + settings.getGroupId(), "Key: " + settings.getGroupKey());
+
+            Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
+                    .execute());
+        } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
+            Tracer.error("Unable to init VK.API, maybe wrong Group-ID / Group-Key was given:", e);
+        }
+
+        isInit = true;
     }
 }

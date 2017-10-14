@@ -215,7 +215,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.vk.VkApiManager;
+import ru.wildbot.wildbotcore.vk.VkManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -227,7 +227,7 @@ import java.nio.file.Files;
 import static io.netty.buffer.Unpooled.copiedBuffer;
 
 public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
-    @NonNull private final VkApiManager vkApiManager;
+    @NonNull private final VkManager vkManager;
     @NonNull private final String confirmationCode;
 
     private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
@@ -240,13 +240,13 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
 
     public static final String ERROR_HTML_FILE_NAME = "vk_callback_error.html";
 
-    public VkCallbackHttpHandler(final VkApiManager vkApiManager, final String confirmationCode) {
+    public VkCallbackHttpHandler(final VkManager vkManager, final String confirmationCode) {
         Tracer.info("Initialising Handler for VK-Callbacks");
 
         if (confirmationCode == null) throw new NullPointerException("No confirmation code present");
         this.confirmationCode = confirmationCode;
-        if (vkApiManager == null) throw new NullPointerException("No vk api manager present");
-        this.vkApiManager = vkApiManager;
+        if (vkManager == null) throw new NullPointerException("No vk api manager present");
+        this.vkManager = vkManager;
 
         File errorFile = new File(ERROR_HTML_FILE_NAME);
 
@@ -285,7 +285,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
             }
 
             // If is not callback (this HTTP is ONLY FOR CALLBACKS) then send error response
-            if (callback != null && callback.getGroupId().equals(vkApiManager.getGroupId())) {
+            if (callback != null && callback.getGroupId().equals(vkManager.getSettings().getGroupId())) {
                 if (callback.getType() == CallbackMessageType.CONFIRMATION) {
                     sendConfirmationResponse(context, request);
                     return;

@@ -280,7 +280,7 @@ public class TelegramWebhookHttpHandler extends ChannelInboundHandlerAdapter {
 
             // If is not callback (this HTTP is ONLY FOR WEBHOOKS) then send error response
             if (update != null) {
-                WildBotCore.getInstance().getEventManager().callEvents(new TelegramUpdateEvent(update));
+                new TelegramUpdateEvent(update).call();
                 sendOkResponse(context, request);
                 return;
             }

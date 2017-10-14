@@ -202,16 +202,13 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.data.json;
 
-import com.vk.api.sdk.objects.wall.WallPost;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
-
-@AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+public class JsonNotPresentException extends Exception {
+    public JsonNotPresentException() {
+        super("There's no valid json for file");
+    }
+    public JsonNotPresentException(final String message) {
+        super(message);
+    }
 }

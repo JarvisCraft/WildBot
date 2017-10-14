@@ -212,18 +212,27 @@ import com.pengrad.telegrambot.response.BaseResponse;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
 
 @RequiredArgsConstructor
-public class TelegramBotManager {
-    @NonNull private final String botToken;
+public class TelegramBotManager implements ManagerInitialisable {
+    @Getter private boolean isInit = false;
+
+    @NonNull private final TelegramBotManagerSettings settings;
 
     @Getter private TelegramBot bot;
+
 
     /**
      * Initialises Telegram Bot (for outcoming data)
      */
-    public void init() {
-        bot = TelegramBotAdapter.build(botToken);
+    @Override
+    public void init() throws Exception {
+        checkInit();
+
+        bot = TelegramBotAdapter.build(settings.getToken());
+
+        isInit = true;
     }
 
     public <T extends BaseRequest, R extends BaseResponse> R execute(BaseRequest<T, R> request) {

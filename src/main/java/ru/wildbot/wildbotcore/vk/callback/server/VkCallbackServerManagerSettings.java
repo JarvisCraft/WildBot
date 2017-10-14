@@ -202,38 +202,18 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.httprcon.server;
+package ru.wildbot.wildbotcore.vk.callback.server;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
-@RequiredArgsConstructor
-public class HttpRconServerManager {
-    // Server Details
-    // Used for Opening Server
-    @NonNull @Getter private final int port;
-    // VK API special
-    @NonNull @Getter private final String key;
-
-    public void init() throws Exception {
-        startNettyServer();
-    }
-
-    public final String NETTY_CHANNEL_NAME = "http_rcon";
-
-    private void startNettyServer() throws Exception {
-        Tracer.info("Starting RCON server on port " + port + " by key: " + key);
-        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new HttpRconChannelInitializer(key))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
-        Tracer.info("RCON server has been successfully started");
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+public class VkCallbackServerManagerSettings extends AbstractJsonData {
+    @NonNull @Getter private String host = "http://example.com/vk-callback-server";
+    @NonNull @Getter private int port = 12414;
+    @NonNull @Getter private String title = "wildbot";
 }

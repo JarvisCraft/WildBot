@@ -208,6 +208,10 @@ import ru.wildbot.wildbotcore.WildBotCore;
 
 public interface WildBotEvent {
     default void call() {
-        WildBotCore.getInstance().getEventManager().callEvents(this);
+        WildBotCore.eventManager().callEvents(this);
+    }
+
+    default void call(final EventManager eventManager) {
+        eventManager.callEvents(this);
     }
 }

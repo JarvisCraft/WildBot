@@ -202,15 +202,109 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.httprcon.event;
+package ru.wildbot.wildbotcore.data.json;
 
-import lombok.*;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import lombok.Cleanup;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.val;
+import org.apache.commons.io.FileUtils;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-@RequiredArgsConstructor
-public class HttpRconEvent implements WildBotEvent {
-    @NonNull @Getter final private String name;
-    @NonNull @Getter final private String data;
-    @Getter @Setter private boolean handled = false;
-    @Getter @Setter private String htmlResponse = "";
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+
+public class JsonDataManager {
+    @Getter private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    private static final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> deserialize(final String json,
+                                                                                Class<T> settingsType) {
+        return Optional.ofNullable(gson.fromJson(json, settingsType));
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType,
+                                                                         final boolean create, final boolean write) {
+        if (!file.exists() || file.isDirectory()) if (create) {
+            try {
+                Tracer.info("Creating file for name \"" + file.getName() + "\"");
+
+                val path = file.getParentFile();
+                if (!path.exists()) {
+                    Tracer.info("Creating required folders for file \"" + file.getName() + "\"");
+                    if (path.mkdir()) Tracer.info("Folders for file \""
+                            + file.getName() + "\" have been successfully created");
+                }
+
+                if (file.createNewFile()) Tracer.info("File for name \""
+                        + file.getName() + "\" has been successfully created");
+
+                if (write) {
+                    Tracer.info("Writing default contents to file \"" + file.getName() + "\"");
+
+                    @Cleanup val outputStream = new FileOutputStream(file);
+                    outputStream.write(gson.toJson(settingsType.newInstance()).getBytes());
+
+                    Tracer.info("Default contents have been successfully written to file \""
+                            + file.getName() + "\"");
+                }
+            } catch (IOException | IllegalAccessException | InstantiationException e) {
+                Tracer.error("An exception occurred while trying to create file \""
+                        + file.getName() + "\":", e);
+
+                return Optional.empty();
+            }
+        } else return Optional.empty();
+
+        final String json;
+        try {
+            json = FileUtils.readFileToString(file, UTF_8_CHARSET);
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+
+        return deserialize(json, settingsType);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType,
+                                                                         final boolean create) {
+        return read(file, settingsType, create, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType) {
+        return read(file, settingsType, true, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType,
+                                                                         final boolean create, final boolean write) {
+        return read(new File(path), settingsType, create, write);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType,
+                                                                         final boolean create) {
+        return read(path, settingsType, create, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType) {
+        return read(path, settingsType, true, true);
+    }
+
+    public static void write(final File file, final Object object) {
+        try {
+            FileUtils.write(file, gson.toJson(object), UTF_8_CHARSET);
+        } catch (IOException e) {
+            Tracer.error("An exception occurred while trying to write file \"" + file.getName() + "\":", e);
+        }
+    }
+
+    public static void write(final String path, final Object object) {
+        write(new File(path), object);
+    }
 }

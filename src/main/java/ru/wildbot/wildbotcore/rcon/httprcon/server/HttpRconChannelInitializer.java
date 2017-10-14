@@ -202,16 +202,26 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
-import com.vk.api.sdk.objects.wall.WallPost;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-@AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+@RequiredArgsConstructor
+public class HttpRconChannelInitializer extends ChannelInitializer {
+    @NonNull private final String key;
+
+    @Override
+    protected void initChannel(Channel channel) throws Exception {
+        Tracer.info("Initialising channel for Http-RCON handling");
+        // Codec -> Aggregator -> Confirmation -> Callback
+        channel.pipeline().addLast("codec", new HttpServerCodec());
+        channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
+        channel.pipeline().addLast("http_rcon", new HttpRconHttpHandler(key));
+    }
 }

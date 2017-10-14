@@ -214,7 +214,7 @@ import java.lang.annotation.Target;
 public @interface EventHandler {
     int order() default Order.MID;
 
-    class Order {
+    final class Order {
         public static final int FIRST = Integer.MIN_VALUE;
         public static final int MID = 0;
         public static final int LAST = Integer.MAX_VALUE;

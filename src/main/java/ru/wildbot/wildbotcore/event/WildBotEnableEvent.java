@@ -204,6 +204,15 @@
 
 package ru.wildbot.wildbotcore.event;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-public class WildBotEnableEvent implements WildBotEvent {}
+@RequiredArgsConstructor
+public class WildBotEnableEvent implements WildBotEvent {
+    @NonNull private final Phase phase;
+
+    public enum Phase {
+        REQUIRED_MANAGERS, NETTY, OPTIONAL_MANAGERS, PLUGINS, READY
+    }
+}

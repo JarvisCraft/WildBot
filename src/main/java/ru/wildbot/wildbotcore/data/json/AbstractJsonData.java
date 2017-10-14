@@ -202,143 +202,16 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.settings;
+package ru.wildbot.wildbotcore.data.json;
 
-import lombok.Cleanup;
-import lombok.val;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import java.io.File;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
-
-public class SettingsManager {
-    private static final String FILE_NAME = "settings.properties";
-
-    public static void init() {
-        Tracer.info("Loading SettingsManager");
-        loadSettings();
-        Tracer.info("SettingsManager has been successfully loaded");
+public abstract class AbstractJsonData {
+    public void save(final File file) {
+        JsonDataManager.write(file, this);
     }
 
-    private static final Properties DEFAULT_SETTINGS = new Properties() {{
-        // Locale
-        setProperty("language", "en_US");
-
-        // Netty
-        setProperty("netty-boss-threads", "0");
-        setProperty("netty-worker-threads", "0");
-
-        // Telegram
-        setProperty("enable-telegram", "true");
-        setProperty("telegram-token", "127:NullDotuNUlldoTOne");
-        // Telegram WebHook
-        setProperty("enable-telegram-webhook", "false");
-        setProperty("telegram-webhook-host", "http://example.com");
-        setProperty("telegram-webhook-port", "19287");
-        setProperty("telegram-webhook-max-connections", "40");
-        setProperty("telegram-webhook-updates", "*");
-
-        // Http RCON
-        setProperty("enable-httprcon", "true");
-        setProperty("httprcon-port", "19286");
-        setProperty("httprcon-key", "abcd1234");
-    }};
-
-    private static Properties settings;
-
-    private static void loadSettings() throws RuntimeException {
-        Tracer.info("Loading Settings");
-        val file = new File(FILE_NAME);
-        if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"settings.properties\", creating it now");
-            try {
-                createSettingsFile(file);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"settings.properties\" File");
-            }
-        }
-
-        Properties settings = new Properties();
-        try {
-            @Cleanup val inputStream = new FileInputStream(file);
-            settings.load(inputStream);
-        } catch (IOException e) {
-            Tracer.error("Error while trying to load Properties");
-        }
-
-        boolean isAddedNewProperty = false;
-        for (Map.Entry<Object, Object> property : DEFAULT_SETTINGS.entrySet())
-            if (!settings.containsKey(property.getKey())) {
-                settings.setProperty(String.valueOf(property.getKey()), String.valueOf(property.getValue()));
-                isAddedNewProperty = true;
-            }
-
-        if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
-            settings.store(outputStream, "Main");
-        } catch (IOException e) {
-            Tracer.error("Error while trying to save default Properties");
-        }
-
-        SettingsManager.settings = settings;
-        Tracer.info("Settings have been loaded successfully");
-    }
-
-    private static void createSettingsFile(final File file) throws IOException {
-        Tracer.info("Creating default File \"setting.properties\"");
-        try {
-            new FileOutputStream(file).close();
-        } catch (IOException e) {
-            Tracer.error("Error trying to create default \"settings.properties\" File:", e);
-            throw new IOException("File could not be created");
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Settings Read/Write
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static String getSetting(String key) {
-        if (!settings.containsKey(key)) {
-            settings.setProperty(key, "");
-            saveSettings();
-        }
-        return settings.getProperty(key);
-    }
-
-    public static <T> T getSetting(String settingKey, Class<? extends T> settingClass) {
-        final Object setting = settings.get(settingKey);
-        try {
-            return setting == null ? null : settingClass.cast(setting);
-        } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
-                    + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
-            return null;
-        }
-    }
-
-    public static void setSetting(String key, Object value, boolean save) {
-        settings.setProperty(key, String.valueOf(value));
-
-        if (save) saveSettings();
-    }
-
-    private static final String SETTINGS_COMMENT = "WildBot Main Configuration File.\n\n" +
-            "WildBot is the product of JARvis PROgrammer (Russia, Moscow) " +
-            "made specially for WildCubes Minecraft Project.\n" +
-            "This Program has nothing to do with Mojang AB, Microsoft or other companies related to Minecraft(TM)." +
-            "It is a free open-source project authored by a young developer.\n\n" +
-            "For contacting the developer use:\n" +
-            "|_ mrjarviscraft@gmail.com\n" +
-            "|_ https://vk.com/PROgrm_JARvis\n";
-
-    public static void saveSettings() {
-        try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
-            settings.store(outputStream, SETTINGS_COMMENT);
-        } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"settings.properties\":", e);
-        }
+    public void save(final String path) {
+        JsonDataManager.write(path, this);
     }
 }

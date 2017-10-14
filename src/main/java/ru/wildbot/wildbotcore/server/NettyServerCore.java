@@ -232,7 +232,7 @@ public class NettyServerCore {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    public void start(String name, final ServerBootstrap bootstrap, int port) throws Exception {
+    public void start(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
         Tracer.info("Starting Netty Channel for name `" + name + "`");
 
         // Add parent and children for Bootstrap if none

@@ -223,9 +223,7 @@ public class YamlReader {
     @SuppressWarnings("unchecked")
     public static @NonNull Map<String, Object> read(final File file) {
         try {
-            @Cleanup FileInputStream fileInputStream = null;
-
-            fileInputStream = new FileInputStream(file);
+            @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
 
             val yamlObject = new Yaml().load(fileInputStream);
             return (Map<String, Object>) yamlObject;

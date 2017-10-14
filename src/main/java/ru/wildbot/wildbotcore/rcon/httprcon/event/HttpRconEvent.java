@@ -202,16 +202,15 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.rcon.httprcon.event;
 
-import com.vk.api.sdk.objects.wall.WallPost;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-@AllArgsConstructor
-public class VkWallPostNewEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private WallPost message;
+@RequiredArgsConstructor
+public class HttpRconEvent implements WildBotEvent {
+    @NonNull @Getter final private String name;
+    @NonNull @Getter final private String data;
+    @Getter @Setter private boolean handled = false;
+    @Getter @Setter private String htmlResponse = "";
 }
