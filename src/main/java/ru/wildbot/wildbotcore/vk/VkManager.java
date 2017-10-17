@@ -204,14 +204,16 @@
 
 package ru.wildbot.wildbotcore.vk;
 
-import com.google.gson.annotations.SerializedName;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
 import com.vk.api.sdk.objects.groups.GroupFull;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
 

@@ -215,14 +215,17 @@ import ru.wildbot.wildbotcore.console.command.CommandParser;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.core.annotation.Shorthand;
+import ru.wildbot.wildbotcore.core.defaults.provider.PaymentsProvider;
 import ru.wildbot.wildbotcore.data.json.JsonDataManager;
 import ru.wildbot.wildbotcore.data.json.JsonNotPresentException;
 import ru.wildbot.wildbotcore.data.properties.PropertiesDataManager;
+import ru.wildbot.wildbotcore.data.properties.PropertiesDataReader;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
+import ru.wildbot.wildbotcore.provider.ProviderManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
-import ru.wildbot.wildbotcore.data.properties.PropertiesDataReader;
+import ru.wildbot.wildbotcore.server.NettyServerCoreSettings;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManagerSettings;
 import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManager;
@@ -267,6 +270,13 @@ public class WildBotCore {
         Tracer.info("Enabling PluginManager");
         instance.pluginManager = new PluginManager();
         Tracer.info("PluginManager has been successfully enabled");
+
+
+        Tracer.info("Enabling ProviderManager");
+        instance.providerManager = new ProviderManager() {{
+            registerEmpty(PaymentsProvider.class);
+        }};
+        Tracer.info("ProviderManager has been successfully enabled");
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.REQUIRED_MANAGERS).call();
 
@@ -315,7 +325,12 @@ public class WildBotCore {
     @Shorthand public static EventManager eventManager() {
         return instance.eventManager;
     }
+    @Getter private ProviderManager providerManager;
+    @Shorthand public static ProviderManager providerManager() {
+        return instance.providerManager;
+    }
 
+    // Netty
     @Getter private NettyServerCore nettyServerCore;
     @Shorthand public static NettyServerCore nettyServerCore() {
         return instance.nettyServerCore;
@@ -336,26 +351,16 @@ public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
 
     private void initNetty() {
-        Tracer.info("Initialising NettyServerCore");
-        int bossThreads;
+        Tracer.info("Initialising Netty-Server-Core");
         try {
-            bossThreads = Integer.valueOf(PropertiesDataManager.getSetting("netty-boss-threads"));
-        } catch (NumberFormatException e) {
-            Tracer.warn("Not number given for field `netty-threads` in `data.properties` file (using 0)");
-            bossThreads = 0;
+            nettyServerCore = new NettyServerCore(JsonDataManager
+                    .readAndWrite("settings\\netty\\core.json",
+                            NettyServerCoreSettings.class).orElseThrow(JsonNotPresentException::new));
+
+            Tracer.info("Netty-Server-Core has been successfully initialised");
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to initialise Netty-Server-Core:", e);
         }
-
-        int workerThreads;
-        try {
-            workerThreads = Integer.valueOf(PropertiesDataManager.getSetting("netty-worker-threads"));
-        } catch (NumberFormatException e) {
-            Tracer.warn("Not number given for field `netty-threads` in `data.properties` file (using 0)");
-            workerThreads = 0;
-        }
-
-        nettyServerCore = new NettyServerCore(bossThreads, workerThreads);
-
-        Tracer.info("NettyServerCore has been successfully initialised");
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -415,12 +420,9 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk"))) {
             Tracer.info("Enabling VK module");
             try {
-                val settings = JsonDataManager.read("settings\\vk\\bot.json",
-                        VkManagerSettings.class).orElseThrow(JsonNotPresentException::new);
-
-                settings.save("settings\\vk\\bot.json");
-
-                vkManager = new VkManager(settings);
+                vkManager = new VkManager(JsonDataManager
+                        .readAndWrite("settings\\vk\\bot.json",
+                        VkManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 vkManager.init();
                 Tracer.info("VK module has been successfully enabled");
             } catch (Exception e) {
@@ -434,12 +436,9 @@ public class WildBotCore {
         if (vkManager != null && Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk-callback"))) {
             Tracer.info("Enabling VK Callbacks");
             try {
-                val settings = JsonDataManager.read("settings\\vk\\callback.json",
-                        VkCallbackServerManagerSettings.class).orElseThrow(JsonNotPresentException::new);
-
-                settings.save("settings\\vk\\callback.json");
-
-                vkCallbackServerManager = new VkCallbackServerManager(vkManager, settings);
+                vkCallbackServerManager = new VkCallbackServerManager(vkManager, JsonDataManager
+                        .readAndWrite("settings\\vk\\callback.json",
+                        VkCallbackServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 vkCallbackServerManager.init();
                 Tracer.info("VK Callbacks have been successfully enabled");
             } catch (Exception e) {
@@ -452,12 +451,9 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram"))) {
             Tracer.info("Enabling Telegram module");
             try {
-                val settings = JsonDataManager.read("settings\\telegram\\bot.json",
-                        TelegramBotManagerSettings.class).orElseThrow(JsonNotPresentException::new);
-
-                settings.save("settings\\telegram\\bot.json");
-
-                telegramBotManager = new TelegramBotManager(settings);
+                telegramBotManager = new TelegramBotManager(JsonDataManager
+                        .readAndWrite("settings\\telegram\\bot.json",
+                        TelegramBotManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 telegramBotManager.init();
                 Tracer.info("Telegram module has been successfully initialised");
             } catch (Exception e) {
@@ -470,12 +466,9 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram-webhook"))) {
             Tracer.info("Enabling Telegram Webhook");
             try {
-                val settings = JsonDataManager.read("settings\\telegram\\webhook.json",
-                        TelegramWebhookManagerSettings.class).orElseThrow(JsonNotPresentException::new);
-
-                settings.save("settings\\telegram\\webhook.json");
-
-                telegramWebhookManager = new TelegramWebhookManager(telegramBotManager, settings);
+                telegramWebhookManager = new TelegramWebhookManager(telegramBotManager, JsonDataManager
+                        .readAndWrite("settings\\telegram\\webhook.json",
+                        TelegramWebhookManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 telegramWebhookManager.init();
                 Tracer.info("Telegram Webhook module has been successfully initialised");
             } catch (Exception e) {
@@ -492,12 +485,9 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-httprcon"))) {
             Tracer.info("Enabling HTTP-RCON");
             try {
-                val settings = JsonDataManager.read("settings\\rcon\\httprcon.json",
-                        HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new);
-
-                settings.save("settings\\rcon\\httprcon.json");
-
-                rconServerManager = new HttpRconServerManager(settings);
+                rconServerManager = new HttpRconServerManager(JsonDataManager
+                        .readAndWrite("settings\\rcon\\httprcon.json",
+                        HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 rconServerManager.init();
                 Tracer.info("HTTP-RCON has been successfully enabled");
             } catch (Exception e) {

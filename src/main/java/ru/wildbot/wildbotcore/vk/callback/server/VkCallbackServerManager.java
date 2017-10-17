@@ -219,7 +219,6 @@ import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
-import ru.wildbot.wildbotcore.data.properties.PropertiesDataManager;
 import ru.wildbot.wildbotcore.vk.VkManager;
 
 @RequiredArgsConstructor

@@ -206,12 +206,12 @@ package ru.wildbot.wildbotcore.vk.callback.server;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.*;
-import lombok.*;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.vk.VkManager;
-
-import static io.netty.buffer.Unpooled.copiedBuffer;
 
 @RequiredArgsConstructor
 public class VkCallbackChannelInitializer extends ChannelInitializer {

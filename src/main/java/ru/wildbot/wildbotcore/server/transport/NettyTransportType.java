@@ -202,62 +202,85 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.telegram.webhook;
+package ru.wildbot.wildbotcore.server.transport;
 
-import com.pengrad.telegrambot.request.GetWebhookInfo;
-import com.pengrad.telegrambot.request.SetWebhook;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
-import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 
-@RequiredArgsConstructor
-public class TelegramWebhookManager implements NettyBasedManager {
-    @Getter private boolean isInit = false;
-    @Getter private boolean isNettyInit = false;
+public abstract class NettyTransportType {
+    public abstract EventLoopGroup newEventLoopGroup();
+    public abstract EventLoopGroup newEventLoopGroup(int nThreads);
+    public abstract ServerSocketChannel newServerSocketChannel();
 
-    @NonNull @Getter private final TelegramBotManager botManager;
-    @NonNull @Getter private final TelegramWebhookManagerSettings settings;
-
-    @Override
-    public void init() throws Exception {
-        checkInit();
-
-        if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(settings.getHost())) {
-            Tracer.info("PropertiesDataRequired Telegram WebHook URL to: " + settings.getHost());
-
-            botManager.execute(new SetWebhook().url(settings.getHost()).allowedUpdates(settings.getUpdates())
-                    .maxConnections(settings.getMaxConnections()));
-
-            Tracer.info("Telegram WebHook URL has been successfully is now set to: "
-                    + botManager.execute(new GetWebhookInfo()).webhookInfo().url());
-        }
-
-        initNetty();
-
-        isInit = true;
+    public static NettyTransportType getNative() {
+        if (Epoll.isAvailable()) return new EpollTransportType();
+        else if (KQueue.isAvailable()) return new KQueueTransportType();
+        else return new NioTransportType();
     }
 
-    public final String NETTY_CHANNEL_NAME = "telegram_webhook";
+    public static NettyTransportType getDefault() {
+        return new NioTransportType();
+    }
 
-    @Override
-    public void initNetty() throws Exception {
-        checkNettyInit();
+    private static class NioTransportType extends NettyTransportType {
 
-        Tracer.info("Starting Telegram-Webhook server on port: " + settings.getPort());
-        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new TelegramWebhookChannelInitializer(botManager))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
-        Tracer.info("Telegram-Webhook server has been successfully started");
+        @Override
+        public EventLoopGroup newEventLoopGroup() {
+            return new NioEventLoopGroup();
+        }
 
-        isNettyInit = true;
+        @Override
+        public EventLoopGroup newEventLoopGroup(int nThreads) {
+            return new NioEventLoopGroup(nThreads);
+        }
+
+        @Override
+        public ServerSocketChannel newServerSocketChannel() {
+            return new NioServerSocketChannel();
+        }
+    }
+
+    private static class EpollTransportType extends NettyTransportType {
+
+        @Override
+        public EventLoopGroup newEventLoopGroup() {
+            return new EpollEventLoopGroup();
+        }
+
+        @Override
+        public EventLoopGroup newEventLoopGroup(int nThreads) {
+            return new EpollEventLoopGroup(nThreads);
+        }
+
+        @Override
+        public ServerSocketChannel newServerSocketChannel() {
+            return new EpollServerSocketChannel();
+        }
+    }
+
+    private static class KQueueTransportType extends NettyTransportType {
+
+        @Override
+        public EventLoopGroup newEventLoopGroup() {
+            return new KQueueEventLoopGroup();
+        }
+
+        @Override
+        public EventLoopGroup newEventLoopGroup(final int nThreads) {
+            return new KQueueEventLoopGroup(nThreads);
+        }
+
+        @Override
+        public ServerSocketChannel newServerSocketChannel() {
+            return new KQueueServerSocketChannel();
+        }
     }
 }

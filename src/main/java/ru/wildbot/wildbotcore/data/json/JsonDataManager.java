@@ -172,7 +172,7 @@
  *       of any other Contributor, and only if You agree to indemnify,
  *       defend, and hold each Contributor harmless for any liability
  *       incurred by, or claims asserted against, such Contributor by reason
- *       of your accepting any such warranty or additional liability.
+ *       of your accepting any such waRanty or additional liability.
  *
  *    END OF TERMS AND CONDITIONS
  *
@@ -214,7 +214,6 @@ import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -226,38 +225,38 @@ public class JsonDataManager {
     private static final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
 
     @NonNull public static <T extends AbstractJsonData> Optional<T> deserialize(final String json,
-                                                                                Class<T> settingsType) {
-        return Optional.ofNullable(gson.fromJson(json, settingsType));
+                                                                                Class<T> objectType) {
+        return Optional.ofNullable(gson.fromJson(json, objectType));
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType,
+    ///////////////////////////////////////////////////////////////////////////
+    // Read
+    ///////////////////////////////////////////////////////////////////////////
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> objectType,
                                                                          final boolean create, final boolean write) {
         if (!file.exists() || file.isDirectory()) if (create) {
             try {
                 Tracer.info("Creating file for name \"" + file.getName() + "\"");
 
-                val path = file.getParentFile();
-                if (!path.exists()) {
-                    Tracer.info("Creating required folders for file \"" + file.getName() + "\"");
-                    if (path.mkdir()) Tracer.info("Folders for file \""
-                            + file.getName() + "\" have been successfully created");
-                }
+                @Cleanup val outputStream = FileUtils.openOutputStream(file);
 
-                if (file.createNewFile()) Tracer.info("File for name \""
-                        + file.getName() + "\" has been successfully created");
+                Tracer.info("File for name \"" + file.getName() + "\" has been successfully created");
 
                 if (write) {
                     Tracer.info("Writing default contents to file \"" + file.getName() + "\"");
 
-                    @Cleanup val outputStream = new FileOutputStream(file);
-                    outputStream.write(gson.toJson(settingsType.newInstance()).getBytes());
+                    val data = objectType.newInstance();
+                    outputStream.write(gson.toJson(data).getBytes());
 
                     Tracer.info("Default contents have been successfully written to file \""
                             + file.getName() + "\"");
-                }
+
+                    return Optional.ofNullable(data);
+                } else return Optional.empty();
             } catch (IOException | IllegalAccessException | InstantiationException e) {
                 Tracer.error("An exception occurred while trying to create file \""
-                        + file.getName() + "\":", e);
+                        + file.getName() + "\" or write to it:", e);
 
                 return Optional.empty();
             }
@@ -270,41 +269,92 @@ public class JsonDataManager {
             return Optional.empty();
         }
 
-        return deserialize(json, settingsType);
+        return deserialize(json, objectType);
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType,
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> objectType,
                                                                          final boolean create) {
-        return read(file, settingsType, create, true);
+        return read(file, objectType, create, true);
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> settingsType) {
-        return read(file, settingsType, true, true);
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final File file, Class<T> objectType) {
+        return read(file, objectType, true, true);
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType,
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> objectType,
                                                                          final boolean create, final boolean write) {
-        return read(new File(path), settingsType, create, write);
+        return read(new File(path), objectType, create, write);
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType,
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> objectType,
                                                                          final boolean create) {
-        return read(path, settingsType, create, true);
+        return read(path, objectType, create, true);
     }
 
-    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> settingsType) {
-        return read(path, settingsType, true, true);
+    @NonNull public static <T extends AbstractJsonData> Optional<T> read(final String path, Class<T> objectType) {
+        return read(path, objectType, true, true);
     }
 
-    public static void write(final File file, final Object object) {
+    ///////////////////////////////////////////////////////////////////////////
+    // Write
+    ///////////////////////////////////////////////////////////////////////////
+
+    public static <T> Optional<T> write(final File file, final T object) {
         try {
             FileUtils.write(file, gson.toJson(object), UTF_8_CHARSET);
         } catch (IOException e) {
             Tracer.error("An exception occurred while trying to write file \"" + file.getName() + "\":", e);
         }
+        return Optional.ofNullable(object);
     }
 
-    public static void write(final String path, final Object object) {
-        write(new File(path), object);
+    public static <T> Optional<T> write(final String path, final T object) {
+        return write(new File(path), object);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Read and Write
+    ///////////////////////////////////////////////////////////////////////////
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final File file,
+                                                                                 Class<T> objectType,
+                                                                                 final boolean create,
+                                                                                 final boolean write)
+            throws JsonNotPresentException {
+        return write(file, read(file, objectType, create, write).orElseThrow(JsonNotPresentException::new));
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final File file,
+                                                                                 Class<T> objectType,
+                                                                                 final boolean create)
+            throws JsonNotPresentException {
+        return readAndWrite(file, objectType, create, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final File file,
+                                                                                 Class<T> objectType)
+            throws JsonNotPresentException {
+        return readAndWrite(file, objectType, true, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final String path,
+                                                                                 Class<T> objectType,
+                                                                                 final boolean create,
+                                                                                 final boolean write)
+            throws JsonNotPresentException {
+        return readAndWrite(new File(path), objectType, create, write);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final String path,
+                                                                                 Class<T> objectType,
+                                                                                 final boolean create)
+            throws JsonNotPresentException {
+        return readAndWrite(path, objectType, create, true);
+    }
+
+    @NonNull public static <T extends AbstractJsonData> Optional<T> readAndWrite(final String path,
+                                                                                 Class<T> objectType)
+            throws JsonNotPresentException {
+        return readAndWrite(path, objectType, true, true);
     }
 }

@@ -206,8 +206,8 @@ package ru.wildbot.wildbotcore.configuration;
 
 import lombok.Cleanup;
 import lombok.NonNull;
-import lombok.val;
 import lombok.experimental.UtilityClass;
+import lombok.val;
 import org.yaml.snakeyaml.Yaml;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 

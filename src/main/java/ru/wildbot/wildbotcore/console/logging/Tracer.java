@@ -204,8 +204,9 @@
 
 package ru.wildbot.wildbotcore.console.logging;
 
-import lombok.*;
+import lombok.Cleanup;
 import lombok.extern.log4j.Log4j2;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;

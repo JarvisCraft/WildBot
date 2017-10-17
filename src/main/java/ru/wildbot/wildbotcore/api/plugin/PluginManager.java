@@ -212,7 +212,6 @@ import ru.wildbot.wildbotcore.api.plugin.annotation.OnDisable;
 import ru.wildbot.wildbotcore.api.plugin.annotation.OnEnable;
 import ru.wildbot.wildbotcore.api.plugin.annotation.WildBotPluginData;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
 import ru.wildbot.wildbotcore.util.FileHelper;
 
 import java.io.File;

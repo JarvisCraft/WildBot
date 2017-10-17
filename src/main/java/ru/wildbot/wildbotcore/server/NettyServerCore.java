@@ -207,29 +207,48 @@ package ru.wildbot.wildbotcore.server;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.val;
 import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.server.transport.NettyTransportType;
 
-public class NettyServerCore {
+public class NettyServerCore {// TODO: 16.10.2017 Impl. initialisable
+    @NonNull @Getter private final NettyServerCoreSettings settings;
+    @NonNull @Getter private final NettyTransportType transportType;
+
     private final EventLoopGroup parentGroup;
     private final EventLoopGroup childGroup;
 
     private final MultiValuedMap<String, ChannelFuture> channels = MultiMapUtils.newSetValuedHashMap();
 
-    public NettyServerCore() {
-        this(0, 0);
-    }
+    public NettyServerCore(final NettyServerCoreSettings settings) {
+        this.settings = settings;
 
-    public NettyServerCore(final int bossThreads, final int workerThreads) {
+        if (settings.isUseNative()) transportType = NettyTransportType.getNative();
+        else transportType = NettyTransportType.getDefault();
+
+        Tracer.info("Using " + transportType.getClass().getSimpleName() + " for Netty ServerCore");
         // Parent (boss) and Child (worker) groups
-        parentGroup = new NioEventLoopGroup(bossThreads);
-        childGroup = new NioEventLoopGroup(workerThreads);
+        parentGroup = transportType.newEventLoopGroup(settings.getParentThreads());
+        childGroup = transportType.newEventLoopGroup(settings.getChildThreads());
 
         // Hook to safe-stop server in case of process being shut-down
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    public NettyServerCore(final int parentThreads, final int childThreads, final boolean useNative) {
+        this(new NettyServerCoreSettings(parentThreads, childThreads, useNative));
+    }
+
+    public NettyServerCore(final int parentThreads, final int childThreads) {
+        this(parentThreads, childThreads, true);
+    }
+
+    public NettyServerCore() {
+        this(0, 0);
     }
 
     public void start(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {

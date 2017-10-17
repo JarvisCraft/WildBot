@@ -204,7 +204,10 @@
 
 package ru.wildbot.wildbotcore.rcon.httprcon.event;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @RequiredArgsConstructor

@@ -206,9 +206,12 @@ package ru.wildbot.wildbotcore.data.properties;
 
 import lombok.Cleanup;
 import lombok.val;
+import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -266,7 +269,7 @@ public class PropertiesDataManager {
             }
 
         if (isAddedNewProperty) try {
-            @Cleanup val outputStream = new FileOutputStream(file);
+            @Cleanup val outputStream = FileUtils.openOutputStream(file);
             settings.store(outputStream, "Main");
         } catch (IOException e) {
             Tracer.error("Error while trying to save default Properties");
@@ -279,7 +282,7 @@ public class PropertiesDataManager {
     private static void createSettingsFile(final File file) throws IOException {
         Tracer.info("Creating default File \"setting.properties\"");
         try {
-            new FileOutputStream(file).close();
+            FileUtils.openOutputStream(file).close();
         } catch (IOException e) {
             Tracer.error("Error trying to create default \"data.properties\" File:", e);
             throw new IOException("File could not be created");
@@ -326,7 +329,7 @@ public class PropertiesDataManager {
 
     public static void saveSettings() {
         try {
-            @Cleanup val outputStream = new FileOutputStream(new File(FILE_NAME));
+            @Cleanup val outputStream = FileUtils.openOutputStream(new File(FILE_NAME));
             settings.store(outputStream, SETTINGS_COMMENT);
         } catch (IOException e) {
             Tracer.error("An error occurred while trying to save \"data.properties\":", e);

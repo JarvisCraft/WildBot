@@ -211,13 +211,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import lombok.*;
-import ru.wildbot.wildbotcore.WildBotCore;
+import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.telegram.webhook.event.TelegramUpdateEvent;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -234,7 +233,7 @@ public class TelegramWebhookHttpHandler extends ChannelInboundHandlerAdapter {
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
     @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String ERROR_HTML_FILE_NAME = "telegram_webhook_error.html";
+    public static final String ERROR_HTML_FILE_NAME = "html\\telegram\\webhook\\error.html";
 
     public TelegramWebhookHttpHandler(final TelegramBotManager botManager) {
         Tracer.info("Initialising Handler for Webhooks");
@@ -248,7 +247,7 @@ public class TelegramWebhookHttpHandler extends ChannelInboundHandlerAdapter {
             if (!errorFile.exists() || errorFile.isDirectory()) {
                 Tracer.info("Could not find File \"vk_callback_error.html\", creating it now");
 
-                @Cleanup val outputStream = new FileOutputStream(errorFile);
+                @Cleanup val outputStream = FileUtils.openOutputStream(errorFile);
                 outputStream.write(htmlErrorContent.getBytes());
 
                 Tracer.info("File \"vk_callback_error.html\" has been successfully created");

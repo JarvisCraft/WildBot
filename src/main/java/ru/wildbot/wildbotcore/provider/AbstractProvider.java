@@ -202,62 +202,7 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.telegram.webhook;
+package ru.wildbot.wildbotcore.provider;
 
-import com.pengrad.telegrambot.request.GetWebhookInfo;
-import com.pengrad.telegrambot.request.SetWebhook;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
-import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
-
-@RequiredArgsConstructor
-public class TelegramWebhookManager implements NettyBasedManager {
-    @Getter private boolean isInit = false;
-    @Getter private boolean isNettyInit = false;
-
-    @NonNull @Getter private final TelegramBotManager botManager;
-    @NonNull @Getter private final TelegramWebhookManagerSettings settings;
-
-    @Override
-    public void init() throws Exception {
-        checkInit();
-
-        if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(settings.getHost())) {
-            Tracer.info("PropertiesDataRequired Telegram WebHook URL to: " + settings.getHost());
-
-            botManager.execute(new SetWebhook().url(settings.getHost()).allowedUpdates(settings.getUpdates())
-                    .maxConnections(settings.getMaxConnections()));
-
-            Tracer.info("Telegram WebHook URL has been successfully is now set to: "
-                    + botManager.execute(new GetWebhookInfo()).webhookInfo().url());
-        }
-
-        initNetty();
-
-        isInit = true;
-    }
-
-    public final String NETTY_CHANNEL_NAME = "telegram_webhook";
-
-    @Override
-    public void initNetty() throws Exception {
-        checkNettyInit();
-
-        Tracer.info("Starting Telegram-Webhook server on port: " + settings.getPort());
-        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new TelegramWebhookChannelInitializer(botManager))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
-        Tracer.info("Telegram-Webhook server has been successfully started");
-
-        isNettyInit = true;
-    }
+public abstract class AbstractProvider {
 }
