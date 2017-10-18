@@ -267,11 +267,12 @@ public class NettyServerCore {// TODO: 16.10.2017 Impl. initialisable
         childGroup.shutdownGracefully();
         parentGroup.shutdownGracefully();
 
+        /*
         // Closing all channels existing
         for (val channel : channels.values()) try {
             channel.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             Tracer.error("An exception occurred while trying to stop Netty-Server. Aborting");
-        }
+        }*/
     }
 }
