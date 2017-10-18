@@ -212,19 +212,24 @@ import lombok.NonNull;
 import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
 import ru.wildbot.wildbotcore.server.transport.NettyTransportType;
 
-public class NettyServerCore {// TODO: 16.10.2017 Impl. initialisable
-    @NonNull @Getter private final NettyServerCoreSettings settings;
-    @NonNull @Getter private final NettyTransportType transportType;
+public class NettyServerCore implements ManagerInitialisable {
+    @NonNull private final NettyServerCoreSettings settings;
 
-    private final EventLoopGroup parentGroup;
-    private final EventLoopGroup childGroup;
+    @NonNull @Getter private NettyTransportType transportType;
+
+    @NonNull @Getter private boolean isInit = false;
+
+    @NonNull private EventLoopGroup parentGroup;
+    @NonNull private EventLoopGroup childGroup;
 
     private final MultiValuedMap<String, ChannelFuture> channels = MultiMapUtils.newSetValuedHashMap();
 
-    public NettyServerCore(final NettyServerCoreSettings settings) {
-        this.settings = settings;
+    @Override
+    public void init() throws Exception {
+        checkInit();
 
         if (settings.isUseNative()) transportType = NettyTransportType.getNative();
         else transportType = NettyTransportType.getDefault();
@@ -236,6 +241,12 @@ public class NettyServerCore {// TODO: 16.10.2017 Impl. initialisable
 
         // Hook to safe-stop server in case of process being shut-down
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+
+        isInit = true;
+    }
+
+    public NettyServerCore(final NettyServerCoreSettings settings) {
+        this.settings = settings;
     }
 
     public NettyServerCore(final int parentThreads, final int childThreads, final boolean useNative) {

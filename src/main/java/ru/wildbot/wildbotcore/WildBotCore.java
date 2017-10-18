@@ -356,6 +356,7 @@ public class WildBotCore {
             nettyServerCore = new NettyServerCore(JsonDataManager
                     .readAndWrite("settings\\netty\\core.json",
                             NettyServerCoreSettings.class).orElseThrow(JsonNotPresentException::new));
+            nettyServerCore.init();
 
             Tracer.info("Netty-Server-Core has been successfully initialised");
         } catch (Exception e) {
