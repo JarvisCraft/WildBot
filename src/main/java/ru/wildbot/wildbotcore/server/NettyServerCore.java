@@ -209,7 +209,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.val;
 import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
@@ -267,7 +266,7 @@ public class NettyServerCore {// TODO: 16.10.2017 Impl. initialisable
         childGroup.shutdownGracefully();
         parentGroup.shutdownGracefully();
 
-        /*
+        /* TODO remove if no problems appear
         // Closing all channels existing
         for (val channel : channels.values()) try {
             channel.channel().closeFuture().sync();

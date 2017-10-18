@@ -1,8 +1,8 @@
 language: java
 sudo: false
-deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_DEPLOY_TOKEN
-  on:
-    branch: master
+#deploy:
+#  provider: pages
+#  skip_cleanup: true
+#  github_token: $GITHUB_DEPLOY_TOKEN
+#  on:
+#    branch: master
