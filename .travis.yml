@@ -1,8 +1,5 @@
 language: java
 sudo: false
-install: true
-script:
-- 'clean test package install javadoc:javadoc'
 #deploy:
 #  provider: pages
 #  skip_cleanup: true
