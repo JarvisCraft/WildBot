@@ -233,7 +233,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
     @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String ERROR_HTML_FILE_NAME = "html\\rcon\\httprcon\\error.html";
+    public static final String ERROR_HTML_FILE_NAME = "html/rcon/httprcon/error.html";
 
     public HttpRconHttpHandler(final String key) {
         Tracer.info("Initialising Handler for RCON");

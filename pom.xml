@@ -231,7 +231,7 @@
     <packaging>jar</packaging>
 
     <build>
-        <defaultGoal>clean test package install javadoc:javadoc</defaultGoal>
+        <defaultGoal>clean package install</defaultGoal>
 
         <resources>
             <resource>

@@ -354,7 +354,7 @@ public class WildBotCore {
         Tracer.info("Initialising Netty-Server-Core");
         try {
             nettyServerCore = new NettyServerCore(JsonDataManager
-                    .readAndWrite("settings\\netty\\core.json",
+                    .readAndWrite("settings/netty/core.json",
                             NettyServerCoreSettings.class).orElseThrow(JsonNotPresentException::new));
             nettyServerCore.init();
 
@@ -422,7 +422,7 @@ public class WildBotCore {
             Tracer.info("Enabling VK module");
             try {
                 vkManager = new VkManager(JsonDataManager
-                        .readAndWrite("settings\\vk\\bot.json",
+                        .readAndWrite("settings/vk/bot.json",
                         VkManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 vkManager.init();
                 Tracer.info("VK module has been successfully enabled");
@@ -438,7 +438,7 @@ public class WildBotCore {
             Tracer.info("Enabling VK Callbacks");
             try {
                 vkCallbackServerManager = new VkCallbackServerManager(vkManager, JsonDataManager
-                        .readAndWrite("settings\\vk\\callback.json",
+                        .readAndWrite("settings/vk/callback.json",
                         VkCallbackServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 vkCallbackServerManager.init();
                 Tracer.info("VK Callbacks have been successfully enabled");
@@ -453,7 +453,7 @@ public class WildBotCore {
             Tracer.info("Enabling Telegram module");
             try {
                 telegramBotManager = new TelegramBotManager(JsonDataManager
-                        .readAndWrite("settings\\telegram\\bot.json",
+                        .readAndWrite("settings/telegram/bot.json",
                         TelegramBotManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 telegramBotManager.init();
                 Tracer.info("Telegram module has been successfully initialised");
@@ -468,7 +468,7 @@ public class WildBotCore {
             Tracer.info("Enabling Telegram Webhook");
             try {
                 telegramWebhookManager = new TelegramWebhookManager(telegramBotManager, JsonDataManager
-                        .readAndWrite("settings\\telegram\\webhook.json",
+                        .readAndWrite("settings/telegram/webhook.json",
                         TelegramWebhookManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 telegramWebhookManager.init();
                 Tracer.info("Telegram Webhook module has been successfully initialised");
@@ -487,7 +487,7 @@ public class WildBotCore {
             Tracer.info("Enabling HTTP-RCON");
             try {
                 rconServerManager = new HttpRconServerManager(JsonDataManager
-                        .readAndWrite("settings\\rcon\\httprcon.json",
+                        .readAndWrite("settings/rcon/httprcon.json",
                         HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 rconServerManager.init();
                 Tracer.info("HTTP-RCON has been successfully enabled");

@@ -233,7 +233,7 @@ public class TelegramWebhookHttpHandler extends ChannelInboundHandlerAdapter {
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
     @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String ERROR_HTML_FILE_NAME = "html\\telegram\\webhook\\error.html";
+    public static final String ERROR_HTML_FILE_NAME = "html/telegram/webhook/error.html";
 
     public TelegramWebhookHttpHandler(final TelegramBotManager botManager) {
         Tracer.info("Initialising Handler for Webhooks");

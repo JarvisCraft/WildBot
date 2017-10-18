@@ -215,6 +215,7 @@ public class TestNettyServer {
     public void testNettyStartupAndShutdown() throws Exception {
         Tracer.info("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
+        nettyServerCore.init();
         Tracer.info("Test successful");
 
         try {
@@ -236,6 +237,7 @@ public class TestNettyServer {
     public void testNettyMultiStartupAndShutdown() throws Exception {
         Tracer.info("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
+        nettyServerCore.init();
         Tracer.info("Test successful");
 
         Tracer.info("Testing Netty Server Core Startup");

@@ -238,7 +238,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
     @Getter private final String OK_RESPONSE = "ok";
 
-    public static final String ERROR_HTML_FILE_NAME = "html\\vk\\callback\\error.html";
+    public static final String ERROR_HTML_FILE_NAME = "html/vk/callback/error.html";
 
     public VkCallbackHttpHandler(final VkManager vkManager, final String confirmationCode) {
         Tracer.info("Initialising Handler for VK-Callbacks");
