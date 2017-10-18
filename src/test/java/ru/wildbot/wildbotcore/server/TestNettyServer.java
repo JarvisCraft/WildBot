@@ -229,9 +229,6 @@ public class TestNettyServer {
         Tracer.info("Testing Netty Server Core Shutdown");
         nettyServerCore.shutdown();
         Tracer.info("Test successful");
-
-        long time = System.currentTimeMillis();
-        System.out.println(System.currentTimeMillis() - time);
     }
 
 
