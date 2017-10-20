@@ -206,7 +206,9 @@ package ru.wildbot.wildbotcore.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.collections4.MultiMapUtils;
@@ -273,16 +275,20 @@ public class NettyServerCore implements ManagerInitialisable {
         Tracer.info("Netty Channel for name `" + name + "` has been successfully started");
     }
 
+    public void startStandard(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
+        start(name, bootstrap.channel(transportType.getServerSocketChannelClass())
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+    }
+
+    public void startHttp(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
+        start(name, bootstrap.channel(transportType.getServerSocketChannelClass())
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+    }
+
     public void shutdown() {
         childGroup.shutdownGracefully();
         parentGroup.shutdownGracefully();
-
-        /* TODO remove if no problems appear
-        // Closing all channels existing
-        for (val channel : channels.values()) try {
-            channel.channel().closeFuture().sync();
-        } catch (InterruptedException e) {
-            Tracer.error("An exception occurred while trying to stop Netty-Server. Aborting");
-        }*/
     }
 }

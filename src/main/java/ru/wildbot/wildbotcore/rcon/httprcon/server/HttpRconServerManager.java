@@ -236,13 +236,13 @@ public class HttpRconServerManager implements NettyBasedManager {
     public void initNetty() throws Exception {
         checkNettyInit();
 
-        Tracer.info("Starting RCON server on port " + settings.getPort() + " by key: " + settings.getKey());
-        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new HttpRconChannelInitializer(settings.getKey()))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
-        Tracer.info("RCON server has been successfully started");
+        Tracer.info("Starting HTTP-RCON server on port " + settings.getPort() + " by key: "
+                + settings.getKey());
+
+        WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .childHandler(new HttpRconChannelInitializer(settings.getKey())), settings.getPort());
+
+        Tracer.info("HTTP-RCON server has been successfully started");
 
         isNettyInit = true;
     }

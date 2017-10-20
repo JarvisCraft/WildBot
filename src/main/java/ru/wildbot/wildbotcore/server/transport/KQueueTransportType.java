@@ -202,75 +202,41 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.server;
+package ru.wildbot.wildbotcore.server.transport;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.junit.Test;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueServerSocketChannel;
+import io.netty.channel.socket.ServerSocketChannel;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-public class TestNettyServer {
-    @Test
-    public void testNettyStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
+public class KQueueTransportType extends NettyTransportType {
 
-        try {
-            Tracer.info("Testing Netty Server Core Startup");
-            nettyServerCore.start("test_netty_server", new ServerBootstrap()
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            Tracer.info("Test successful");
-        } catch (Exception e) {
-            Tracer.error(e);
-        }
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public Class<? extends EventLoopGroup> getEventLoopGroupClass() {
+        return KQueueEventLoopGroup.class;
     }
 
-
-    @Test
-    public void testNettyNioMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.start("test_netty_server1", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.start("test_netty_server2", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public EventLoopGroup newEventLoopGroup() {
+        return new KQueueEventLoopGroup();
     }
 
-    @Test
-    public void testNettyAutoHttpMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+    @Override
+    public EventLoopGroup newEventLoopGroup(int nThreads) {
+        return new KQueueEventLoopGroup(nThreads);
+    }
 
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
+    @Override
+    public Class<? extends ServerSocketChannel> getServerSocketChannelClass() {
+        return KQueueServerSocketChannel.class;
+    }
 
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public ServerSocketChannel newServerSocketChannel() {
+        return new KQueueServerSocketChannel();
     }
 }
+

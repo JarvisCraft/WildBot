@@ -202,75 +202,46 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.server;
+package ru.wildbot.wildbotcore.rcon.rcon.server;
 
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.junit.Test;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketType;
 
-public class TestNettyServer {
-    @Test
-    public void testNettyStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
+import static io.netty.util.ReferenceCountUtil.release;
+
+@RequiredArgsConstructor
+public class InboundRconChannelHandler extends ChannelInboundHandlerAdapter {// TODO: 19.10.2017
+    @NonNull private final String key;
+
+    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-            Tracer.info("Testing Netty Server Core Startup");
-            nettyServerCore.start("test_netty_server", new ServerBootstrap()
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            Tracer.info("Test successful");
+            System.out.println("Connection by: " + ctx.toString());
+            if (msg instanceof ByteBuf) {
+                final ByteBuf buf = (ByteBuf) msg;
+
+                final byte packetId = buf.readByte();
+                Tracer.info("Packet (id" + packetId + "): " + RconPacketType.get(packetId));
+            }
         } catch (Exception e) {
-            Tracer.error(e);
+            Tracer.error("An exception occurred while trying to handle RCON Packet:", e);
+        } finally {
+            release(msg);
         }
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
     }
 
-
-    @Test
-    public void testNettyNioMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.start("test_netty_server1", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.start("test_netty_server2", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
-    }
-
-    @Test
-    public void testNettyAutoHttpMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        Tracer.error("An exception occurred while trying to "); // TODO: 19.10.2017
+        ctx.close();
     }
 }

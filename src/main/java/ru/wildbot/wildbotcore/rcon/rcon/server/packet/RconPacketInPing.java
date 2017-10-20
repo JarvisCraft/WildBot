@@ -202,75 +202,20 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.server;
+package ru.wildbot.wildbotcore.rcon.rcon.server.packet;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.junit.Test;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-
-public class TestNettyServer {
-    @Test
-    public void testNettyStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        try {
-            Tracer.info("Testing Netty Server Core Startup");
-            nettyServerCore.start("test_netty_server", new ServerBootstrap()
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            Tracer.info("Test successful");
-        } catch (Exception e) {
-            Tracer.error(e);
-        }
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+public class RconPacketInPing extends RconPacketType {
+    @Override
+    public byte getId() {
+        return 0;
     }
 
-
-    @Test
-    public void testNettyNioMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.start("test_netty_server1", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.start("test_netty_server2", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public RconPacket newPacket() {
+        return new Packet();
     }
 
-    @Test
-    public void testNettyAutoHttpMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    private class Packet extends RconPacket {
+        private static final String response = "pong";
     }
 }

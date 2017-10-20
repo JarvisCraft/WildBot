@@ -236,6 +236,7 @@ public class PropertiesDataManager {
         setProperty("enable-telegram", "true");
         setProperty("enable-telegram-webhook", "false");
         // Http RCON
+        setProperty("enable-rcon", "true");
         setProperty("enable-httprcon", "true");
     }};
 

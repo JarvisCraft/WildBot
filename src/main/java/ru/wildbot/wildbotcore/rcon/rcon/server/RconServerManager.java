@@ -202,75 +202,46 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.server;
+package ru.wildbot.wildbotcore.rcon.rcon.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.junit.Test;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketType;
 
-public class TestNettyServer {
-    @Test
-    public void testNettyStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+@RequiredArgsConstructor
+public class RconServerManager implements NettyBasedManager {
+    @Getter private boolean isInit = false;
+    @Getter private boolean isNettyInit = false;
 
-        try {
-            Tracer.info("Testing Netty Server Core Startup");
-            nettyServerCore.start("test_netty_server", new ServerBootstrap()
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            Tracer.info("Test successful");
-        } catch (Exception e) {
-            Tracer.error(e);
-        }
+    @NonNull @Getter private final RconServerManagerSettings settings;
 
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+    @Override
+    public void init() throws Exception {
+        checkInit();
+
+        initNetty();
+
+        isInit = true;
     }
 
+    public final String NETTY_CHANNEL_NAME = "rcon";
 
-    @Test
-    public void testNettyNioMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+    @Override
+    public void initNetty() throws Exception {
+        checkNettyInit();
 
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.start("test_netty_server1", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.start("test_netty_server2", new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
+        Tracer.info("Starting RCON server on port " + settings.getPort() + " by key: " + settings.getKey());
 
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
-    }
+        WildBotCore.getInstance().getNettyServerCore().startStandard(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .childHandler(new RconChannelInitializer(settings.getKey())), settings.getPort());
 
-    @Test
-    public void testNettyAutoHttpMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
-        final NettyServerCore nettyServerCore = new NettyServerCore();
-        nettyServerCore.init();
-        Tracer.info("Test successful");
+        Tracer.info("RCON server has been successfully started");
 
-        Tracer.info("Testing Netty Server Core Startup");
-        nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
-                .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
-
-        Tracer.info("Testing Netty Server Core Shutdown");
-        nettyServerCore.shutdown();
-        Tracer.info("Test successful");
+        isNettyInit = true;
     }
 }

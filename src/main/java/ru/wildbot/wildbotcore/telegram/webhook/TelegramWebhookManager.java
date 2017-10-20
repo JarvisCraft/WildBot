@@ -251,11 +251,10 @@ public class TelegramWebhookManager implements NettyBasedManager {
         checkNettyInit();
 
         Tracer.info("Starting Telegram-Webhook server on port: " + settings.getPort());
-        WildBotCore.getInstance().getNettyServerCore().start(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new TelegramWebhookChannelInitializer(botManager))
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true), settings.getPort());
+
+        WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
+                .childHandler(new TelegramWebhookChannelInitializer(botManager)), settings.getPort());
+
         Tracer.info("Telegram-Webhook server has been successfully started");
 
         isNettyInit = true;

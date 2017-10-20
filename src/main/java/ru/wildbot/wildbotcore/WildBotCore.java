@@ -224,6 +224,10 @@ import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
 import ru.wildbot.wildbotcore.provider.ProviderManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
+import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
+import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketInPing;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketType;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.server.NettyServerCoreSettings;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
@@ -290,6 +294,7 @@ public class WildBotCore {
         }};*/
 
         instance.initMessengers();
+        instance.initRcon();
         instance.initHttpRcon();
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.OPTIONAL_MANAGERS).call();
@@ -395,10 +400,15 @@ public class WildBotCore {
         return instance.telegramWebhookManager;
     }
 
-    // HTTP-RCON
-    @Getter private HttpRconServerManager rconServerManager;
-    @Shorthand public static HttpRconServerManager rconServerManager() {
+    // RCON
+    @Getter private RconServerManager rconServerManager;
+    @Shorthand public static RconServerManager rconServerManager() {
         return instance.rconServerManager;
+    }
+    // HTTP-RCON
+    @Getter private HttpRconServerManager httpRconServerManager;
+    @Shorthand public static HttpRconServerManager httpRconServerManager() {
+        return instance.httpRconServerManager;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -479,6 +489,27 @@ public class WildBotCore {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // RCON
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void initRcon() {
+        if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-rcon"))) {
+            Tracer.info("Enabling RCON");
+            try {
+                RconPacketType.register(new RconPacketInPing());
+
+                rconServerManager = new RconServerManager(JsonDataManager
+                        .readAndWrite("settings/rcon/rcon.json",
+                                RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
+                rconServerManager.init();
+                Tracer.info("RCON has been successfully enabled");
+            } catch (Exception e) {
+                Tracer.error("An exception occurred while trying to enable RCON: ", e);
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // HTTP-RCON
     ///////////////////////////////////////////////////////////////////////////
 
@@ -486,10 +517,10 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-httprcon"))) {
             Tracer.info("Enabling HTTP-RCON");
             try {
-                rconServerManager = new HttpRconServerManager(JsonDataManager
+                httpRconServerManager = new HttpRconServerManager(JsonDataManager
                         .readAndWrite("settings/rcon/httprcon.json",
                         HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                rconServerManager.init();
+                httpRconServerManager.init();
                 Tracer.info("HTTP-RCON has been successfully enabled");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable HTTP-RCON: ", e);

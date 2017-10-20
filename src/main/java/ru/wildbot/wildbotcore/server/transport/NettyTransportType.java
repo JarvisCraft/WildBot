@@ -206,18 +206,14 @@ package ru.wildbot.wildbotcore.server.transport;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.kqueue.KQueue;
-import io.netty.channel.kqueue.KQueueEventLoopGroup;
-import io.netty.channel.kqueue.KQueueServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 public abstract class NettyTransportType {
+    public abstract Class<? extends EventLoopGroup> getEventLoopGroupClass();
     public abstract EventLoopGroup newEventLoopGroup();
     public abstract EventLoopGroup newEventLoopGroup(int nThreads);
+    public abstract Class<? extends ServerSocketChannel> getServerSocketChannelClass();
     public abstract ServerSocketChannel newServerSocketChannel();
 
     public static NettyTransportType getNative() {
@@ -228,59 +224,5 @@ public abstract class NettyTransportType {
 
     public static NettyTransportType getDefault() {
         return new NioTransportType();
-    }
-
-    private static class NioTransportType extends NettyTransportType {
-
-        @Override
-        public EventLoopGroup newEventLoopGroup() {
-            return new NioEventLoopGroup();
-        }
-
-        @Override
-        public EventLoopGroup newEventLoopGroup(int nThreads) {
-            return new NioEventLoopGroup(nThreads);
-        }
-
-        @Override
-        public ServerSocketChannel newServerSocketChannel() {
-            return new NioServerSocketChannel();
-        }
-    }
-
-    private static class EpollTransportType extends NettyTransportType {
-
-        @Override
-        public EventLoopGroup newEventLoopGroup() {
-            return new EpollEventLoopGroup();
-        }
-
-        @Override
-        public EventLoopGroup newEventLoopGroup(int nThreads) {
-            return new EpollEventLoopGroup(nThreads);
-        }
-
-        @Override
-        public ServerSocketChannel newServerSocketChannel() {
-            return new EpollServerSocketChannel();
-        }
-    }
-
-    private static class KQueueTransportType extends NettyTransportType {
-
-        @Override
-        public EventLoopGroup newEventLoopGroup() {
-            return new KQueueEventLoopGroup();
-        }
-
-        @Override
-        public EventLoopGroup newEventLoopGroup(final int nThreads) {
-            return new KQueueEventLoopGroup(nThreads);
-        }
-
-        @Override
-        public ServerSocketChannel newServerSocketChannel() {
-            return new KQueueServerSocketChannel();
-        }
     }
 }
