@@ -209,7 +209,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketType;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -217,8 +217,9 @@ import java.nio.charset.StandardCharsets;
 import static io.netty.util.ReferenceCountUtil.release;
 
 @RequiredArgsConstructor
-public class InboundRconChannelHandler extends ChannelInboundHandlerAdapter {// TODO: 19.10.2017
+public class InboundRconChannelHandler extends ChannelInboundHandlerAdapter {
     @NonNull private final String key;
+    @NonNull private final RconPackets packets;
 
     private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
 
@@ -230,8 +231,10 @@ public class InboundRconChannelHandler extends ChannelInboundHandlerAdapter {// 
                 final ByteBuf buf = (ByteBuf) msg;
 
                 final byte packetId = buf.readByte();
-                Tracer.info("Packet (id" + packetId + "): " + RconPacketType.get(packetId));
+                Tracer.info("Packet (id" + packetId + "): " + packets.get(packetId).getPacket());
             }
+        } catch (IndexOutOfBoundsException e) {
+            ctx.writeAndFlush(0);
         } catch (Exception e) {
             Tracer.error("An exception occurred while trying to handle RCON Packet:", e);
         } finally {

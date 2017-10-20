@@ -213,17 +213,17 @@ import java.util.List;
 @Builder
 @EqualsAndHashCode
 public class PropertiesDataRequired {
-    @Builder.Default @Getter @NonNull private String name = "unknown_field";
-    @Builder.Default @Getter @NonNull private InputType inputType = InputType.STRING;
-    @Builder.Default @Getter private int min = Integer.MIN_VALUE;
-    @Builder.Default @Getter private int max = Integer.MAX_VALUE;
+    @Getter @Builder.Default @NonNull private String name = "unknown_field";
+    @Getter @Builder.Default @NonNull private InputType inputType = InputType.STRING;
+    @Getter @Builder.Default private int min = Integer.MIN_VALUE;
+    @Getter @Builder.Default private int max = Integer.MAX_VALUE;
 
-    @Getter @NonNull @Singular(value = "requestInputMessage")
+    @NonNull @Getter @Singular(value = "requestInputMessage")
     private List<String> requestInputMessage
             = Collections.singletonList("Please, input value for parameter {setting_name}");
-    @Getter @NonNull @Singular(value = "wrongInputMessage") private List<String> wrongInputMessage
+    @NonNull @Getter @Singular(value = "wrongInputMessage") private List<String> wrongInputMessage
             = Collections.singletonList("Wrong value given for parameter {setting_name}");
-    @Getter @NonNull @Singular(value = "successInputMessage") private List<String> successInputMessage
+    @NonNull @Getter @Singular(value = "successInputMessage") private List<String> successInputMessage
             = Collections.singletonList("Value of parameter {setting_name} set to {setting_value}");
 
     @AllArgsConstructor

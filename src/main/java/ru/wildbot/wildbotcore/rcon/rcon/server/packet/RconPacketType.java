@@ -204,27 +204,12 @@
 
 package ru.wildbot.wildbotcore.rcon.rcon.server.packet;
 
-import lombok.Synchronized;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NonNull;
 
-import java.util.*;
-
-public abstract class RconPacketType {
-    public abstract byte getId();
-    public abstract RconPacket newPacket();
-
-    private static final Map<Byte, RconPacketType> types = new HashMap<>();
-
-    @Synchronized public static RconPacketType get(final byte id) {
-        return types.get(id);
-    }
-
-    @Synchronized public static RconPacketType reRegister(final RconPacketType type) {
-        return types.put(type.getId(), type);
-    }
-
-    @Synchronized public static RconPacketType register(final RconPacketType type) {
-        return types.putIfAbsent(type.getId(), type);
-    }
-
-    public abstract class RconPacket {}
+@AllArgsConstructor
+public class RconPacketType<P extends RconPacket> {
+    @NonNull @Getter private final byte id;
+    @NonNull @Getter private final P packet;
 }

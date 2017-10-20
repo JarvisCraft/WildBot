@@ -209,14 +209,16 @@ import io.netty.channel.ChannelInitializer;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 
 @RequiredArgsConstructor
 public class RconChannelInitializer extends ChannelInitializer {
     @NonNull private final String key;
+    @NonNull private final RconPackets packets;
 
     @Override
     protected void initChannel(Channel channel) throws Exception {
         Tracer.info("Initialising channel for RCON handling");
-        channel.pipeline().addLast("rcon", new InboundRconChannelHandler(key));
+        channel.pipeline().addLast("rcon", new InboundRconChannelHandler(key, packets));
     }
 }

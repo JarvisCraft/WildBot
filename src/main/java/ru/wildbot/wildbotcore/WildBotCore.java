@@ -226,8 +226,7 @@ import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
-import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketInPing;
-import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPacketType;
+import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 import ru.wildbot.wildbotcore.server.NettyServerCore;
 import ru.wildbot.wildbotcore.server.NettyServerCoreSettings;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
@@ -496,11 +495,11 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-rcon"))) {
             Tracer.info("Enabling RCON");
             try {
-                RconPacketType.register(new RconPacketInPing());
+                val packets = RconPackets.ofDefault();
 
                 rconServerManager = new RconServerManager(JsonDataManager
                         .readAndWrite("settings/rcon/rcon.json",
-                                RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
+                                RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new), packets);
                 rconServerManager.init();
                 Tracer.info("RCON has been successfully enabled");
             } catch (Exception e) {

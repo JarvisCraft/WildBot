@@ -298,6 +298,11 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <outputDirectory>
+                        ${project.basedir}/docs
+                    </outputDirectory>
+                </configuration>
             </plugin>
 
             <!-- Settings from outer files -->
@@ -398,6 +403,13 @@
             <artifactId>lombok</artifactId>
             <version>1.16.18</version>
             <scope>compile</scope>
+        </dependency>
+
+        <!-- Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>23.2-jre</version>
         </dependency>
 
         <!-- SnakeYaml -->

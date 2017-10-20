@@ -204,18 +204,6 @@
 
 package ru.wildbot.wildbotcore.rcon.rcon.server.packet;
 
-public class RconPacketInPing extends RconPacketType {
-    @Override
-    public byte getId() {
-        return 0;
-    }
-
-    @Override
-    public RconPacket newPacket() {
-        return new Packet();
-    }
-
-    private class Packet extends RconPacket {
-        private static final String response = "pong";
-    }
+public class RconPacketInPing extends RconPacket {
+    private static final String response = "pong";
 }
