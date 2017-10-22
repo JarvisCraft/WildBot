@@ -205,11 +205,17 @@
 package ru.wildbot.wildbotcore.util.collection;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+@EqualsAndHashCode
 @AllArgsConstructor
-public class Pair<K, V> {
-    @Getter @Setter private K key;
-    @Getter @Setter private V value;
+public class Pair<F, S> {
+    @Getter @Setter private F first;
+    @Getter @Setter private S second;
+
+    public static <F, S> Pair<F, S> of(final F first, final S second) {
+        return new Pair<>(first, second);
+    }
 }

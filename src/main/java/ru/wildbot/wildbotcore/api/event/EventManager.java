@@ -242,11 +242,11 @@ public class EventManager {
             val handlers = new EventListenersQueue(event, listener).getHandlers();
             for (val handler : handlers)
                 try {
-                    val method = handler.getKey().getKey();
+                    val method = handler.getFirst().getFirst();
                     val accessible = method.isAccessible();
 
                     method.setAccessible(true);
-                    method.invoke(handler.getKey().getValue(), event);
+                    method.invoke(handler.getFirst().getSecond(), event);
                     method.setAccessible(accessible);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     Tracer.error("An exception occurred while trying to call event:", e);

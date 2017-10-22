@@ -298,11 +298,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <outputDirectory>
-                        ${project.basedir}/docs
-                    </outputDirectory>
-                </configuration>
             </plugin>
 
             <!-- Settings from outer files -->

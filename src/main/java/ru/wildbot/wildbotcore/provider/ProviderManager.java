@@ -205,21 +205,28 @@
 package ru.wildbot.wildbotcore.provider;
 
 import lombok.Getter;
-import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
+import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProviderManager implements ManagerInitialisable {
-    @Getter private boolean isInit = false;
+public class ProviderManager implements WildBotManager {
+    @Getter private boolean enabled = false;
 
     private Map<Class<? extends AbstractProvider>, AbstractProvider> providers = new HashMap<>();
 
     @Override
-    public void init() throws Exception {
-        checkInit();
+    public void enable() throws Exception {
+        checkEnabled();
 
-        isInit = true;
+        enabled = true;
+    }
+
+    @Override
+    public void disable() throws Exception {
+        checkDisabled();
+        // TODO: 21.10.2017
+        enabled = false;
     }
 
     public boolean isRegistered(final Class<? extends AbstractProvider> provider) {

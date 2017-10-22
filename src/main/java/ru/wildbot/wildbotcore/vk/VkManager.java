@@ -215,11 +215,11 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
+import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 
 @RequiredArgsConstructor
-public class VkManager implements ManagerInitialisable {
-    @Getter private boolean isInit = false;
+public class VkManager implements WildBotManager {
+    @Getter private boolean enabled = false;
 
     ///////////////////////////////////////////////////////////////////////////
     // Secure
@@ -227,7 +227,7 @@ public class VkManager implements ManagerInitialisable {
 
     @NonNull @Getter private final VkManagerSettings settings;
 
-    @Getter private final VkApiClient vkApi = new VkApiClient(new HttpTransportClient());
+    @Getter private VkApiClient vkApi;
 
     @Getter @Setter private GroupActor actor;
     @Getter @Setter private GroupFull group;
@@ -236,8 +236,10 @@ public class VkManager implements ManagerInitialisable {
             "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
 
     @Override
-    public void init() throws Exception {
-        checkInit();
+    public void enable() throws Exception {
+        checkEnabled();
+
+        vkApi = new VkApiClient(new HttpTransportClient());
 
         try {
             actor = new GroupActor(settings.getGroupId(), settings.getGroupKey());
@@ -251,9 +253,21 @@ public class VkManager implements ManagerInitialisable {
             Tracer.info("Send: " + vkApi.messages().send(actor).userId(288451376).message(HELLO_WORLD)
                     .execute());
         } catch (ApiException | ClientException | IndexOutOfBoundsException e) {
-            Tracer.error("Unable to init VK.API, maybe wrong Group-ID / Group-Key was given:", e);
+            Tracer.error("Unable to enable VK.API, maybe wrong Group-ID / Group-Key was given:", e);
         }
 
-        isInit = true;
+        enabled = true;
+    }
+
+    @Override
+    public void disable() throws Exception {
+        checkDisabled();
+
+        vkApi = null;
+
+        actor = null;
+        group = null;
+
+        enabled = false;
     }
 }

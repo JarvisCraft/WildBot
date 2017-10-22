@@ -219,7 +219,7 @@ import java.util.jar.JarFile;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @EqualsAndHashCode
-@ToString(exclude = {"jarFile", "data", "pluginsClasses"})
+@ToString(exclude = {"jarFile", "yaml", "pluginsClasses"})
 class JavaPluginInQueue {
     @NonNull @Getter private final File file;
     @NonNull @Getter private final JarFile jarFile;

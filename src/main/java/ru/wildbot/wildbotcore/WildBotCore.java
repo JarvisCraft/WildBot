@@ -211,24 +211,25 @@ import lombok.NonNull;
 import lombok.val;
 import ru.wildbot.wildbotcore.api.event.EventManager;
 import ru.wildbot.wildbotcore.api.plugin.PluginManager;
-import ru.wildbot.wildbotcore.console.command.CommandParser;
+import ru.wildbot.wildbotcore.api.command.CommandManager;
 import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.annotation.Shorthand;
-import ru.wildbot.wildbotcore.core.defaults.provider.PaymentsProvider;
+import ru.wildbot.wildbotcore.api.annotation.Shorthand;
+import ru.wildbot.wildbotcore.api.provider.PaymentsProvider;
+import ru.wildbot.wildbotcore.core.command.DefaultCommand;
 import ru.wildbot.wildbotcore.data.json.JsonDataManager;
 import ru.wildbot.wildbotcore.data.json.JsonNotPresentException;
 import ru.wildbot.wildbotcore.data.properties.PropertiesDataManager;
 import ru.wildbot.wildbotcore.data.properties.PropertiesDataReader;
 import ru.wildbot.wildbotcore.event.WildBotEnableEvent;
+import ru.wildbot.wildbotcore.netty.NettyServerCore;
+import ru.wildbot.wildbotcore.netty.NettyServerCoreSettings;
 import ru.wildbot.wildbotcore.provider.ProviderManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
-import ru.wildbot.wildbotcore.server.NettyServerCore;
-import ru.wildbot.wildbotcore.server.NettyServerCoreSettings;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManagerSettings;
 import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManager;
@@ -238,6 +239,7 @@ import ru.wildbot.wildbotcore.vk.VkManagerSettings;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManager;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManagerSettings;
 
+import java.util.Collections;
 import java.util.Scanner;
 
 public class WildBotCore {
@@ -288,18 +290,18 @@ public class WildBotCore {
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.NETTY).call();
 
-        /*_instance.commandReader = new CommandReader() {{
-            start(); TODO implement CommandReader
+        /*_instance.commandReader = new CommandManager() {{
+            open(); TODO implement CommandManager
         }};*/
 
-        instance.initMessengers();
-        instance.initRcon();
-        instance.initHttpRcon();
+        instance.enableMessengers();
+        instance.enableRcon();
+        instance.enableHttpRcon();
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.OPTIONAL_MANAGERS).call();
 
         // Info on basic components initialised
-        Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to start The Core"
+        Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to open The Core"
                 + AnsiCodes.RESET);
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
@@ -311,9 +313,26 @@ public class WildBotCore {
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.READY).call();
 
-        readCommands(); // Used for reading commands and not exiting application
+
+        Tracer.info("Enabling CommandManager");
+        instance.commandManager = new CommandManager();
+        Tracer.info("CommandManager has been successfully enabled");
+
+        instance.registerDefaultCommands();
+        instance.readCommands(); // Used for reading commands and not exiting application
 
         shutdown();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // `Enability`
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Getter private boolean enabled = true;
+
+    public void disable() {
+        enabled = false;
+        // TODO: 20.10.2017 if required
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -332,6 +351,10 @@ public class WildBotCore {
     @Getter private ProviderManager providerManager;
     @Shorthand public static ProviderManager providerManager() {
         return instance.providerManager;
+    }
+    @Getter private CommandManager commandManager;
+    @Shorthand public static CommandManager commandManager() {
+        return instance.commandManager;
     }
 
     // Netty
@@ -360,7 +383,7 @@ public class WildBotCore {
             nettyServerCore = new NettyServerCore(JsonDataManager
                     .readAndWrite("settings/netty/core.json",
                             NettyServerCoreSettings.class).orElseThrow(JsonNotPresentException::new));
-            nettyServerCore.init();
+            nettyServerCore.enable();
 
             Tracer.info("Netty-Server-Core has been successfully initialised");
         } catch (Exception e) {
@@ -414,26 +437,26 @@ public class WildBotCore {
     // Initialisations
     ///////////////////////////////////////////////////////////////////////////
 
-    private void initMessengers() {
+    private void enableMessengers() {
         Tracer.info("Enabling Messengers");
         // Output
-        initVk();
-        initTelegram();
+        enableVk();
+        enableTelegram();
 
         // Input
-        initVkCallback();
-        initTelegramWebhook();
+        enableVkCallback();
+        enableTelegramWebhook();
         Tracer.info("All possible Messengers have been enabled");
     }
 
-    private void initVk() {
+    private void enableVk() {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk"))) {
             Tracer.info("Enabling VK module");
             try {
                 vkManager = new VkManager(JsonDataManager
                         .readAndWrite("settings/vk/bot.json",
                         VkManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                vkManager.init();
+                vkManager.enable();
                 Tracer.info("VK module has been successfully enabled");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable VK module:", e);
@@ -442,29 +465,29 @@ public class WildBotCore {
     }
 
 
-    private void initVkCallback() {
+    private void enableVkCallback() {
         if (vkManager != null && Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-vk-callback"))) {
             Tracer.info("Enabling VK Callbacks");
             try {
                 vkCallbackServerManager = new VkCallbackServerManager(vkManager, JsonDataManager
                         .readAndWrite("settings/vk/callback.json",
                         VkCallbackServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                vkCallbackServerManager.init();
+                vkCallbackServerManager.enable();
                 Tracer.info("VK Callbacks have been successfully enabled");
             } catch (Exception e) {
-                Tracer.error("An exception occurred while trying to enable HTTP-Callback server: ", e);
+                Tracer.error("An exception occurred while trying to enable HTTP-Callback netty: ", e);
             }
         }
     }
 
-    private void initTelegram() {
+    private void enableTelegram() {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram"))) {
             Tracer.info("Enabling Telegram module");
             try {
                 telegramBotManager = new TelegramBotManager(JsonDataManager
                         .readAndWrite("settings/telegram/bot.json",
                         TelegramBotManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                telegramBotManager.init();
+                telegramBotManager.enable();
                 Tracer.info("Telegram module has been successfully initialised");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable Telegram module:", e);
@@ -472,14 +495,14 @@ public class WildBotCore {
         }
     }
 
-    private void initTelegramWebhook() {
+    private void enableTelegramWebhook() {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-telegram-webhook"))) {
             Tracer.info("Enabling Telegram Webhook");
             try {
                 telegramWebhookManager = new TelegramWebhookManager(telegramBotManager, JsonDataManager
                         .readAndWrite("settings/telegram/webhook.json",
                         TelegramWebhookManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                telegramWebhookManager.init();
+                telegramWebhookManager.enable();
                 Tracer.info("Telegram Webhook module has been successfully initialised");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable Telegram Webhook:", e);
@@ -491,7 +514,7 @@ public class WildBotCore {
     // RCON
     ///////////////////////////////////////////////////////////////////////////
 
-    private void initRcon() {
+    private void enableRcon() {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-rcon"))) {
             Tracer.info("Enabling RCON");
             try {
@@ -500,7 +523,7 @@ public class WildBotCore {
                 rconServerManager = new RconServerManager(JsonDataManager
                         .readAndWrite("settings/rcon/rcon.json",
                                 RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new), packets);
-                rconServerManager.init();
+                rconServerManager.enable();
                 Tracer.info("RCON has been successfully enabled");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable RCON: ", e);
@@ -512,14 +535,14 @@ public class WildBotCore {
     // HTTP-RCON
     ///////////////////////////////////////////////////////////////////////////
 
-    private void initHttpRcon() {
+    private void enableHttpRcon() {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-httprcon"))) {
             Tracer.info("Enabling HTTP-RCON");
             try {
                 httpRconServerManager = new HttpRconServerManager(JsonDataManager
                         .readAndWrite("settings/rcon/httprcon.json",
                         HttpRconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
-                httpRconServerManager.init();
+                httpRconServerManager.enable();
                 Tracer.info("HTTP-RCON has been successfully enabled");
             } catch (Exception e) {
                 Tracer.error("An exception occurred while trying to enable HTTP-RCON: ", e);
@@ -527,23 +550,34 @@ public class WildBotCore {
         }
     }
 
+    public void logInfo() {
+        Tracer.info(Collections.singleton("Uptime: {}"), Analytics.getUptimeFormatted());
+
+        val plugins = pluginManager.getPlugins();
+
+
+        Tracer.info(plugins.size() > 0 ? "There are no plugins loaded" : Collections
+                        .singleton("Plugins loaded: {}{}"), plugins.size(), plugins.toString());
+    }
+
     ///////////////////////////////////////////////////////////////////////////
-    // Commands (todo Remove)
+    // Commands
     ///////////////////////////////////////////////////////////////////////////
 
     private static Scanner scanner = new Scanner(System.in);
 
-    public static final String STOP_COMMAND = "stop"; // TODO: 24.09.2017 Implement commands system
+    public void registerDefaultCommands() {
+        for (val command : DefaultCommand.values()) commandManager.register(command.getLabel());
+    }
 
-    private static void readCommands() {
-        while (scanner.hasNextLine()) {
-            val command = scanner.nextLine();
-            if (command.equalsIgnoreCase(STOP_COMMAND)) break;
-            CommandParser.parseCommand(command);
+    private void readCommands() {
+        while (enabled && scanner.hasNextLine()) {
+            commandManager.parse(scanner.nextLine());
         }
     }
 
     private static void shutdown() {
         Tracer.info("Shutting down");
+        System.exit(0);
     }
 }

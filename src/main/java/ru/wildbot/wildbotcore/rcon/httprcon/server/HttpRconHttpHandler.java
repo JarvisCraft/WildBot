@@ -288,7 +288,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                         } catch (Exception e) {
                             Tracer.error("An exception occurred while trying to call to HttpRconEvent:", e);
                         }
-                    } else Tracer.info("Wrong key given for RCON-request: \"" + requestContent
+                    } else Tracer.info("Wrong first given for RCON-request: \"" + requestContent
                             + "\" expected \"" + key + "\"");
                 }
             }

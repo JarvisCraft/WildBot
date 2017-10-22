@@ -202,111 +202,63 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.server;
+package ru.wildbot.wildbotcore.api.command;
 
-import com.vk.api.sdk.actions.Groups;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.objects.groups.CallbackServer;
-import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
-import io.netty.bootstrap.ServerBootstrap;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
+import com.google.common.collect.Sets;
+import lombok.Synchronized;
+import lombok.val;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.api.manager.WildBotManager;
-import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
-import ru.wildbot.wildbotcore.vk.VkManager;
 
-@RequiredArgsConstructor
-public class VkCallbackServerManager implements WildBotManager, WildBotNettyManager {
-    @Getter private boolean enabled = false;
-    @Getter private boolean nettyEnabled = false;
+import java.util.*;
 
-    @NonNull private final VkManager vkManager;
-    @NonNull private final VkCallbackServerManagerSettings settings;
+public class CommandManager {
+    private final Set<Command> commands = Sets.newConcurrentHashSet();
 
-    // VK API special
-    private CallbackServer callbackServer = null;
-    private String confirmationCode;
-    @Getter private int id;
-
-    @Override
-    public void enable() throws Exception {
-        checkEnabled();
-
-        // Shorthands
-        final Groups group = vkManager.getVkApi().groups();
-        final GroupActor actor = vkManager.getActor();
-
-        // Confirmation code (taken from VK-group)
-        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
-
-        enableNetty();
-        findCallbackServer(group, actor);
-        registerCallbackServerIfAbsent(group, actor);
-
-        Tracer.info("Using Host \"" + settings.getHost() + "\" for Callback Server");
-
-        enabled = true;
-    }
-
-    @Override
-    public void disable() throws Exception {
-        checkDisabled();
-        // TODO: 21.10.2017
-        enabled = false;
-    }
-
-    public final String NETTY_CHANNEL_NAME = "vk_callback";
-
-    @Override
-    public void enableNetty() throws Exception {
-        checkNettyEnabled();
-
-        Tracer.info("Starting VK-Callback netty on port: " + settings.getPort());
-
-        WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .childHandler(new VkCallbackChannelInitializer(vkManager, confirmationCode)), settings.getPort());
-
-        Tracer.info("VK-Callback netty has been successfully started");
-
-        nettyEnabled = true;
-    }
-
-    @Override
-    public void disableNetty() throws Exception {
-        checkNettyDisabled();
-
-        WildBotCore.nettyServerCore().close(NETTY_CHANNEL_NAME, settings.getPort());
-
-        nettyEnabled = false;
-    }
-
-    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Finding CallBack Server in the list of registered");
-
-        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
-
-        for (CallbackServer callbackServerTested : servers.getItems())
-            if (callbackServerTested.getUrl()
-                    .equalsIgnoreCase(settings.getHost())) {
-                Tracer.info("CallbackServer was found by host \"" + settings.getHost() + "\"");
-                callbackServer = callbackServerTested;
-                id = callbackServer.getId();
-                break;
-            }
-    }
-
-    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Registering custom Callback Server");
-
-        if (callbackServer == null) {
-            Tracer.info("There were no registered CallbackServer with host " + settings.getHost());
-            id = group.addCallbackServer(actor, settings.getHost(), settings.getTitle()).execute().getServerId();
-            findCallbackServer(group, actor);
+    public boolean register(final Command command) {
+        if (isRegistered(command.getNames())) {
+            Tracer.warn("Unable to register command by names " + command.getNames()
+                    + " as at least one of it's names is registered");
+            return false;
         }
+        commands.add(command);
+        return true;
+    }
+
+    // TODO: 22.10.2017 impl reregistration
+
+    public boolean isRegistered(final String name) {
+        for (val command : commands) for (val commandName : command.getNames()) if (name
+                .equalsIgnoreCase(commandName)) return true;
+        return false;
+    }
+
+    public boolean isRegistered(final Collection<String> names) {
+        for (val command : commands) for (String commandName : command.getNames()) for (val name : names) if (name
+                .equalsIgnoreCase(commandName)) return true;
+        return false;
+    }
+
+    @Synchronized public Optional<Runnable> parse(final String commandLine) {
+        final int firstSpaceIndex = commandLine.indexOf(' ');
+        final String commandName = firstSpaceIndex >= 0 ? commandLine.substring(0, firstSpaceIndex) : commandLine;
+
+        for (val command : commands) for (val testedCommandName : command.getNames()) if (commandName
+                .equalsIgnoreCase(testedCommandName)) return Optional
+                .ofNullable(command.getExecutor().execute(command, commandName, Arrays.asList(
+                        firstSpaceIndex >= 0 ? commandLine.substring(firstSpaceIndex + 1).split("\\s")
+                                : new String[]{""})));
+
+        return Optional.empty();
+    }
+
+    @Synchronized public Collection<Optional<Runnable>> parse(final String... commandLines) {
+        val actions = new ArrayList<Optional<Runnable>>();
+
+        for (val commandLine : commandLines) {
+            if (commandLine == null || commandLine.isEmpty()) continue;
+            actions.add(parse(commandLine));
+        }
+
+        return actions;
     }
 }

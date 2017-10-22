@@ -213,7 +213,7 @@ import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VkCallbackServerManagerSettings extends AbstractJsonData {
-    @NonNull @Getter private String host = "http://example.com/vk-callback-server";
+    @NonNull @Getter private String host = "http://example.com/vk-callback-netty";
     @NonNull @Getter private int port = 12414;
     @NonNull @Getter private String title = "wildbot";
 }

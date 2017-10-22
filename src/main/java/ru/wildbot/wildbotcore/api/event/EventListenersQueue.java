@@ -204,6 +204,7 @@
 
 package ru.wildbot.wildbotcore.api.event;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.val;
 import ru.wildbot.wildbotcore.util.collection.Pair;
@@ -231,7 +232,7 @@ public class EventListenersQueue extends ArrayList<Class<?>> {
 
     private void sortHandlers() {
         for (int i = 0; i < handlers.size(); i++) for (int j = 0; j < handlers.size(); j++) {
-            if (handlers.get(j).getValue() > handlers.get(i).getValue()) {
+            if (handlers.get(j).getSecond() > handlers.get(i).getSecond()) {
                 val bigger = handlers.get(j);
                 handlers.set(j, handlers.get(i));
                 handlers.set(i, bigger);
@@ -239,9 +240,10 @@ public class EventListenersQueue extends ArrayList<Class<?>> {
         }
     }
 
+    @EqualsAndHashCode
     public class EventHandlerMethod extends Pair<Pair<Method, Object>, Integer> {
         public EventHandlerMethod(final Method handler, final Object listener, final Integer order) {
-            super(new Pair<>(handler, listener), order);
+            super(Pair.of(handler, listener), order);
         }
     }
 }

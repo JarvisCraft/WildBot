@@ -246,11 +246,11 @@ public class PropertiesDataManager {
         Tracer.info("Loading Settings");
         val file = new File(FILE_NAME);
         if (!file.exists() || file.isDirectory()) {
-            Tracer.info("Could not find File \"data.properties\", creating it now");
+            Tracer.info("Could not find File \"yaml.properties\", creating it now");
             try {
                 createSettingsFile(file);
             } catch (IOException e) {
-                throw new RuntimeException("Error while loading \"data.properties\" File");
+                throw new RuntimeException("Error while loading \"yaml.properties\" File");
             }
         }
 
@@ -285,7 +285,7 @@ public class PropertiesDataManager {
         try {
             FileUtils.openOutputStream(file).close();
         } catch (IOException e) {
-            Tracer.error("Error trying to create default \"data.properties\" File:", e);
+            Tracer.error("Error trying to create default \"yaml.properties\" File:", e);
             throw new IOException("File could not be created");
         }
     }
@@ -307,7 +307,7 @@ public class PropertiesDataManager {
         try {
             return setting == null ? null : settingClass.cast(setting);
         } catch (ClassCastException e) {
-            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with value of \""
+            Tracer.warn("Unable to cast setting \"" + settingKey + "\" with second of \""
                     + setting + " \" to class \"" + settingClass.getSimpleName() + "\"");
             return null;
         }
@@ -333,7 +333,7 @@ public class PropertiesDataManager {
             @Cleanup val outputStream = FileUtils.openOutputStream(new File(FILE_NAME));
             settings.store(outputStream, SETTINGS_COMMENT);
         } catch (IOException e) {
-            Tracer.error("An error occurred while trying to save \"data.properties\":", e);
+            Tracer.error("An error occurred while trying to save \"yaml.properties\":", e);
         }
     }
 }

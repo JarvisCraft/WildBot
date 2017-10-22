@@ -210,39 +210,56 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
+import ru.wildbot.wildbotcore.api.manager.WildBotManager;
+import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 
 @RequiredArgsConstructor
-public class RconServerManager implements NettyBasedManager {
-    @Getter private boolean isInit = false;
-    @Getter private boolean isNettyInit = false;
+public class RconServerManager implements WildBotManager, WildBotNettyManager {
+    @Getter private boolean enabled = false;
+    @Getter private boolean nettyEnabled = false;
 
     @NonNull @Getter private final RconServerManagerSettings settings;
     @NonNull private final RconPackets packets;
 
     @Override
-    public void init() throws Exception {
-        checkInit();
+    public void enable() throws Exception {
+        checkEnabled();
 
-        initNetty();
+        enableNetty();
 
-        isInit = true;
+        enabled = true;
+    }
+
+    @Override
+    public void disable() throws Exception {
+        checkDisabled();
+        // TODO: 21.10.2017
+        enabled = false;
     }
 
     public final String NETTY_CHANNEL_NAME = "rcon";
 
     @Override
-    public void initNetty() throws Exception {
-        checkNettyInit();
+    public void enableNetty() throws Exception {
+        checkNettyEnabled();
 
-        Tracer.info("Starting RCON server on port " + settings.getPort() + " by key: " + settings.getKey());
+        Tracer.info("Starting RCON netty on port " + settings.getPort() + " by first: " + settings.getKey());
 
         WildBotCore.getInstance().getNettyServerCore().startStandard(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .childHandler(new RconChannelInitializer(settings.getKey(), packets)), settings.getPort());
 
-        Tracer.info("RCON server has been successfully started");
+        Tracer.info("RCON netty has been successfully started");
 
-        isNettyInit = true;
+        nettyEnabled = true;
+    }
+
+    @Override
+    public void disableNetty() throws Exception {
+        checkNettyDisabled();
+
+        WildBotCore.nettyServerCore().close(NETTY_CHANNEL_NAME, settings.getPort());
+
+        nettyEnabled = false;
     }
 }

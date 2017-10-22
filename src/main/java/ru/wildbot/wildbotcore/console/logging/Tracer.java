@@ -218,8 +218,6 @@ import java.util.regex.Pattern;
 
 @Log4j2(topic = "WildBot")
 public class Tracer {
-    //@Getter public static final InternalLogger logger = Log4J2LoggerFactory.getInstance("WildBotCore");
-
     ///////////////////////////////////////////////////////////////////////////
     // Info
     ///////////////////////////////////////////////////////////////////////////
@@ -463,7 +461,7 @@ public class Tracer {
                 outputSessionInfo();
             } else {
                 outputSessionInfo();
-                info("No data found in \"latest.log\", adding it for you <3");
+                info("No yaml found in \"latest.log\", adding it for you <3");
             }
         } catch (IOException e) {
             System.err.println("An error occurred while trying to update \".log\" files:");

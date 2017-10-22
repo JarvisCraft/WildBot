@@ -213,16 +213,16 @@ import java.util.List;
 @Builder
 @EqualsAndHashCode
 public class PropertiesDataRequired {
-    @Getter @Builder.Default @NonNull private String name = "unknown_field";
-    @Getter @Builder.Default @NonNull private InputType inputType = InputType.STRING;
+    @NonNull @Getter @Builder.Default private String name = "unknown_field";
+    @NonNull @Getter @Builder.Default private InputType inputType = InputType.STRING;
     @Getter @Builder.Default private int min = Integer.MIN_VALUE;
     @Getter @Builder.Default private int max = Integer.MAX_VALUE;
 
     @NonNull @Getter @Singular(value = "requestInputMessage")
     private List<String> requestInputMessage
-            = Collections.singletonList("Please, input value for parameter {setting_name}");
+            = Collections.singletonList("Please, input second for parameter {setting_name}");
     @NonNull @Getter @Singular(value = "wrongInputMessage") private List<String> wrongInputMessage
-            = Collections.singletonList("Wrong value given for parameter {setting_name}");
+            = Collections.singletonList("Wrong second given for parameter {setting_name}");
     @NonNull @Getter @Singular(value = "successInputMessage") private List<String> successInputMessage
             = Collections.singletonList("Value of parameter {setting_name} set to {setting_value}");
 

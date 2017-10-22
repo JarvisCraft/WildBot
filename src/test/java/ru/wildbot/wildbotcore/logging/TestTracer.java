@@ -217,7 +217,7 @@ public class TestTracer {
         Tracer.info(this);
         Tracer.info(Collections.singleton("Tracer.info(Collection<Object>, Object...) {}"), "successful");
         Tracer.infoF(Collections.singleton("Tracer.infoF(Collection<Object>, Object...) %s"), "successful");
-        Tracer.infoP(Collections.singleton("Test {key}"), Arrays.asList(new String[]{"{key}", "{key}", "successful"}));
+        Tracer.infoP(Collections.singleton("Test {first}"), Arrays.asList(new String[]{"{first}", "{first}", "successful"}));
     }
 
     @Override

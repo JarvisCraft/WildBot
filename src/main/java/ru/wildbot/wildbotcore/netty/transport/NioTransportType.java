@@ -202,111 +202,40 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.server;
+package ru.wildbot.wildbotcore.netty.transport;
 
-import com.vk.api.sdk.actions.Groups;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.objects.groups.CallbackServer;
-import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
-import io.netty.bootstrap.ServerBootstrap;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.api.manager.WildBotManager;
-import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
-import ru.wildbot.wildbotcore.vk.VkManager;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
-public class VkCallbackServerManager implements WildBotManager, WildBotNettyManager {
-    @Getter private boolean enabled = false;
-    @Getter private boolean nettyEnabled = false;
-
-    @NonNull private final VkManager vkManager;
-    @NonNull private final VkCallbackServerManagerSettings settings;
-
-    // VK API special
-    private CallbackServer callbackServer = null;
-    private String confirmationCode;
-    @Getter private int id;
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
+public class NioTransportType extends NettyTransportType {
 
     @Override
-    public void enable() throws Exception {
-        checkEnabled();
-
-        // Shorthands
-        final Groups group = vkManager.getVkApi().groups();
-        final GroupActor actor = vkManager.getActor();
-
-        // Confirmation code (taken from VK-group)
-        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
-
-        enableNetty();
-        findCallbackServer(group, actor);
-        registerCallbackServerIfAbsent(group, actor);
-
-        Tracer.info("Using Host \"" + settings.getHost() + "\" for Callback Server");
-
-        enabled = true;
+    public Class<? extends EventLoopGroup> getEventLoopGroupClass() {
+        return NioEventLoopGroup.class;
     }
 
     @Override
-    public void disable() throws Exception {
-        checkDisabled();
-        // TODO: 21.10.2017
-        enabled = false;
-    }
-
-    public final String NETTY_CHANNEL_NAME = "vk_callback";
-
-    @Override
-    public void enableNetty() throws Exception {
-        checkNettyEnabled();
-
-        Tracer.info("Starting VK-Callback netty on port: " + settings.getPort());
-
-        WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .childHandler(new VkCallbackChannelInitializer(vkManager, confirmationCode)), settings.getPort());
-
-        Tracer.info("VK-Callback netty has been successfully started");
-
-        nettyEnabled = true;
+    public EventLoopGroup newEventLoopGroup() {
+        return new NioEventLoopGroup();
     }
 
     @Override
-    public void disableNetty() throws Exception {
-        checkNettyDisabled();
-
-        WildBotCore.nettyServerCore().close(NETTY_CHANNEL_NAME, settings.getPort());
-
-        nettyEnabled = false;
+    public EventLoopGroup newEventLoopGroup(int nThreads) {
+        return new NioEventLoopGroup(nThreads);
     }
 
-    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Finding CallBack Server in the list of registered");
-
-        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
-
-        for (CallbackServer callbackServerTested : servers.getItems())
-            if (callbackServerTested.getUrl()
-                    .equalsIgnoreCase(settings.getHost())) {
-                Tracer.info("CallbackServer was found by host \"" + settings.getHost() + "\"");
-                callbackServer = callbackServerTested;
-                id = callbackServer.getId();
-                break;
-            }
+    @Override
+    public Class<? extends ServerSocketChannel> getServerSocketChannelClass() {
+        return NioServerSocketChannel.class;
     }
 
-    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Registering custom Callback Server");
-
-        if (callbackServer == null) {
-            Tracer.info("There were no registered CallbackServer with host " + settings.getHost());
-            id = group.addCallbackServer(actor, settings.getHost(), settings.getTitle()).execute().getServerId();
-            findCallbackServer(group, actor);
-        }
+    @Override
+    public ServerSocketChannel newServerSocketChannel() {
+        return new NioServerSocketChannel();
     }
 }

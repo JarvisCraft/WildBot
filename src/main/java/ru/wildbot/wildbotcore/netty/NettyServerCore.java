@@ -202,53 +202,62 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.server;
+package ru.wildbot.wildbotcore.netty;
 
-import com.vk.api.sdk.actions.Groups;
-import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
-import com.vk.api.sdk.objects.groups.CallbackServer;
-import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.WildBotCore;
+import lombok.val;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
-import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
-import ru.wildbot.wildbotcore.vk.VkManager;
+import ru.wildbot.wildbotcore.netty.transport.NettyTransportType;
+import ru.wildbot.wildbotcore.util.collection.Pair;
 
-@RequiredArgsConstructor
-public class VkCallbackServerManager implements WildBotManager, WildBotNettyManager {
-    @Getter private boolean enabled = false;
-    @Getter private boolean nettyEnabled = false;
+import java.util.HashSet;
 
-    @NonNull private final VkManager vkManager;
-    @NonNull private final VkCallbackServerManagerSettings settings;
+@AllArgsConstructor
+public class NettyServerCore implements WildBotManager {
+    @NonNull private final NettyServerCoreSettings settings;
 
-    // VK API special
-    private CallbackServer callbackServer = null;
-    private String confirmationCode;
-    @Getter private int id;
+    @Getter private NettyTransportType transportType;
+
+    @NonNull @Getter private boolean enabled = false;
+
+    private EventLoopGroup parentGroup;
+    private EventLoopGroup childGroup;
+
+    // Each name can associate with multiple Pairs of Channel and it's Port
+    private final Multimap<String, Pair<ChannelFuture, Integer>> channels = ArrayListMultimap.create();
+
+    private Thread shutdownHook = new Thread(() -> {
+        try {
+            shutdown();
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to disable Netty-Server-core " +
+                    "while Shutting Down Runtime:", e);
+        }
+    });
 
     @Override
     public void enable() throws Exception {
         checkEnabled();
 
-        // Shorthands
-        final Groups group = vkManager.getVkApi().groups();
-        final GroupActor actor = vkManager.getActor();
+        if (settings.isUseNative()) transportType = NettyTransportType.getNative();
+        else transportType = NettyTransportType.getDefault();
 
-        // Confirmation code (taken from VK-group)
-        confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
+        Tracer.info("Using " + transportType.getClass().getSimpleName() + " for Netty ServerCore");
+        // Parent (boss) and Child (worker) groups
+        parentGroup = transportType.newEventLoopGroup(settings.getParentThreads());
+        childGroup = transportType.newEventLoopGroup(settings.getChildThreads());
 
-        enableNetty();
-        findCallbackServer(group, actor);
-        registerCallbackServerIfAbsent(group, actor);
-
-        Tracer.info("Using Host \"" + settings.getHost() + "\" for Callback Server");
+        // Hook to safe-stop netty in case of process being shut-down
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         enabled = true;
     }
@@ -256,57 +265,125 @@ public class VkCallbackServerManager implements WildBotManager, WildBotNettyMana
     @Override
     public void disable() throws Exception {
         checkDisabled();
-        // TODO: 21.10.2017
+
+        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+
+        shutdown();
+
+        parentGroup = null;
+        childGroup = null;
+
+        transportType = null;
+
+        channels.clear();
+
         enabled = false;
     }
 
-    public final String NETTY_CHANNEL_NAME = "vk_callback";
-
-    @Override
-    public void enableNetty() throws Exception {
-        checkNettyEnabled();
-
-        Tracer.info("Starting VK-Callback netty on port: " + settings.getPort());
-
-        WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .childHandler(new VkCallbackChannelInitializer(vkManager, confirmationCode)), settings.getPort());
-
-        Tracer.info("VK-Callback netty has been successfully started");
-
-        nettyEnabled = true;
+    public NettyServerCore(final NettyServerCoreSettings settings) {
+        this.settings = settings;
     }
 
-    @Override
-    public void disableNetty() throws Exception {
-        checkNettyDisabled();
-
-        WildBotCore.nettyServerCore().close(NETTY_CHANNEL_NAME, settings.getPort());
-
-        nettyEnabled = false;
+    public NettyServerCore(final int parentThreads, final int childThreads, final boolean useNative) {
+        this(new NettyServerCoreSettings(parentThreads, childThreads, useNative));
     }
 
-    public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Finding CallBack Server in the list of registered");
+    public NettyServerCore(final int parentThreads, final int childThreads) {
+        this(parentThreads, childThreads, true);
+    }
 
-        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
+    public NettyServerCore() {
+        this(0, 0);
+    }
 
-        for (CallbackServer callbackServerTested : servers.getItems())
-            if (callbackServerTested.getUrl()
-                    .equalsIgnoreCase(settings.getHost())) {
-                Tracer.info("CallbackServer was found by host \"" + settings.getHost() + "\"");
-                callbackServer = callbackServerTested;
-                id = callbackServer.getId();
-                break;
+    public void open(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
+        Tracer.info("Opening Netty Channel for name `" + name + "`");
+
+        // Add parent and children for Bootstrap if none
+        if (bootstrap.group() == null || bootstrap.childGroup() == null) bootstrap.group(parentGroup, childGroup);
+
+        // Registering in `channels` Map
+        channels.put(name, Pair.of(bootstrap.bind(port), port));
+
+        Tracer.info("Netty Channel for name `" + name + "` has been successfully opened");
+    }
+
+    public boolean close(final String name, final int port) throws Exception {
+        Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
+
+        if (channels.containsKey(name)) {
+            for (val channel : channels.get(name)) if (channel.getSecond() == port) {
+                Tracer.info("Closing Netty Channel on port " + channel.getSecond());
+
+                channel.getFirst().channel().closeFuture().channel().close();
+                channels.remove(name, channel);
+
+                Tracer.info("Netty Channel for name `" + name + "` on port " + port
+                        + " has been successfully stopped");
+
+                return true;
             }
+        }
+
+        Tracer.info("There is no registered Netty Channel for name `" + name + "` on port " + port
+                + " to be stopped");
+
+        return false;
     }
 
-    public void registerCallbackServerIfAbsent(Groups group, GroupActor actor) throws ApiException, ClientException {
-        Tracer.info("Registering custom Callback Server");
+    public boolean close(final String name) throws Exception {
+        Tracer.info("Closing all Netty Channels for name `" + name + "`");
 
-        if (callbackServer == null) {
-            Tracer.info("There were no registered CallbackServer with host " + settings.getHost());
-            id = group.addCallbackServer(actor, settings.getHost(), settings.getTitle()).execute().getServerId();
-            findCallbackServer(group, actor);
+        if (channels.containsKey(name)) {
+            val removes = new HashSet<Pair<String, Pair<ChannelFuture, Integer>>>();
+
+            for (Pair<ChannelFuture, Integer> channel : this.channels.get(name)) {
+                Tracer.info("Closing Netty Channel on port " + channel.getSecond());
+
+                channel.getFirst().channel().closeFuture().channel().close();
+                removes.add(Pair.of(name, channel));
+            }
+
+            for (val remove : removes) channels.remove(remove.getFirst(), remove.getSecond());
+
+            Tracer.info("All Netty Channels for name `" + name + "` have been successfully stopped");
+
+            return true;
+        } else {
+            Tracer.info("There are no registered Netty Channels for name `" + name + "` to be stopped");
+
+            return false;
         }
+    }
+
+    public boolean closeAll() throws Exception {
+        Tracer.info("Closing all Netty Channels");
+
+        if (channels.isEmpty()) {
+            Tracer.info("There are no registered Netty Channels");
+            return false;
+        }
+
+        for (val channelName : channels.keys()) close(channelName);
+        Tracer.info("All Netty Channels have been closed");
+
+        return true;
+    }
+
+    public void startStandard(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
+        open(name, bootstrap.channel(transportType.getServerSocketChannelClass())
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+    }
+
+    public void startHttp(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
+        open(name, bootstrap.channel(transportType.getServerSocketChannelClass())
+                .option(ChannelOption.SO_BACKLOG, 128)
+                .childOption(ChannelOption.SO_KEEPALIVE, true), port);
+    }
+
+    public void shutdown() {
+        childGroup.shutdownGracefully();
+        parentGroup.shutdownGracefully();
     }
 }

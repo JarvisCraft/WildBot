@@ -207,27 +207,26 @@ package ru.wildbot.wildbotcore.telegram.webhook;
 import com.pengrad.telegrambot.request.GetWebhookInfo;
 import com.pengrad.telegrambot.request.SetWebhook;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.manager.NettyBasedManager;
+import ru.wildbot.wildbotcore.api.manager.WildBotManager;
+import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 
 @RequiredArgsConstructor
-public class TelegramWebhookManager implements NettyBasedManager {
-    @Getter private boolean isInit = false;
-    @Getter private boolean isNettyInit = false;
+public class TelegramWebhookManager implements WildBotManager, WildBotNettyManager {
+    @Getter private boolean enabled = false;
+    @Getter private boolean nettyEnabled = false;
 
     @NonNull @Getter private final TelegramBotManager botManager;
     @NonNull @Getter private final TelegramWebhookManagerSettings settings;
 
     @Override
-    public void init() throws Exception {
-        checkInit();
+    public void enable() throws Exception {
+        checkEnabled();
 
         if (!botManager.execute(new GetWebhookInfo()).webhookInfo().url().equals(settings.getHost())) {
             Tracer.info("PropertiesDataRequired Telegram WebHook URL to: " + settings.getHost());
@@ -239,24 +238,40 @@ public class TelegramWebhookManager implements NettyBasedManager {
                     + botManager.execute(new GetWebhookInfo()).webhookInfo().url());
         }
 
-        initNetty();
+        enableNetty();
 
-        isInit = true;
+        enabled = true;
+    }
+
+    @Override
+    public void disable() throws Exception {
+        checkDisabled();
+        // TODO: 21.10.2017
+        enabled = false;
     }
 
     public final String NETTY_CHANNEL_NAME = "telegram_webhook";
 
     @Override
-    public void initNetty() throws Exception {
-        checkNettyInit();
+    public void enableNetty() throws Exception {
+        checkNettyEnabled();
 
-        Tracer.info("Starting Telegram-Webhook server on port: " + settings.getPort());
+        Tracer.info("Starting Telegram-Webhook netty on port: " + settings.getPort());
 
         WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
                 .childHandler(new TelegramWebhookChannelInitializer(botManager)), settings.getPort());
 
-        Tracer.info("Telegram-Webhook server has been successfully started");
+        Tracer.info("Telegram-Webhook netty has been successfully started");
 
-        isNettyInit = true;
+        nettyEnabled = true;
+    }
+
+    @Override
+    public void disableNetty() throws Exception {
+        checkNettyDisabled();
+
+        WildBotCore.nettyServerCore().close(NETTY_CHANNEL_NAME, settings.getPort());
+
+        nettyEnabled = false;
     }
 }

@@ -212,11 +212,11 @@ import com.pengrad.telegrambot.response.BaseResponse;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import ru.wildbot.wildbotcore.core.manager.ManagerInitialisable;
+import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 
 @RequiredArgsConstructor
-public class TelegramBotManager implements ManagerInitialisable {
-    @Getter private boolean isInit = false;
+public class TelegramBotManager implements WildBotManager {
+    @Getter private boolean enabled = false;
 
     @NonNull private final TelegramBotManagerSettings settings;
 
@@ -224,15 +224,22 @@ public class TelegramBotManager implements ManagerInitialisable {
 
 
     /**
-     * Initialises Telegram Bot (for outcoming data)
+     * Initialises Telegram Bot (for outcoming yaml)
      */
     @Override
-    public void init() throws Exception {
-        checkInit();
+    public void enable() throws Exception {
+        checkEnabled();
 
         bot = TelegramBotAdapter.build(settings.getToken());
 
-        isInit = true;
+        enabled = true;
+    }
+
+    @Override
+    public void disable() throws Exception {
+        checkDisabled();
+        // TODO: 21.10.2017
+        enabled = false;
     }
 
     public <T extends BaseRequest, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
