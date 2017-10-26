@@ -204,24 +204,26 @@
 
 package ru.wildbot.wildbotcore;
 
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
-public class Analytics {
-    @Getter
-    private static long timeMark;
+import java.time.Duration;
+import java.time.Instant;
 
-    public static void updateStartTime() {
-        timeMark = System.currentTimeMillis();
+@UtilityClass
+public final class Analytics {
+
+    private static volatile Instant currentInstant = Instant.now();
+
+    public static synchronized void updateStartTime() {
+        currentInstant = Instant.now();
     }
 
-    public static long getUptime() {
-        return System.currentTimeMillis() - timeMark;
+    public static synchronized long getUptime() {
+        return Duration.between(Instant.now(), currentInstant).toMillis();
     }
 
-    @NonNull
-    public static String getUptimeFormatted() {
+    public static synchronized String getUptimeFormatted() {
         return DurationFormatUtils.formatDurationHMS(getUptime());
     }
 }
