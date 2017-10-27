@@ -210,11 +210,17 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
+import java.util.Arrays;
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class TelegramWebhookManagerSettings extends AbstractJsonData {
     @NonNull @Getter private String host = "http://example.com/vk-webhook-netty";
     @NonNull @Getter private int port = 12424;
     @NonNull @Getter private int maxConnections = 40;
-    @NonNull @Getter private String[] updates = {"*"};
+    @NonNull private String[] updates = {"*"};
+
+    public String[] getUpdates() {
+        return Arrays.copyOf(updates, updates.length);
+    }
 }

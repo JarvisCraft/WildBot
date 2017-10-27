@@ -300,13 +300,14 @@ public class PluginManager {
             for (Method method : methods) if (method.isAnnotationPresent(OnDisable.class)) method.invoke(plugin);
             plugins.remove(pluginData.name());
         } catch (Exception e) {
-            Tracer.error("An exception occurred while trying to disable plugin by name \"");
+            Tracer.error("An exception occurred while trying to disable plugin by name \"" + pluginData.name()
+                    + "\":", e);
         }
 
         Tracer.info("Plugin \"" + plugin.getClass().getSimpleName() + "\" was successfully disabled");
     }
 
-    public final String PLUGINS_FOLDER = "plugins";
+    public static final String PLUGINS_FOLDER = "plugins";
 
     public void loadPlugins() {
         val files = loadJarFiles();

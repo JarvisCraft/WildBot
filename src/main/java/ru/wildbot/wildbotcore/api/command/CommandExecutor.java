@@ -204,9 +204,9 @@
 
 package ru.wildbot.wildbotcore.api.command;
 
-import java.util.Collection;
+import java.util.List;
 
 @FunctionalInterface
 public interface CommandExecutor {
-    Runnable execute(Command command, String name, Collection<String> arguments);
+    Runnable execute(Command command, String name, List<String> arguments);
 }

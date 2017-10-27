@@ -202,16 +202,57 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.secure.googleauth;
 
-import com.vk.api.sdk.callback.objects.photo.CallbackPhotoComment;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
+import lombok.*;
 
-@AllArgsConstructor
-public class VkPhotoCommentEditEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private CallbackPhotoComment message;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+public class GoggleAuthManager {
+    private ConcurrentMap<AuthId, AuthContainer> keys = new ConcurrentHashMap<>();
+
+    public String newKey(final AuthId id) {
+        val authenticator = new GoogleAuthenticator();
+        val credentials = authenticator.createCredentials();
+
+        val authContainer = new AuthContainer(authenticator, credentials.getKey());
+
+        keys.put(id, authContainer);
+
+        return authContainer.secret;
+    }
+
+    public Optional<String> getSecret(final AuthId id) {
+        return Optional.ofNullable(keys.containsKey(id) ? keys.get(id).secret : null);
+    }
+
+    public AuthStatus auth(final AuthId id, final int key) {
+        if (!keys.containsKey(id)) return AuthStatus.NOT_FOUND;
+
+        val authContainer = keys.get(id);
+
+        return authContainer.authenticator.authorize(authContainer.secret, key)
+                ? AuthStatus.SUCCESS : AuthStatus.FAILURE;
+    }
+
+    /*
+    public String getQr(AuthId id) {
+        return GoogleAuthenticatorQRGenerator.getOtpAuthURL()
+    }
+    */
+
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    private final static class AuthContainer {
+        @NonNull private final GoogleAuthenticator authenticator;
+        @NonNull private final String secret;
+    }
+
+    public enum AuthStatus {
+        SUCCESS, FAILURE, NOT_FOUND
+    }
 }

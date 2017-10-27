@@ -230,13 +230,12 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     @NonNull private final VkManager vkManager;
     @NonNull private final String confirmationCode;
 
-    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
     private final Gson gson = new Gson();
     private final VkCallbackHandler callbackApiHandler = new VkCallbackHandler();
 
     @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
-    @Getter private final String OK_RESPONSE = "ok";
+    public static final String OK_RESPONSE = "ok";
 
     public static final String ERROR_HTML_FILE_NAME = "html/vk/callback/error.html";
 
@@ -255,7 +254,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
                 Tracer.info("Could not find File \"vk_callback_error.html\", creating it now");
 
                 @Cleanup val outputStream = FileUtils.openOutputStream(errorFile);
-                outputStream.write(htmlErrorContent.getBytes());
+                outputStream.write(htmlErrorContent.getBytes(StandardCharsets.UTF_8));
 
                 Tracer.info("File \"vk_callback_error.html\" has been successfully created");
             }
@@ -313,20 +312,21 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
         context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
+                HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                copiedBuffer(cause.getMessage().getBytes(StandardCharsets.UTF_8))));
     }
 
     // Gets Callback (if everything OK and not confirmation)
     private String parseIfPossibleCallback(final FullHttpRequest request) {
         if (request == null || request.getMethod() != HttpMethod.POST) return null;
-        return request.content().toString(UTF_8_CHARSET);
+        return request.content().toString(StandardCharsets.UTF_8);
     }
 
     // Response (confirmation code)
     private void sendConfirmationResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(confirmationCode.getBytes()));
+                HttpResponseStatus.OK, copiedBuffer(confirmationCode.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
@@ -342,7 +342,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes()));
+                HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
@@ -358,7 +358,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
+                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,

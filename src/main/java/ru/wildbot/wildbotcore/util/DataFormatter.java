@@ -207,6 +207,8 @@ package ru.wildbot.wildbotcore.util;
 import io.netty.util.internal.UnstableApi;
 import lombok.experimental.UtilityClass;
 
+import java.util.Random;
+
 @UtilityClass
 public class DataFormatter {
     public static final String HTTP_PREFIX = "http://";
@@ -295,8 +297,10 @@ public class DataFormatter {
         return host;
     }
 
+    private static final Random RANDOM = new Random();
+
     public static int validatePort(int port) {
-        if (port == 0) port = (int) (Math.random() * PORT_MAX_VALUE) + 1; // Use random value if port is 0
+        if (port == 0) port = RANDOM.nextInt(PORT_MAX_VALUE + 1); // Use random value if port is 0
         port = Math.abs(port); // Port must be positive
         while (port > PORT_MAX_VALUE) port -= PORT_MAX_VALUE; // Port can't be higher than 65536
 

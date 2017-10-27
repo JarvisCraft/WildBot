@@ -232,7 +232,7 @@ public class VkManager implements WildBotManager {
     @Getter @Setter private GroupActor actor;
     @Getter @Setter private GroupFull group;
 
-    public final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
+    public static final String HELLO_WORLD = "Hello World!\n\nInitializing Wildbot:\n" +
             "\nName: ${name}\nVersion: ${version}\nProtocol: WildBot-CustomProtocol\nSystemTime: ";
 
     @Override

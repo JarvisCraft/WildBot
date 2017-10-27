@@ -238,7 +238,7 @@ public class PropertiesDataReader {
     }
 
     private static Object readSettingFromConsole(final PropertiesDataRequired setting) {
-        final Scanner scanner = new Scanner(System.in);
+        final Scanner scanner = new Scanner(System.in, "UTF-8");
 
         try {
             switch (setting.getInputType()) {

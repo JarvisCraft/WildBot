@@ -204,7 +204,6 @@
 
 package ru.wildbot.wildbotcore.api.event;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.val;
 import ru.wildbot.wildbotcore.util.collection.Pair;
@@ -214,7 +213,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EventListenersQueue extends ArrayList<Class<?>> {
-    @Getter private List<EventHandlerMethod> handlers = new ArrayList<>();
+    @Getter private transient List<EventHandlerMethod> handlers = new ArrayList<>();
 
     public EventListenersQueue(final WildBotEvent event, final List<Object> eventListeners) {
         // Get all handler methods
@@ -240,8 +239,7 @@ public class EventListenersQueue extends ArrayList<Class<?>> {
         }
     }
 
-    @EqualsAndHashCode
-    public class EventHandlerMethod extends Pair<Pair<Method, Object>, Integer> {
+    public static class EventHandlerMethod extends Pair<Pair<Method, Object>, Integer> {
         public EventHandlerMethod(final Method handler, final Object listener, final Integer order) {
             super(Pair.of(handler, listener), order);
         }

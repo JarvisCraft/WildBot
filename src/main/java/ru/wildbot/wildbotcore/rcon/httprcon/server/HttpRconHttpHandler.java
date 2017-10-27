@@ -216,7 +216,6 @@ import ru.wildbot.wildbotcore.rcon.httprcon.event.HttpRconEvent;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -226,12 +225,11 @@ import static io.netty.buffer.Unpooled.copiedBuffer;
 public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     @NonNull private final String key;
 
-    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
-    private final Gson gson = new Gson();
+    private final Gson gson = new Gson(); // TODO: 24.10.2017 use 
 
     @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
-    @Getter private final String OK_RESPONSE = "ok";
+    public static final String OK_RESPONSE = "ok";
 
     public static final String ERROR_HTML_FILE_NAME = "html/rcon/httprcon/error.html";
 
@@ -248,7 +246,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                 Tracer.info("Could not find File \"error.html\", creating it now");
 
                 @Cleanup val outputStream = FileUtils.openOutputStream(errorFile);
-                outputStream.write(htmlErrorContent.getBytes());
+                outputStream.write(htmlErrorContent.getBytes(StandardCharsets.UTF_8));
 
                 Tracer.info("File \"error.html\" has been successfully created");
             }
@@ -306,7 +304,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                                 final String htmlResponse) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(htmlResponse.getBytes()));
+                HttpResponseStatus.OK, copiedBuffer(htmlResponse.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
@@ -327,7 +325,8 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
         try {
             context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.INTERNAL_SERVER_ERROR, copiedBuffer(cause.getMessage().getBytes())));
+                    HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                    copiedBuffer(cause.getMessage().getBytes(StandardCharsets.UTF_8))));
         } catch (Exception e) {
             Tracer.info("context: " + context);
             Tracer.info("cause: " + cause);
@@ -338,14 +337,14 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     // Gets Callback (if everything OK and not confirmation)
     private String parseIfPossibleCallback(final FullHttpRequest request) {
         if (request == null || request.getMethod() != HttpMethod.POST) return null;
-        return request.content().toString(UTF_8_CHARSET);
+        return request.content().toString(StandardCharsets.UTF_8);
     }
 
     // Response (error)
     private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
         final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes()));
+                HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,

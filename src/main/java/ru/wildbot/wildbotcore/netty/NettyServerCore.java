@@ -315,7 +315,10 @@ public class NettyServerCore implements WildBotManager {
             for (val channel : channels.get(name)) if (channel.getSecond() == port) {
                 Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
-                channel.getFirst().channel().closeFuture().channel().close();
+                // TODO: 26.10.2017  channel.getFirst().channel().closeFuture().sync();
+
+                Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
+
                 channels.remove(name, channel);
 
                 Tracer.info("Netty Channel for name `" + name + "` on port " + port
@@ -340,7 +343,10 @@ public class NettyServerCore implements WildBotManager {
             for (Pair<ChannelFuture, Integer> channel : this.channels.get(name)) {
                 Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
-                channel.getFirst().channel().closeFuture().channel().close();
+                // TODO: 26.10.2017  channel.getFirst().channel().closeFuture().sync();
+
+                Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
+
                 removes.add(Pair.of(name, channel));
             }
 

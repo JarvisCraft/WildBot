@@ -207,9 +207,11 @@ package ru.wildbot.wildbotcore.console.logging;
 import lombok.Cleanup;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -438,7 +440,8 @@ public class Tracer {
     public static void setupLogging() {
         final File file = new File(LATEST_LOG);
         try {
-            @Cleanup val reader = new BufferedReader(new FileReader(file));
+            @Cleanup val reader = new BufferedReader(new InputStreamReader(FileUtils
+                    .openInputStream(file), StandardCharsets.UTF_8));
 
             String previousLog = reader.readLine();
 
@@ -456,7 +459,7 @@ public class Tracer {
 
                 Files.copy(file.toPath(), new File(previousLog).toPath());
 
-                new PrintWriter(file).close();
+                new PrintWriter(file, "UTF-8").close();
 
                 outputSessionInfo();
             } else {

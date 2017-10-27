@@ -256,11 +256,13 @@ public class VkCallbackServerManager implements WildBotManager, WildBotNettyMana
     @Override
     public void disable() throws Exception {
         checkDisabled();
+
+        disableNetty();
         // TODO: 21.10.2017
         enabled = false;
     }
 
-    public final String NETTY_CHANNEL_NAME = "vk_callback";
+    public static final String NETTY_CHANNEL_NAME = "vk_callback";
 
     @Override
     public void enableNetty() throws Exception {

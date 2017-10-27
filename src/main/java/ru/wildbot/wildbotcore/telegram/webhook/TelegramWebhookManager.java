@@ -250,7 +250,7 @@ public class TelegramWebhookManager implements WildBotManager, WildBotNettyManag
         enabled = false;
     }
 
-    public final String NETTY_CHANNEL_NAME = "telegram_webhook";
+    public static final String NETTY_CHANNEL_NAME = "telegram_webhook";
 
     @Override
     public void enableNetty() throws Exception {

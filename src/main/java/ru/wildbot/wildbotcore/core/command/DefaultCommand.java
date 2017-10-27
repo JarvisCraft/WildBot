@@ -207,9 +207,12 @@ package ru.wildbot.wildbotcore.core.command;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.val;
+import org.apache.commons.lang3.math.NumberUtils;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.api.command.Command;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.secure.googleauth.AuthId;
 
 @AllArgsConstructor
 public enum DefaultCommand {
@@ -217,7 +220,8 @@ public enum DefaultCommand {
             .name("stop")
             .name("end")
             .pluginName("")
-            .executor((command, name, executor) -> {
+            .locked(true)
+            .executor((command, name, arguments) -> {
         Tracer.info("Stopping WildBot due to `stop` command being called");
         WildBotCore.getInstance().disable();
         return null;
@@ -226,10 +230,79 @@ public enum DefaultCommand {
     INFO(Command.builder()
             .name("info")
             .pluginName("")
-            .executor((command, name, executor) -> {
+            .executor((command, name, args) -> {
         WildBotCore.getInstance().logInfo();
         return null;
+    }).build()),
+
+    AUTH_KEY_NEW(Command.builder()
+            .name("auth_key_new")
+            .pluginName("")
+            .executor((command, name, args) -> {
+        if (args.size() >= 2) {
+
+            val id = new AuthId(args.get(0), args.get(1));
+
+            Tracer.info("Using AuthID: " + id);
+
+            val key = WildBotCore.goggleAuthManager().newKey(id);
+
+            Tracer.info("Key generated: " + key);
+        } else Tracer.info("Insert your Key `platform` and `name`");
+
+        return null;
+    }).build()),
+
+    AUTH_KEY_CHECK(Command.builder()
+            .name("auth_key_check")
+            .pluginName("")
+            .executor((command, name, args) -> {
+        if (args.size() >= 3) {
+            if (NumberUtils.isCreatable(args.get(2))) {
+                val id = new AuthId(args.get(0), args.get(1));
+                Tracer.info("Using AuthID: " + id);
+
+                Tracer.info("Key-check result: " + WildBotCore.goggleAuthManager().auth(id,
+                        NumberUtils.createNumber(args.get(2)).intValue()).name());
+            } else Tracer.info("Given key is not a valid number");
+        } else Tracer.info("Insert your Key `platform`, `name` and the very key");
+        return null;
+    }).build()),
+
+    VKCB_STOP(Command.builder()
+            .name("vkcb_stop")
+            .pluginName("")
+            .locked(true)
+            .executor((command, name, args) -> {
+        Tracer.info("Stopping VK-Callbacks");
+        try {
+            WildBotCore.vkCallbackServerManager().disable();
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to stop VK-Callbacks", e);
+        }
+        return null;
     }).build());
+
+    /*
+    AUTH_KEY_QR(Command.builder()
+            .name("auth_key_qr")
+            .pluginName("")
+            .executor((command, name, arguments) -> {
+
+                if (arguments.size() >= 2) {
+
+                    val id = new AuthId(arguments.get(0), arguments.get(1));
+
+                    Tracer.info("Using AuthID: " + id);
+
+                    val qr = WildBotCore.goggleAuthManager().getQr(id);
+
+                    Tracer.info("QR generated: " + key);
+                } else Tracer.info("Insert your Key `platform` and `name`");
+
+                return null;
+            }).build());
+    */
 
     @NonNull @Getter private final Command label;
 }

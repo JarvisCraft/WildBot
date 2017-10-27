@@ -210,7 +210,6 @@ import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
@@ -256,7 +255,7 @@ public class PropertiesDataManager {
 
         Properties settings = new Properties();
         try {
-            @Cleanup val inputStream = new FileInputStream(file);
+            @Cleanup val inputStream = FileUtils.openInputStream(file);
             settings.load(inputStream);
         } catch (IOException e) {
             Tracer.error("Error while trying to load Properties");

@@ -222,8 +222,6 @@ public class InboundRconChannelHandler extends ChannelInboundHandlerAdapter {
     @NonNull private final String key;
     @NonNull private final RconPackets packets;
 
-    private final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {

@@ -230,6 +230,7 @@ import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
+import ru.wildbot.wildbotcore.secure.googleauth.GoggleAuthManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManagerSettings;
 import ru.wildbot.wildbotcore.telegram.webhook.TelegramWebhookManager;
@@ -282,6 +283,10 @@ public class WildBotCore {
             registerEmpty(PaymentsProvider.class);
         }};
         Tracer.info("ProviderManager has been successfully enabled");
+
+        Tracer.info("Enabling GoogleAuthManager");
+        instance.goggleAuthManager = new GoggleAuthManager();
+        Tracer.info("GoogleAuthManager has been successfully enabled");
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.REQUIRED_MANAGERS).call();
 
@@ -355,6 +360,10 @@ public class WildBotCore {
     @Getter private CommandManager commandManager;
     @Shorthand public static CommandManager commandManager() {
         return instance.commandManager;
+    }
+    @Getter private GoggleAuthManager goggleAuthManager;
+    @Shorthand public static GoggleAuthManager goggleAuthManager() {
+        return instance.goggleAuthManager;
     }
 
     // Netty
@@ -564,7 +573,7 @@ public class WildBotCore {
     // Commands
     ///////////////////////////////////////////////////////////////////////////
 
-    private static Scanner scanner = new Scanner(System.in);
+    private static Scanner scanner = new Scanner(System.in, "UTF-8");
 
     public void registerDefaultCommands() {
         for (val command : DefaultCommand.values()) commandManager.register(command.getLabel());

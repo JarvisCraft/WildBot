@@ -238,7 +238,7 @@ public class RconServerManager implements WildBotManager, WildBotNettyManager {
         enabled = false;
     }
 
-    public final String NETTY_CHANNEL_NAME = "rcon";
+    public static final String NETTY_CHANNEL_NAME = "rcon";
 
     @Override
     public void enableNetty() throws Exception {

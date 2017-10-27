@@ -208,6 +208,7 @@ import lombok.Cleanup;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.val;
+import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
@@ -223,9 +224,9 @@ public class YamlReader {
     @SuppressWarnings("unchecked")
     public static @NonNull Map<String, Object> read(final File file) {
         try {
-            @Cleanup FileInputStream fileInputStream = new FileInputStream(file);
+            @Cleanup FileInputStream inputStream = FileUtils.openInputStream(file);
 
-            val yamlObject = new Yaml().load(fileInputStream);
+            val yamlObject = new Yaml().load(inputStream);
             return (Map<String, Object>) yamlObject;
         } catch (IOException e) {
             Tracer.error("An exception occurred while trying to load a YAML file:", e);

@@ -202,16 +202,16 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.secure.googleauth;
 
-import com.vk.api.sdk.callback.objects.photo.CallbackPhotoComment;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import lombok.*;
 
+@ToString
+@EqualsAndHashCode
 @AllArgsConstructor
-public class VkPhotoCommentEditEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private CallbackPhotoComment message;
+public final class AuthId {
+    @NonNull
+    @Getter
+    private final String platform;
+    @NonNull @Getter private final String id;
 }

@@ -222,8 +222,6 @@ import java.util.Optional;
 public class JsonDataManager {
     @Getter private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
-
     @NonNull public static <T extends AbstractJsonData> Optional<T> deserialize(final String json,
                                                                                 Class<T> objectType) {
         return Optional.ofNullable(gson.fromJson(json, objectType));
@@ -247,7 +245,7 @@ public class JsonDataManager {
                     Tracer.info("Writing default contents to file \"" + file.getName() + "\"");
 
                     val data = objectType.newInstance();
-                    outputStream.write(gson.toJson(data).getBytes());
+                    outputStream.write(gson.toJson(data).getBytes(StandardCharsets.UTF_8));
 
                     Tracer.info("Default contents have been successfully written to file \""
                             + file.getName() + "\"");
@@ -264,7 +262,7 @@ public class JsonDataManager {
 
         final String json;
         try {
-            json = FileUtils.readFileToString(file, UTF_8_CHARSET);
+            json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
             return Optional.empty();
         }
@@ -301,7 +299,7 @@ public class JsonDataManager {
 
     public static <T> Optional<T> write(final File file, final T object) {
         try {
-            FileUtils.write(file, gson.toJson(object), UTF_8_CHARSET);
+            FileUtils.write(file, gson.toJson(object), StandardCharsets.UTF_8);
         } catch (IOException e) {
             Tracer.error("An exception occurred while trying to write file \"" + file.getName() + "\":", e);
         }
