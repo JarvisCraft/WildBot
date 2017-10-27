@@ -14,5 +14,7 @@ cache:
     - ~/.m2/repository
 
 after_success:
+  - chmod +x ./cd/before-deploy.sh
+  - chmod +x ./cd/deploy.sh
   - ./cd/before-deploy.sh
   - ./cd/deploy.sh
