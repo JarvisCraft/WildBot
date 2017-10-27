@@ -2,9 +2,13 @@ language: java
 env:
   global:
     - secure: "u7Bf6PC9uKrQEwvmXd8chHAbTVIKW/8GF+zoiVb4mGo2umMjAKZBeb0t1iFtrT/4Aq/vme1vcAxff9TL31zYg2vbTnSj/dOZ1CeYp+OYTBwMO+hk2TESA9UStvxM8X6Qk0Rw14sTftpsoaBaXdjxvwTi+gLKwi2dLYkXfwA7nwe99WoNubl+4zYGBHAvawn66+C5DsN4RLDjII+wMT/bkERQ/oBS9+O3fQe2r+y2CK14owKkSCZ6tMH2Qpw2b9w+DwqSz2O+6V1TwBrSNme2/GuM0yxhqqN1we/qDXAb6b2FCjHfnR5Gtdb/JFn9ZXfb+nX9qnetns3i9dqw5zj/Wo6hwwQMTrwpuGkxzqpQfstiyDf6uECiGOjl9vzNkRzbg1fMCO/4aLYfXQyM7cBDj4N9z/OxX3TDRNn378MzXCcuRvPCzRNlh2huz46Y/WIve9Vgi4nqoCGKXHsXZPe81z+y68uSF1sZZA8FgmgOku+zdmMX0SyFzSosnHkzHXGYf6map7K/CbioKXGLX1cDXrq9IzYUhla/TJbCKpFfukl0ZM0nQG79PA1Gef+B0DQIKbyGR4GG/PrZHvAUgk4MrvPYKkFR5ALljo3rncBOFHBl5iuQODQymGMD0g8A5GUCLY3ernecgN/qoY9nwvLYu39/luRHB8IQJ7nzD0X7s6Q="
+    - # ^^ OSSRH_JIRA_USERNAME
     - secure: "FrTuO2TPWLXLbWZ/O/Pd7gouAuHyYqmW+iHBrdEYhvbOsiiiHLCJMAM2Pny/6kQxp3m6mGo7oElXKNu+jFD5w48EibBbuse0niluuTJ486dghuEYhDKKtbxJnk+fvBZg2hGVSMag2VO8S5g96s/+yQsLRE9IuRtX2M1W7hF/ni1G2+BQXAV7R2/sZoWYFearjIfZbTJqskCF2QuISmjWOaAOQ/2isM5doYo2OOryeH3pxCWsBOouD/Sd/j9SM3lrrOYVeYEhC/3oodJphcBGW50HXlpn4PMo/C+Dkn72tax4WmdDgRv35ZApi9HwfXKniXFMWaXuVfX6Bode40Tm9ltn0288NSQ/4TQwVEGhqkPJm23fR3Y3+UN0ln7i3W9KO5yvanJgDookT7eP+3wyJZWjPD88Awi2K9IJDFgc3uKQc9BvEeL19bdcx9t9ANBgaH9CGfM+O0h5MYnw2sreK3uspkZGC30Z2ndLzHCtcrEb6ogQjBpBmojymklNfAdyboIerzHpaN9obdQAzZcHsenjBdEM8GJU4djdI2zegLbWr6Xl+5kYvRqg8Zz1U7dUuabHE6g0HHFDiyGBdIEfP6Dwt15sM2aCaw2MS4AstoU++PPol84eE/ioYEv6I/Wc4r8k1C/am8OZbrM+GEqj3jnYPacgZJrz/wzyaeIy9NU="
+    - # ^^ OSSRH_JIRA_PASSWORD
     - secure: "BYIgucqxV/GesJY6ZoPAW/v+A7FrEDZ4gUm/pbH8ARUq2TN6niuctJUsjaYNXooMwI2qJ1xx4spSo4eA+Gr5WpO2p+Qh8EH/j+v0d+VnhYdkE3zRPQqrhnkLcVBmlJgp0hU9wwvCyBeSzf6itLgCoFst8mc7iQBAqdFb/MxmL3VAC+PEm/Zm7Hx26Y8lpODp/qnBTxVlvImVtkIa3Z8OqJkDirY4lJkYmXD8O4ArjMQPQF4ic7rAWInsuBlkPEpWz+v2cI9LNSNiClmfrxK1RsSpvcST3Cj9evp4fEKruw+ygUoDouF34NubkO/LAApXnrQS4ghAWHbCFd2mzOybHGnh50S99LVHPCEdljqWXOpf7zqAfJBs6TdXQgyartiYl70VfZkGskZJoJN1/1gLBUseyMd5U/kKKG2KsaXBycO82PpifrL1wYC9Bv2ViJGor0v/PCZKXemP8OcZ0u3esBQcSTQVB6cuq8V+eJ8lvTm0tyEQSp/yJ4uWSAmSDbaiNkv8GbHR+OZzHaOb4sRUOUhnSUpeu73DGQ2Q+Bwrldz3bO3cXHO8BjCcFS2rQ0KWq/G9dUI490/FoENjvxK1xbyGbL9p9mOEdEmKAxXd1nJVANinJmHnsjD8khaAcWNVLehBr3H4lOhNpYeLUsi8BRgQvBaZbFrSO2+pA5AFOAY="
+    - # ^^ GPG_KEY_NAME
     - secure: "DfHjwOeU5ZC46jX3kRdgWju4mh2JU9PM2a/RIpPrAmF/ELwGPPJxR3RyGyQsF+tqE3XNgHNxhIg/nmcYbQDisHAXgd6eqartW+yxJZdWtoqFCP9Qc5hQeDQsTrl9x1WfZKBGME+NEW//U4Fod0NRVSOPfD75vjKrnz0DS6QMUca5zHArdox5uc1/Tzl2T7tKYklDA6Ygy6mTD9ZQgWECkwF8uCq+7uU9/ftj5Ab/9N2oz3zcLyVrn5O+mqX5+abCwvxMcsn1I0uA2IQbLAfpbJDZuj3yNs+Xs9Qa60otL7oRCnDSjWciJ0n88pP9VLvMP9ryJ0inwIeCsQuPLydTxAmsb2G8SATGTJj0jG5qO8YRjDM+9jflClDkmBTBRlRnnvNfcQIiCM6yR9c3yzTkQzypCw5ta5xkXDdetDo7VepLtQQeT90K+18AymurToGQFa6DmZ3QsxGYWP7kIcBKfllptYjO47NNHHSJkiO/CinUpS241vxvtRyUdu27wHAIuvEHPMn52LTuCVNtRML2eOK61pswT35Rz+tsYdGh+yWWoFy5iBnQw2zrlNtq84o+D5Io1F2lW4uf67KL8ymMTxFlFmxb+ISnRHL4pg3cpQo3uUJzbISWNl0zsvSRJCgOlES0gGTmXeHXYr9e4XdOTNNqKcBIjJAEjwJxpJRZ0d8="
+    - # ^^ GPG_PASSPHRASE
 
 install: mvn install -P !build-extras -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -P !build-extras -B
@@ -14,7 +18,5 @@ cache:
     - ~/.m2/repository
 
 after_success:
-  - chmod +x ./.travis/before-deploy.sh
-  - chmod +x ./.travis/deploy.sh
   - ./.travis/before-deploy.sh
   - ./.travis/deploy.sh
