@@ -314,7 +314,6 @@ public class NettyServerCore implements WildBotManager {
         Tracer.info("Netty Channel for name `" + name + "` has been successfully opened");
     }
 
-    @SuppressWarnings("unchecked")
     public boolean close(final String name, final int port) throws Exception {
         Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
 
@@ -325,17 +324,20 @@ public class NettyServerCore implements WildBotManager {
 
                     // TODO: 26.10.2017  channel.getFirst().channel().closeFuture().sync();
 
-                    channel.getKey().channel()
-                            .close()
-                            .addListener((ChannelFutureListener) future -> {
+                    channel.getFirst().channel().disconnect().addListener(future -> {
+                        Tracer.info("Closing");
+                    }).awaitUninterruptibly()
+                            .channel().close().addListener(future -> {
                                 if (future.isSuccess()) {
-                                    Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
-                                    channels.remove(name, channel);
+                                    Tracer.info("Netty Channel on port " + channel.getSecond()
+                                            + " has been successfully stopped");
+                                    channels.remove(name, channel);// TODO: 29.10.2017 rework
 
                                     Tracer.info("Netty Channel for name `" + name + "` on port " + port
                                             + " has been successfully stopped");
                                 } else {
-                                    Tracer.info("An error occurred while closing channel on port " + channel.getSecond());
+                                    Tracer.error("An exception occurred while closing channel on port "
+                                            + channel.getSecond() + ":", future.cause());
                                     if (future.cause() != null) future.cause().printStackTrace();
                                 }
                             }).awaitUninterruptibly();
