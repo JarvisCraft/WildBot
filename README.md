@@ -1,5 +1,6 @@
 # WildBot
-[![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot) 
+[![Maven Central](https://img.shields.io/maven-central/v/ru.wildbot/wildbot-core.svg)]() 
+[![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot)  
 [![GitHub contributors](https://img.shields.io/github/contributors/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/graphs/contributors) 
 [![license](https://img.shields.io/github/license/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/blob/master/LICENSE.md) 
 [![Discord](https://img.shields.io/discord/359322755650551818.svg)](https://discord.gg/3fn3YSM)  
@@ -9,7 +10,6 @@
 [![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls)  
 An advanced open-source Bot for different messengers with it's own API.  
 This project is under development  
-Docs are available at: https://jarviscraft.github.io/WildBot/
 
 [![GitHub forks](https://img.shields.io/github/forks/JarvisCraft/WildBot.svg?style=social&label=Fork)](https://github.com/JarvisCraft/WildBot#fork-destination-box)
 [![GitHub stars](https://img.shields.io/github/stars/JarvisCraft/WildBot.svg?style=social&label=Star)](https://github.com/JarvisCraft/WildBot)
