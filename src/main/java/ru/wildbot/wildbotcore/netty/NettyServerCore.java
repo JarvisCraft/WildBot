@@ -206,8 +206,10 @@ package ru.wildbot.wildbotcore.netty;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import lombok.AllArgsConstructor;
@@ -223,17 +225,21 @@ import java.util.HashSet;
 
 @AllArgsConstructor
 public class NettyServerCore implements WildBotManager {
-    @NonNull private final NettyServerCoreSettings settings;
+    @NonNull
+    private final NettyServerCoreSettings settings;
 
-    @Getter private NettyTransportType transportType;
+    @Getter
+    private NettyTransportType transportType;
 
-    @NonNull @Getter private boolean enabled = false;
+    @NonNull
+    @Getter
+    private boolean enabled = false;
 
     private EventLoopGroup parentGroup;
     private EventLoopGroup childGroup;
 
     // Each name can associate with multiple Pairs of Channel and it's Port
-    private final Multimap<String, Pair<ChannelFuture, Integer>> channels = ArrayListMultimap.create();
+    private final Multimap<String, Pair<ChannelFuture, Integer>> channels = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());
 
     private Thread shutdownHook = new Thread(() -> {
         try {
@@ -308,24 +314,34 @@ public class NettyServerCore implements WildBotManager {
         Tracer.info("Netty Channel for name `" + name + "` has been successfully opened");
     }
 
+    @SuppressWarnings("uncheked")
     public boolean close(final String name, final int port) throws Exception {
         Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
 
         if (channels.containsKey(name)) {
-            for (val channel : channels.get(name)) if (channel.getSecond() == port) {
-                Tracer.info("Closing Netty Channel on port " + channel.getSecond());
+            for (val channel : channels.get(name))
+                if (channel.getSecond() == port) {
+                    Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
-                // TODO: 26.10.2017  channel.getFirst().channel().closeFuture().sync();
+                    // TODO: 26.10.2017  channel.getFirst().channel().closeFuture().sync();
 
-                Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
+                    channel.getKey().channel()
+                            .close()
+                            .addListener((ChannelFutureListener) future -> {
+                                if (future.isSuccess()) {
+                                    Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
+                                    channels.remove(name, channel);
 
-                channels.remove(name, channel);
+                                    Tracer.info("Netty Channel for name `" + name + "` on port " + port
+                                            + " has been successfully stopped");
+                                } else {
+                                    Tracer.info("An error occurred while closing channel on port " + channel.getSecond());
+                                    if (future.cause() != null) future.cause().printStackTrace();
+                                }
+                            }).awaitUninterruptibly();
 
-                Tracer.info("Netty Channel for name `" + name + "` on port " + port
-                        + " has been successfully stopped");
-
-                return true;
-            }
+                    return true;
+                }
         }
 
         Tracer.info("There is no registered Netty Channel for name `" + name + "` on port " + port
