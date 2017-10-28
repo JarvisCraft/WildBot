@@ -211,7 +211,7 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot-core</artifactId>
-    <version>0.1.0-beta</version>
+    <version>0.1.0-beta-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>WildBot Project</name>
     <url>https://github.com/JarvisCraft/WildBot/</url>

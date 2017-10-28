@@ -243,6 +243,15 @@ import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManagerSettings
 import java.util.Collections;
 import java.util.Scanner;
 
+/**
+ * Main and base class of WildBot Project.
+ * It provides a "constant" instance accessible via {@link #getInstance()}
+ * which is initialised on WildBot initialisation right after all required Managers are set up.
+ * It does also initialise static classes like {@link Tracer} and {@link Analytics} up.
+ *
+ * Non-static managers can be accessed per unique instance's or rather from static {@link #instance}
+ * using special methods marked as {@link Shorthand}
+ */
 public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
     // Singleton

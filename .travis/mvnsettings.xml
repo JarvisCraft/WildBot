@@ -206,8 +206,8 @@
     <servers>
         <server>
             <id>ossrh</id>
-            <username>${env.OSSRH_JIRA_USERNAME}</username>
-            <password>${env.OSSRH_JIRA_PASSWORD}</password>
+            <username>PROgrammer_JARvis</username>
+            <password>SuperJarOne2$</password>
         </server>
     </servers>
     <profiles>
