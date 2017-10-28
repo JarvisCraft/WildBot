@@ -448,7 +448,6 @@
     </dependencies>
 
     <profiles>
-
         <profile>
             <id>sign</id>
             <build>
