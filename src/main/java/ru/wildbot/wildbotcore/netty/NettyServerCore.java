@@ -314,7 +314,7 @@ public class NettyServerCore implements WildBotManager {
         Tracer.info("Netty Channel for name `" + name + "` has been successfully opened");
     }
 
-    @SuppressWarnings("uncheked")
+    @SuppressWarnings("unchecked")
     public boolean close(final String name, final int port) throws Exception {
         Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
 
