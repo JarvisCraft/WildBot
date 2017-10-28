@@ -245,7 +245,7 @@ import java.util.Scanner;
 
 /**
  * Main and base class of WildBot Project.
- * It provides a "constant" instance accessible via {@link #getInstance()}
+ * It provides a "constant" instance accessible via {@link #instance}
  * which is initialised on WildBot initialisation right after all required Managers are set up.
  * It does also initialise static classes like {@link Tracer} and {@link Analytics} up.
  *
