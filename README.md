@@ -11,7 +11,15 @@
 An advanced open-source Bot for different messengers with it's own API.  
 This project is under development  
 ## Maven
-WildBot Core is available from Maven Central so, in order to use it, you can simply...
+WildBot Core is available from Maven Central so, in order to use it, you can simply add the foolowing to your `<dependencies>` tag:  
+```xml
+<dependency>
+    <groupId>ru.wildbot</groupId>
+    <artifactId>wildbot-core</artifactId>
+    <version>LATEST</version>
+</dependency>
+```
+`LATEST` can be replaced with version name if you want to use some specific one.
 
 [![GitHub forks](https://img.shields.io/github/forks/JarvisCraft/WildBot.svg?style=social&label=Fork)](https://github.com/JarvisCraft/WildBot#fork-destination-box)
 [![GitHub stars](https://img.shields.io/github/stars/JarvisCraft/WildBot.svg?style=social&label=Star)](https://github.com/JarvisCraft/WildBot)
