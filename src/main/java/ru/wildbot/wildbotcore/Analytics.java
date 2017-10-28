@@ -204,6 +204,7 @@
 
 package ru.wildbot.wildbotcore;
 
+import lombok.Synchronized;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
@@ -213,17 +214,17 @@ import java.time.Instant;
 @UtilityClass
 public final class Analytics {
 
-    private static volatile Instant currentInstant = Instant.now();
+    private static Instant currentInstant = Instant.now();
 
-    public static synchronized void updateStartTime() {
+    @Synchronized public static void updateStartTime() {
         currentInstant = Instant.now();
     }
 
-    public static synchronized long getUptime() {
+    @Synchronized public static long getUptime() {
         return Duration.between(Instant.now(), currentInstant).toMillis();
     }
 
-    public static synchronized String getUptimeFormatted() {
+    @Synchronized public static String getUptimeFormatted() {
         return DurationFormatUtils.formatDurationHMS(getUptime());
     }
 }
