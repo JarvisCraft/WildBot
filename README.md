@@ -10,6 +10,8 @@
 [![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls)  
 An advanced open-source Bot for different messengers with it's own API.  
 This project is under development  
+## Maven
+WildBot Core is available from Maven Central so, in order to use it, you can simply...
 
 [![GitHub forks](https://img.shields.io/github/forks/JarvisCraft/WildBot.svg?style=social&label=Fork)](https://github.com/JarvisCraft/WildBot#fork-destination-box)
 [![GitHub stars](https://img.shields.io/github/stars/JarvisCraft/WildBot.svg?style=social&label=Star)](https://github.com/JarvisCraft/WildBot)
