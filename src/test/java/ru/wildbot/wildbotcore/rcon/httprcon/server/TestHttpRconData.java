@@ -206,7 +206,6 @@ package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
 import org.apache.commons.codec.DecoderException;
 import org.junit.Test;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.test.WildBotTest;
 
 import java.util.Arrays;
@@ -247,7 +246,7 @@ public class TestHttpRconData extends WildBotTest {
 
     @Test
     public void testHashing() throws Exception {
-        Tracer.info("Testing Hashing");
+        testing("Hashing");
 
         testing("both hashes empty");
         assertException(new HttpRconData(HEX_HASH_EMPTY, HEX_HASH_EMPTY, RIGHT_CONTENT)
@@ -293,7 +292,7 @@ public class TestHttpRconData extends WildBotTest {
         testing("Key Verification");
 
         final HttpRconData data = new HttpRconData(KEY_HASH_HEX, WRONG_HASH_HEX, STRING_EMPTY).decodeHashes();
-        Tracer.info("Testing equal key-hashes:");
+        testing("equal key-hashes");
         assert data.verifyKey(RIGHT_KEY);
         success();
         testing("unequal key-hashes");
@@ -305,10 +304,10 @@ public class TestHttpRconData extends WildBotTest {
 
     @Test
     public void testContentVerification() throws Exception {
-        Tracer.info("Testing Content Verification");
+        testing("Content Verification");
 
         HttpRconData data = new HttpRconData(WRONG_HASH_HEX, CONTENT_HASH_HEX, RIGHT_CONTENT).decodeHashes();
-        Tracer.info("Testing equal content-hashes:");
+        testing("equal content-hashes:");
         assert data.verifyContent();
         success();
 
@@ -322,7 +321,7 @@ public class TestHttpRconData extends WildBotTest {
 
     @Test
     public void testVerification() throws Exception {
-        Tracer.info("Testing Verification");
+        testing("Verification");
 
         testing("both hashes wrong");
         HttpRconData data = new HttpRconData(WRONG_HASH_HEX, WRONG_HASH_HEX, RIGHT_CONTENT).decodeHashes();

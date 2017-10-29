@@ -205,10 +205,11 @@
 package ru.wildbot.wildbotcore.console.logging;
 
 import org.junit.Test;
+import ru.wildbot.wildbotcore.test.WildBotTest;
 
 import java.util.Collections;
 
-public class TestTracer {
+public class TestTracer extends WildBotTest {
     @Test
     public void testInfo() {
         Tracer.info("Tracer.info(String) Test successful");

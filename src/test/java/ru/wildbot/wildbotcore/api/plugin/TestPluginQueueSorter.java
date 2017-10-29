@@ -206,27 +206,36 @@ package ru.wildbot.wildbotcore.api.plugin;
 
 import org.junit.Assert;
 import org.junit.Test;
+import ru.wildbot.wildbotcore.test.WildBotTest;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class TestPluginQueueSorter {
+public class TestPluginQueueSorter extends WildBotTest {
     @Test
     public void testNull() {
+        testing("PluginQueueSorter Given Null As `plugins`");
         final PluginQueueSorter sorter = new PluginQueueSorter(null);
         Set<JavaPluginInQueue> plugins = sorter.sort();
 
         Assert.assertNotNull(plugins);
         Assert.assertEquals(0, plugins.size());
+
+        allSuccess();
     }
 
     @Test
     public void testNone() {
+        testing("All Empty Plugins Set Sorting");
+
         Set<JavaPluginInQueue> plugins = new HashSet<>();
         final PluginQueueSorter sorter = new PluginQueueSorter(plugins);
         plugins = sorter.sort();
 
         Assert.assertNotNull(plugins);
         Assert.assertEquals(0, plugins.size());
+        success();
+
+        allSuccess();
     }
 }

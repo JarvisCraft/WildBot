@@ -208,41 +208,38 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.junit.Test;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.test.WildBotTest;
 
 public class TestNettyServer extends WildBotTest {
     @Test
     public void testNettyStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
+        testing("Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
         success();
 
-        try {
-            Tracer.info("Testing Netty Server Core Startup");
-            nettyServerCore.open("test_netty_server", new ServerBootstrap()
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            success();
-        } catch (Exception e) {
-            Tracer.error(e);
-        }
+        testing("Netty Server Core Startup");
+        nettyServerCore.open("test_netty_server", new ServerBootstrap()
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInboundHandlerAdapter()), 0);
+        success();
 
-        Tracer.info("Testing Netty Server Core Shutdown");
+        testing("Netty Server Core Shutdown");
         nettyServerCore.disable();
         success();
+
+        allSuccess();
     }
 
 
     @Test
     public void testNettyNioMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
+        testing("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
         success();
 
-        Tracer.info("Testing Netty Server Core Startup");
+        testing("Netty Server Core Startup");
         nettyServerCore.open("test_netty_server1", new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
@@ -251,27 +248,31 @@ public class TestNettyServer extends WildBotTest {
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
         success();
 
-        Tracer.info("Testing Netty Server Core Shutdown");
+        testing("Netty Server Core Shutdown");
         nettyServerCore.disable();
         success();
+
+        allSuccess();
     }
 
     @Test
     public void testNettyAutoHttpMultiStartupAndShutdown() throws Exception {
-        Tracer.info("Testing Netty Server Core Construction");
+        testing("Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
         success();
 
-        Tracer.info("Testing Netty Server Core Startup");
+        testing("Netty Server Core Startup");
         nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
         nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
         success();
 
-        Tracer.info("Testing Netty Server Core Shutdown");
+        testing("Testing Netty Server Core Shutdown");
         nettyServerCore.disable();
         success();
+
+        allSuccess();
     }
 }
