@@ -209,15 +209,15 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.val;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.core.exception.NotImplementedException;
 import ru.wildbot.wildbotcore.netty.transport.NettyTransportType;
 import ru.wildbot.wildbotcore.util.collection.Pair;
 
@@ -225,15 +225,11 @@ import java.util.HashSet;
 
 @AllArgsConstructor
 public class NettyServerCore implements WildBotManager {
-    @NonNull
-    private final NettyServerCoreSettings settings;
+    @NonNull private final NettyServerCoreSettings settings;
 
-    @Getter
-    private NettyTransportType transportType;
+    @Getter private NettyTransportType transportType;
 
-    @NonNull
-    @Getter
-    private boolean enabled = false;
+    @Getter private boolean enabled = false;
 
     private EventLoopGroup parentGroup;
     private EventLoopGroup childGroup;
@@ -315,6 +311,7 @@ public class NettyServerCore implements WildBotManager {
     }
 
     public boolean close(final String name, final int port) throws Exception {
+        //if (true) throw new NotImplementedException("Channel closing is yet disabled");
         Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
 
         if (channels.containsKey(name)) {
@@ -322,8 +319,7 @@ public class NettyServerCore implements WildBotManager {
                 if (channel.getSecond() == port) {
                     Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
-                    channel.getFirst().channel().disconnect().addListener(future -> Tracer
-                            .info("Closing")).awaitUninterruptibly()
+                            /*
                             .channel().close().addListener(future -> {
                                 if (future.isSuccess()) {
                                     Tracer.info("Netty Channel on port " + channel.getSecond()
@@ -338,7 +334,14 @@ public class NettyServerCore implements WildBotManager {
                                     if (future.cause() != null) future.cause().printStackTrace();
                                 }
                             }).awaitUninterruptibly();
+                            */
 
+                            channel.getFirst()
+                                    .channel().close().addListener(future -> Tracer.info("close")).awaitUninterruptibly()
+                                    .channel().disconnect().addListener(future -> Tracer.info("disconnect")).awaitUninterruptibly()
+                                    .channel().deregister().addListener(future -> Tracer.info("deregister")).awaitUninterruptibly();
+
+                    Tracer.info("END");
                     return true;
                 }
         }
@@ -350,6 +353,8 @@ public class NettyServerCore implements WildBotManager {
     }
 
     public boolean close(final String name) throws Exception {
+        //if (true) throw new NotImplementedException("Channel closing is yet disabled");
+
         Tracer.info("Closing all Netty Channels for name `" + name + "`");
 
         if (channels.containsKey(name)) {

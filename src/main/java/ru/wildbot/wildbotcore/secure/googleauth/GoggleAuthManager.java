@@ -205,8 +205,10 @@
 package ru.wildbot.wildbotcore.secure.googleauth;
 
 import com.warrenstrange.googleauth.GoogleAuthenticator;
-import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.val;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;

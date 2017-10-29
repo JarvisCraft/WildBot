@@ -202,25 +202,67 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.telegram.webhook;
+package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+import lombok.*;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.Arrays;
 
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelegramWebhookManagerSettings extends AbstractJsonData {
-    @NonNull @Getter private String host = "http://example.com/vk-webhook-netty";
-    @Getter private int port = 12424;
-    @Getter private int maxConnections = 40;
-    @NonNull private String[] updates = {"*"};
+import static org.apache.commons.codec.digest.DigestUtils.sha512;
 
-    public String[] getUpdates() {
-        return Arrays.copyOf(updates, updates.length);
+@ToString
+@EqualsAndHashCode
+@NoArgsConstructor
+@RequiredArgsConstructor
+public class HttpRconData {
+
+    /**
+     * Key hash (SHA512) used for verification of packet
+     */
+    @SerializedName("key-hash") @NonNull @Getter private String keyHexHash;
+    @Expose @Getter private byte[] sha512KeyHash;
+
+    @SneakyThrows
+    public HttpRconData decodeKeyHash() throws DecoderException {
+        if (keyHexHash.isEmpty()) throw new DecoderException();
+        sha512KeyHash = Hex.decodeHex(keyHexHash.toCharArray());
+        return this;
+    }
+
+    /**
+     * Main content hash (SHA512) used for verification
+     */
+    @SerializedName("content-hash") @NonNull @Getter private String contentHexHash;
+    @Expose @Getter private byte[] sha512ContentHash;
+
+    public HttpRconData decodeContentHash() throws DecoderException {
+        if (contentHexHash.isEmpty()) throw new DecoderException();
+        sha512ContentHash = Hex.decodeHex(contentHexHash.toCharArray());
+        return this;
+    }
+
+    public HttpRconData decodeHashes() throws DecoderException {
+        return decodeKeyHash().decodeContentHash();
+    }
+
+    /**
+     * The very of HTTP-RCON content packet as JSON string
+     */
+    @SerializedName("content") @NonNull @Getter private String jsonContent;
+
+    public boolean verifyContent() {
+        return Arrays.equals(sha512(jsonContent), sha512ContentHash);
+    }
+
+    public boolean verifyKey(final String key) {
+        return Arrays.equals(sha512(key), sha512KeyHash);
+    }
+
+    public boolean verify(final String key) {
+        return verifyKey(key) && verifyContent();
     }
 }

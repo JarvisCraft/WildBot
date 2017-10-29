@@ -202,25 +202,53 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.telegram.webhook;
+package ru.wildbot.wildbotcore.test;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
+public class WildBotTest {
+    private final static String SUCCESS = "Success";
+    private final static String ALL_SUCCESS = "All tests successful";
 
-import java.util.Arrays;
+    public final void success() {
+        System.out.println(SUCCESS);
+    }
 
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelegramWebhookManagerSettings extends AbstractJsonData {
-    @NonNull @Getter private String host = "http://example.com/vk-webhook-netty";
-    @Getter private int port = 12424;
-    @Getter private int maxConnections = 40;
-    @NonNull private String[] updates = {"*"};
+    public final void allSuccess() {
+        System.out.println(ALL_SUCCESS);
+    }
 
-    public String[] getUpdates() {
-        return Arrays.copyOf(updates, updates.length);
+    public final void testing(final String tested) {
+        System.out.printf("Testing %s\n", tested);
+    }
+
+    public final WildBotTest assertException(final ThrowingRunnable test)
+            throws UnsuccessfulException {
+        try {
+            test.run();
+        } catch (Throwable e) {
+            return this;
+        }
+        throw new UnsuccessfulException();
+    }
+
+
+    public final <T extends Class<? extends Throwable>> WildBotTest assertException(final ThrowingRunnable test,
+                                                                                final T expected)
+            throws UnsuccessfulException {
+        try {
+            test.run();
+        } catch (Throwable e) {
+            if (expected.isInstance(e)) return this;
+        }
+        throw new UnsuccessfulException(expected);
+    }
+
+    public final class UnsuccessfulException extends Exception {
+        public UnsuccessfulException() {
+            super("No expected exception was thrown");
+        }
+
+        public UnsuccessfulException(final Class<? extends Throwable> exceptionClass) {
+            super("Expected exception " + exceptionClass.getSimpleName() + " was not thrown");
+        }
     }
 }

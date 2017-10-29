@@ -209,6 +209,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import lombok.*;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
@@ -225,7 +226,7 @@ import static io.netty.buffer.Unpooled.copiedBuffer;
 public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     @NonNull private final String key;
 
-    private final Gson gson = new Gson(); // TODO: 24.10.2017 use 
+    private final Gson gson = new Gson();
 
     @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
@@ -269,8 +270,16 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
 
             Tracer.info("RCON-channel connection received");
 
-            String requestContent = parseIfPossibleCallback(request);
+            String requestContent = parseIfPossible(request);
             if (requestContent != null) {
+                try {
+                    val data = gson.fromJson(requestContent, HttpRconData.class).decodeHashes();
+                    Tracer.info("GSONed: " + data.toString());
+                    Tracer.info(data.verify(key));
+                } catch (Exception e) {
+                    sendErrorResponse(context, request);
+                }
+                /*
                 int separatorIndex1 = requestContent.indexOf(":");
                 int separatorIndex2 = requestContent.indexOf(":", separatorIndex1 + 1);
                 if (separatorIndex1 >= 0 && separatorIndex2 > 0) {
@@ -289,6 +298,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                     } else Tracer.info("Wrong first given for RCON-request: \"" + requestContent
                             + "\" expected \"" + key + "\"");
                 }
+                */
             }
 
             sendErrorResponse(context, request);
@@ -303,7 +313,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request,
                                 final String htmlResponse) {
         //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK, copiedBuffer(htmlResponse.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
@@ -335,7 +345,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     }
 
     // Gets Callback (if everything OK and not confirmation)
-    private String parseIfPossibleCallback(final FullHttpRequest request) {
+    private String parseIfPossible(final FullHttpRequest request) {
         if (request == null || request.getMethod() != HttpMethod.POST) return null;
         return request.content().toString(StandardCharsets.UTF_8);
     }
@@ -343,7 +353,7 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
     // Response (error)
     private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers

@@ -233,13 +233,15 @@ public class CommandManager {
     }
 
     public boolean isRegistered(final Collection<String> names) {
-        for (val command : commands) for (String commandName : command.getNames()) for (val name : names) if (name
+        for (val command : commands) for (val commandName : command.getNames()) for (val name : names) if (name
                 .equalsIgnoreCase(commandName)) return true;
         return false;
     }
 
-    @Synchronized public Optional<Runnable> parse(final String commandLine) {
+    @Synchronized public Optional<Runnable> parse(String commandLine) {
+        while (commandLine.indexOf(" ") == 0) commandLine = commandLine.substring(1); // remove spaces in the beginning
         final int firstSpaceIndex = commandLine.indexOf(' ');
+
         final String commandName = firstSpaceIndex >= 0 ? commandLine.substring(0, firstSpaceIndex) : commandLine;
 
         for (val command : commands) for (val testedCommandName : command.getNames()) if (commandName

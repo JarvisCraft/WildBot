@@ -209,28 +209,29 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.junit.Test;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
+import ru.wildbot.wildbotcore.test.WildBotTest;
 
-public class TestNettyServer {
+public class TestNettyServer extends WildBotTest {
     @Test
     public void testNettyStartupAndShutdown() throws Exception {
         Tracer.info("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
-        Tracer.info("Test successful");
+        success();
 
         try {
             Tracer.info("Testing Netty Server Core Startup");
             nettyServerCore.open("test_netty_server", new ServerBootstrap()
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInboundHandlerAdapter()), 0);
-            Tracer.info("Test successful");
+            success();
         } catch (Exception e) {
             Tracer.error(e);
         }
 
         Tracer.info("Testing Netty Server Core Shutdown");
         nettyServerCore.disable();
-        Tracer.info("Test successful");
+        success();
     }
 
 
@@ -239,7 +240,7 @@ public class TestNettyServer {
         Tracer.info("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
-        Tracer.info("Test successful");
+        success();
 
         Tracer.info("Testing Netty Server Core Startup");
         nettyServerCore.open("test_netty_server1", new ServerBootstrap()
@@ -248,11 +249,11 @@ public class TestNettyServer {
         nettyServerCore.open("test_netty_server2", new ServerBootstrap()
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
+        success();
 
         Tracer.info("Testing Netty Server Core Shutdown");
         nettyServerCore.disable();
-        Tracer.info("Test successful");
+        success();
     }
 
     @Test
@@ -260,17 +261,17 @@ public class TestNettyServer {
         Tracer.info("Testing Netty Server Core Construction");
         final NettyServerCore nettyServerCore = new NettyServerCore();
         nettyServerCore.enable();
-        Tracer.info("Test successful");
+        success();
 
         Tracer.info("Testing Netty Server Core Startup");
         nettyServerCore.startHttp("test_netty_server1", new ServerBootstrap()
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
         nettyServerCore.startHttp("test_netty_server2", new ServerBootstrap()
                 .childHandler(new ChannelInboundHandlerAdapter()), 0);
-        Tracer.info("Test successful");
+        success();
 
         Tracer.info("Testing Netty Server Core Shutdown");
         nettyServerCore.disable();
-        Tracer.info("Test successful");
+        success();
     }
 }

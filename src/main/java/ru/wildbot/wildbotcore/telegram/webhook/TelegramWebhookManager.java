@@ -211,9 +211,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 
 @RequiredArgsConstructor

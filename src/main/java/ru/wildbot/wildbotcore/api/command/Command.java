@@ -214,6 +214,6 @@ import java.util.HashSet;
 public class Command {
     @Singular @NonNull @Getter private Collection<String> names = new HashSet<>();
     @NonNull @Getter @Builder.Default private String pluginName = "";
-    @NonNull @Getter @Builder.Default private boolean locked = false;
+    @Getter @Builder.Default private boolean locked = false;
     @NonNull @Getter private CommandExecutor executor;
 }

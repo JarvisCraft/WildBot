@@ -213,6 +213,6 @@ import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RconServerManagerSettings extends AbstractJsonData {
-    @NonNull @Getter private int port = 12514;
+    @Getter private int port = 12514;
     @NonNull @Getter private String key = "MyS3cr37K$&";
 }

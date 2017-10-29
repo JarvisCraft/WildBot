@@ -202,12 +202,10 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.logging;
+package ru.wildbot.wildbotcore.console.logging;
 
 import org.junit.Test;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 public class TestTracer {
@@ -217,7 +215,7 @@ public class TestTracer {
         Tracer.info(this);
         Tracer.info(Collections.singleton("Tracer.info(Collection<Object>, Object...) {}"), "successful");
         Tracer.infoF(Collections.singleton("Tracer.infoF(Collection<Object>, Object...) %s"), "successful");
-        Tracer.infoP(Collections.singleton("Test {first}"), Arrays.asList(new String[]{"{first}", "{first}", "successful"}));
+        Tracer.infoP(Collections.singleton("Test {first}"), "{first}", "successful");
     }
 
     @Override

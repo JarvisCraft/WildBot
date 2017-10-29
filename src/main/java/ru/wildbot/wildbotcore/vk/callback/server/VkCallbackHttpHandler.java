@@ -220,7 +220,6 @@ import ru.wildbot.wildbotcore.vk.VkManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -325,7 +324,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     // Response (confirmation code)
     private void sendConfirmationResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK, copiedBuffer(confirmationCode.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
@@ -341,7 +340,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     // Response (confirmation code)
     private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK, copiedBuffer(OK_RESPONSE.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
@@ -357,7 +356,7 @@ public class VkCallbackHttpHandler extends ChannelInboundHandlerAdapter {
     // Response (error)
     private void sendErrorResponse(final ChannelHandlerContext context, final FullHttpRequest request) {
         //Main content
-        final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK, copiedBuffer(htmlErrorContent.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers

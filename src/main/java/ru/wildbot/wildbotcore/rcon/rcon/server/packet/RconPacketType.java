@@ -210,6 +210,6 @@ import lombok.NonNull;
 
 @AllArgsConstructor
 public class RconPacketType<P extends RconPacket> {
-    @NonNull @Getter private final byte id;
+    @Getter private final byte id;
     @NonNull @Getter private final P packet;
 }

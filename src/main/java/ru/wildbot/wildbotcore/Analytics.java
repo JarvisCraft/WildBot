@@ -221,7 +221,7 @@ public final class Analytics {
     }
 
     @Synchronized public static long getUptime() {
-        return Duration.between(Instant.now(), currentInstant).toMillis();
+        return Duration.between(currentInstant, Instant.now()).toMillis();
     }
 
     @Synchronized public static String getUptimeFormatted() {

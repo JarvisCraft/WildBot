@@ -241,7 +241,7 @@ public class PluginQueueSorter {
             if (pluginsUnordered.isEmpty()) break sorting;
 
             // Get all plugins without dependencies and remove them from `unorderedPlugins` Set
-            final LinkedHashSet<JavaPluginInQueue> independentPlugins = getIndependentPlugins(pluginsUnordered);
+            val independentPlugins = getIndependentPlugins(pluginsUnordered);
             pluginsUnordered.removeAll(independentPlugins);
             pluginsOrdered.addAll(independentPlugins);
 
@@ -287,7 +287,7 @@ public class PluginQueueSorter {
 
     private LinkedHashMap<JavaPluginInQueue, Set<String>> getPluginsDependencies(
             final Set<JavaPluginInQueue> plugins) {
-        final LinkedHashMap<JavaPluginInQueue, Set<String>> dependentPlugins = new LinkedHashMap<>();
+        val dependentPlugins = new LinkedHashMap<JavaPluginInQueue, Set<String>>();
 
         for (JavaPluginInQueue plugin : plugins) {
             val dependencies = new HashSet<String>();

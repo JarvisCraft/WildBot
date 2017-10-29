@@ -209,15 +209,15 @@ import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.groups.CallbackServer;
-import com.vk.api.sdk.objects.groups.responses.GetCallbackServersResponse;
 import io.netty.bootstrap.ServerBootstrap;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import ru.wildbot.wildbotcore.WildBotCore;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.vk.VkManager;
 
 @RequiredArgsConstructor
@@ -238,8 +238,8 @@ public class VkCallbackServerManager implements WildBotManager, WildBotNettyMana
         checkEnabled();
 
         // Shorthands
-        final Groups group = vkManager.getVkApi().groups();
-        final GroupActor actor = vkManager.getActor();
+        val group = vkManager.getVkApi().groups();
+        val actor = vkManager.getActor();
 
         // Confirmation code (taken from VK-group)
         confirmationCode = group.getCallbackConfirmationCode(actor).execute().getCode();
@@ -290,7 +290,7 @@ public class VkCallbackServerManager implements WildBotManager, WildBotNettyMana
     public void findCallbackServer(Groups group, GroupActor actor) throws ApiException, ClientException {
         Tracer.info("Finding CallBack Server in the list of registered");
 
-        final GetCallbackServersResponse servers = group.getCallbackServers(actor).execute();
+        val servers = group.getCallbackServers(actor).execute();
 
         for (CallbackServer callbackServerTested : servers.getItems())
             if (callbackServerTested.getUrl()

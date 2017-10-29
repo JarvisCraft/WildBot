@@ -244,11 +244,15 @@ public class Tracer {
                 .info(String.format(String.valueOf(object), args));
     }
 
-    public static void infoP(Collection<Object> objects, Collection<Object> args) {
+    public static void infoP(Collection<Object> objects, Object... args) {
         if (objects != null && log.isInfoEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) log.info(String.valueOf(object), args);
         }
+    }
+
+    public static void infoP(Collection<Object> objects, Collection<Object> args) {
+        infoP(objects, args.toArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -281,7 +285,7 @@ public class Tracer {
                 .warn(String.format(String.valueOf(object), args));
     }
 
-    public static void warnP(Collection<Object> objects, Collection<Object> args) {
+    public static void warnP(Collection<Object> objects, Object... args) {
         if (objects != null && log.isWarnEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) {
@@ -289,6 +293,10 @@ public class Tracer {
                 log.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
             }
         }
+    }
+
+    public static void warnP(Collection<Object> objects, Collection<Object> args) {
+        warnP(objects, args.toArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -321,7 +329,7 @@ public class Tracer {
                 .error(String.format(String.valueOf(object), args));
     }
 
-    public static void errorP(Collection<Object> objects, Collection<Object> args) {
+    public static void errorP(Collection<Object> objects, Object... args) {
         if (objects != null && log.isErrorEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) {
@@ -329,6 +337,10 @@ public class Tracer {
                 log.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
             }
         }
+    }
+
+    public static void errorP(Collection<Object> objects, Collection<Object> args) {
+        errorP(objects, args.toArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -355,12 +367,16 @@ public class Tracer {
                 .debug(String.format(String.valueOf(object), args));
     }
 
-    public static void debugP(Collection<Object> objects, Collection<Object> args) {
+    public static void debugP(Collection<Object> objects, Object... args) {
         if (objects != null && log.isDebugEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects)
                 log.debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
         }
+    }
+
+    public static void debugP(Collection<Object> objects, Collection<Object> args) {
+        debugP(objects, args.toArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -387,8 +403,7 @@ public class Tracer {
                 .trace(String.format(String.valueOf(object), args));
     }
 
-    //All important debug
-    public static void traceP(Collection<Object> objects, Collection<Object> args) {
+    public static void traceP(Collection<Object> objects, Object... args) {
         if (objects != null && log.isTraceEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects)
@@ -396,12 +411,16 @@ public class Tracer {
         }
     }
 
+    public static void traceP(Collection<Object> objects, Collection<Object> args) {
+        traceP(objects, args.toArray());
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Util
     ///////////////////////////////////////////////////////////////////////////
 
     public static Map<String, String> toPlaceholders(Object... args) {
-        final Map<String, String> placeholders = new HashMap<>(args.length);
+        final Map<String, String> placeholders = new HashMap<>(args.length / 2);
         String latestKey = null;
         for (int i = 0; i < args.length; i++) {
             if (i % 2 == 0) latestKey = String.valueOf(args[i]);
@@ -418,13 +437,13 @@ public class Tracer {
         final Map<String, String> placeholders = toPlaceholders(args);
 
         for (int i = 0; i < objectList.size(); i++) {
-            for (Map.Entry<String, String> placeholder
-                    : placeholders.entrySet())
-                objectList.set(i, String.valueOf(objectList.get(i))
-                        .replaceAll(Pattern.quote(placeholder.getKey()), placeholder.getValue()));
+            for (Map.Entry<String, String> placeholder : placeholders.entrySet()) objectList
+                    .set(i, String.valueOf(objectList.get(i))
+                            .replace(placeholder.getKey(), placeholder.getValue()));
+
         }
 
-        return objects;
+        return objectList;
     }
 
     ///////////////////////////////////////////////////////////////////////////

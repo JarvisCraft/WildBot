@@ -206,6 +206,7 @@ package ru.wildbot.wildbotcore.util;
 
 import io.netty.util.internal.UnstableApi;
 import lombok.experimental.UtilityClass;
+import lombok.val;
 
 import java.util.Random;
 
@@ -279,7 +280,7 @@ public class DataFormatter {
 
             if (portSeparatorIndex <= 0) host += (PORT_SEPARATOR + port);
             else try { //Check if is port
-                final int hostPort = Integer.parseInt(host.substring(portSeparatorIndex + 1));
+                val hostPort = Integer.parseInt(host.substring(portSeparatorIndex + 1));
 
                 // Ports not equal, given as method param has higher priority
                 if (hostPort != port) host = host.substring(0, portSeparatorIndex + 1) + port;

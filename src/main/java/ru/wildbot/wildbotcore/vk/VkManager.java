@@ -214,8 +214,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
+import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
 public class VkManager implements WildBotManager {

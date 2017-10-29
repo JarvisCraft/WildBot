@@ -202,25 +202,9 @@
  *    limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.telegram.webhook;
+package ru.wildbot.wildbotcore.test;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
-
-import java.util.Arrays;
-
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelegramWebhookManagerSettings extends AbstractJsonData {
-    @NonNull @Getter private String host = "http://example.com/vk-webhook-netty";
-    @Getter private int port = 12424;
-    @Getter private int maxConnections = 40;
-    @NonNull private String[] updates = {"*"};
-
-    public String[] getUpdates() {
-        return Arrays.copyOf(updates, updates.length);
-    }
+@FunctionalInterface
+public interface ThrowingRunnable {
+    void run() throws Throwable;
 }

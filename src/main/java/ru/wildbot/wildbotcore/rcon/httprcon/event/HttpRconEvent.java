@@ -209,11 +209,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
+import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconData;
 
 @RequiredArgsConstructor
 public class HttpRconEvent implements WildBotEvent {
-    @NonNull @Getter final private String name;
-    @NonNull @Getter final private String data;
+    @NonNull @Getter final private HttpRconData data;
     @Getter @Setter private boolean handled = false;
-    @Getter @Setter private String htmlResponse = "";
 }
