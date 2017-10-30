@@ -23,6 +23,6 @@ import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @RequiredArgsConstructor
-public class TelegramUpdateEvent implements WildBotEvent {
+public class TelegramUpdateEvent implements WildBotEvent<TelegramUpdateEvent> {
     @NonNull @Getter private final Update update;
 }

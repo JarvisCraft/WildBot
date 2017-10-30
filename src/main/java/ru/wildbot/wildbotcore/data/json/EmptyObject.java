@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.vk.callback.event;
+package ru.wildbot.wildbotcore.data.json;
 
-import com.vk.api.sdk.callback.objects.photo.CallbackPhotoCommentDelete;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import ru.wildbot.wildbotcore.api.event.WildBotEvent;
-
-@AllArgsConstructor
-public class VkphotoCommentDeleteEvent implements WildBotEvent {
-    @Getter @Setter private Integer groupId;
-    @Getter @Setter private CallbackPhotoCommentDelete message;
-}
+/**
+ * Default class to be used in case when content should be empty but can not be {@link null}
+ */
+public final class EmptyObject {}

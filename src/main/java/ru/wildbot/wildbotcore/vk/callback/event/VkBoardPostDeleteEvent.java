@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkBoardPostDeleteEvent implements WildBotEvent {
+public class VkBoardPostDeleteEvent implements WildBotEvent<VkBoardPostDeleteEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private CallbackBoardPostDelete message;
 }

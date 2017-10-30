@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkBoardPostEditEvent implements WildBotEvent {
+public class VkBoardPostEditEvent implements WildBotEvent<VkBoardPostEditEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private TopicComment message;
 }

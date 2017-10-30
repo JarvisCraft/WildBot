@@ -20,13 +20,14 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 @RequiredArgsConstructor
 public class HttpRconChannelInitializer extends ChannelInitializer {
-    @NonNull private final String key;
+    @NonNull private final HttpRconServerManagerSettings settings;
 
     @Override
     protected void initChannel(Channel channel) throws Exception {
@@ -34,6 +35,6 @@ public class HttpRconChannelInitializer extends ChannelInitializer {
         // Codec -> Aggregator -> Confirmation -> Callback
         channel.pipeline().addLast("codec", new HttpServerCodec());
         channel.pipeline().addLast("aggregator", new HttpObjectAggregator(524288)); // 2^19
-        channel.pipeline().addLast("http_rcon", new HttpRconHttpHandler(key));
+        channel.pipeline().addLast("http_rcon", new HttpRconHttpHandler(settings));
     }
 }

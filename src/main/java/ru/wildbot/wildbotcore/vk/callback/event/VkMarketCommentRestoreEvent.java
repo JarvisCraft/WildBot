@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkMarketCommentRestoreEvent implements WildBotEvent {
+public class VkMarketCommentRestoreEvent implements WildBotEvent<VkMarketCommentRestoreEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private CallbackMarketComment message;
 }

@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @RequiredArgsConstructor
-public class WildBotEnableEvent implements WildBotEvent {
+public class WildBotEnableEvent implements WildBotEvent<WildBotEnableEvent> {
     @NonNull private final Phase phase;
 
     public enum Phase {

@@ -17,10 +17,12 @@
 package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import lombok.*;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import ru.wildbot.wildbotcore.WildBotCore;
@@ -36,21 +38,17 @@ import java.util.Arrays;
 import static io.netty.buffer.Unpooled.copiedBuffer;
 
 public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
-    @NonNull private final String key;
+    @NonNull @Getter private final HttpRconServerManagerSettings settings;
 
     private final Gson gson = new Gson();
 
     @Getter @Setter private String htmlErrorContent = "<html><h1>This project is using WildBot</h1>" +
             "<h2>by JARvis (Peter P.) PROgrammer</h2></html>";
-    public static final String OK_RESPONSE = "ok";
 
     public static final String ERROR_HTML_FILE_NAME = "html/rcon/httprcon/error.html";
 
-    public HttpRconHttpHandler(final String key) {
-        Tracer.info("Initialising Handler for RCON");
-
-        if (key == null) throw new NullPointerException("No confirmation code present");
-        this.key = key;
+    public HttpRconHttpHandler(final HttpRconServerManagerSettings settings) {
+        this.settings = settings;
 
         File errorFile = new File(ERROR_HTML_FILE_NAME);
 
@@ -80,37 +78,59 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
         if (message instanceof FullHttpRequest) {
             val request = (FullHttpRequest) message;
 
-            Tracer.info("RCON-channel connection received");
-
             String requestContent = parseIfPossible(request);
             if (requestContent != null) {
                 try {
-                    val data = gson.fromJson(requestContent, HttpRconData.class).decodeHashes();
-                    Tracer.info("GSONed: " + data.toString());
-                    Tracer.info(data.verify(key));
+                    HttpRconData data;
+                    try {
+                        data = gson.fromJson(requestContent, HttpRconData.class).decodeHashes();
+                    } catch (DecoderException | JsonSyntaxException e) {
+                        Tracer.info("EXce:" + e.getMessage());
+                        data = null;
+                    }
+
+                    // Check if data is a valid HTTP-RCON JSON request
+                    if (data == null) {
+                        if (settings.isLogMalformed()) {
+                            if (settings.isLogMalformedContent()) Tracer
+                                    .info("Received malformed HTTP-RCON request:", requestContent);
+                            else Tracer.info("Received malformed HTTP-RCON request");
+                        }
+                        sendErrorResponse(context, request);
+                        return;
+                    }
+
+                    // Log that HTTP-RCON has been received
+                    if (settings.isLogReceived()) {
+                        if (settings.isLogReceivedContent()) Tracer
+                                .info("Received HTTP-RCON request:", data.toString());
+                        else Tracer.info("Received HTTP-RCON request");
+                    }
+
+                    // Check key
+                    if (!data.verifyKey(settings.getKey())) {
+                        if (settings.isLogUnauthorised()) Tracer
+                                .info("Given HTTP-RCON request could not be authorised");
+                        sendResponse(context, request, HttpRconResponse.getKeyHashError());
+                        return;
+                    }
+
+                    // Check content if necessary
+                    if (settings.isVerifyContent() && !data.verifyContent()) {
+                        if (settings.isLogUnauthorised()) Tracer
+                                .info("Given HTTP-RCON request's content could not be verified");
+                        sendResponse(context, request, HttpRconResponse.getContentHashError());
+                        return;
+                    }
+
+                    // Call event and response to request
+                    Tracer.info("Calling event");
+                    val event = new HttpRconEvent(data).call();
+                    Tracer.info("sending response");
+                    sendResponse(context, request, event.getResponse());
                 } catch (Exception e) {
                     sendErrorResponse(context, request);
                 }
-                /*
-                int separatorIndex1 = requestContent.indexOf(":");
-                int separatorIndex2 = requestContent.indexOf(":", separatorIndex1 + 1);
-                if (separatorIndex1 >= 0 && separatorIndex2 > 0) {
-                    if (requestContent.substring(0, separatorIndex1).equals(key)) {
-                        val name = requestContent.substring(separatorIndex1 + 1, separatorIndex2);
-                        val data = requestContent.substring(separatorIndex2 + 1);
-
-                        try {
-                            val event = new HttpRconEvent(name, data);
-                            WildBotCore.getInstance().getEventManager().callEvents(event);
-                            sendOkResponse(context, request, event.getHtmlResponse());
-                            return;
-                        } catch (Exception e) {
-                            Tracer.error("An exception occurred while trying to call to HttpRconEvent:", e);
-                        }
-                    } else Tracer.info("Wrong first given for RCON-request: \"" + requestContent
-                            + "\" expected \"" + key + "\"");
-                }
-                */
             }
 
             sendErrorResponse(context, request);
@@ -121,18 +141,21 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    // Response (confirmation code)
-    private void sendOkResponse(final ChannelHandlerContext context, final FullHttpRequest request,
-                                final String htmlResponse) {
+    private void sendResponse(final ChannelHandlerContext context, final FullHttpRequest request,
+                                final HttpRconResponse rconResponse) {
+        Tracer.info("Sending response for " + (rconResponse == null ? null : rconResponse.toString()));
+
         //Main content
+        val responseJson = gson.toJson(rconResponse == null ? HttpRconResponse.getDefault() : rconResponse);
+
         val response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, copiedBuffer(htmlResponse.getBytes(StandardCharsets.UTF_8)));
+                HttpResponseStatus.OK, copiedBuffer(responseJson.getBytes(StandardCharsets.UTF_8)));
 
         // Required headers
         if (HttpHeaders.isKeepAlive(request)) response.headers().set(HttpHeaders.Names.CONNECTION,
                 HttpHeaders.Values.KEEP_ALIVE);
         response.headers().set(HttpHeaders.Names.CONTENT_TYPE, "text/html;charset=utf-8");
-        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, htmlResponse.length());
+        response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, responseJson.length());
 
         // Write and Flush (send)
         context.writeAndFlush(response);
@@ -150,9 +173,9 @@ public class HttpRconHttpHandler extends ChannelInboundHandlerAdapter {
                     HttpResponseStatus.INTERNAL_SERVER_ERROR,
                     copiedBuffer(cause.getMessage().getBytes(StandardCharsets.UTF_8))));
         } catch (Exception e) {
-            Tracer.info("context: " + context);
-            Tracer.info("cause: " + cause);
-            Tracer.info("cause: " + Arrays.toString(cause.getStackTrace()));
+            Tracer.error("An exception occurred while trying to handle Channel exception:", e);
+            context.close().addListener(future -> Tracer
+                    .info("Successfully closed connection with channel which threw an exception"));
         }
     }
 

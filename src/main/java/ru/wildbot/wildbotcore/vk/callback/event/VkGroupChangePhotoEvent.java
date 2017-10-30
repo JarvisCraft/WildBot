@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkGroupChangePhotoEvent implements WildBotEvent {
+public class VkGroupChangePhotoEvent implements WildBotEvent<VkGroupChangePhotoEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private CallbackGroupChangePhoto message;
 }

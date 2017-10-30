@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkVideoCommentEditEvent implements WildBotEvent {
+public class VkVideoCommentEditEvent implements WildBotEvent<VkVideoCommentEditEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private CallbackVideoComment message;
 }

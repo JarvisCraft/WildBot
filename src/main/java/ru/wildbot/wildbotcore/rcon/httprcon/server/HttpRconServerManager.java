@@ -44,7 +44,10 @@ public class HttpRconServerManager implements WildBotManager, WildBotNettyManage
     @Override
     public void disable() throws Exception {
         checkDisabled();
-        // TODO: 21.10.2017
+
+        // TODO: 30.10.2017
+        disableNetty();
+
         enabled = false;
     }
 
@@ -58,7 +61,7 @@ public class HttpRconServerManager implements WildBotManager, WildBotNettyManage
                 + settings.getKey());
 
         WildBotCore.getInstance().getNettyServerCore().startHttp(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .childHandler(new HttpRconChannelInitializer(settings.getKey())), settings.getPort());
+                .childHandler(new HttpRconChannelInitializer(settings)), settings.getPort());
 
         Tracer.info("HTTP-RCON netty has been successfully started");
 

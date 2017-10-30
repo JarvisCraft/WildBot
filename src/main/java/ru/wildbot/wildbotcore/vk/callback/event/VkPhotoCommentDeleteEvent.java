@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.secure.googleauth;
+package ru.wildbot.wildbotcore.vk.callback.event;
 
-import lombok.*;
+import com.vk.api.sdk.callback.objects.photo.CallbackPhotoCommentDelete;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-@ToString
-@EqualsAndHashCode
 @AllArgsConstructor
-public final class AuthId {
-    @NonNull @Getter private final String platform;
-    @NonNull @Getter private final String id;
+public class VkPhotoCommentDeleteEvent implements WildBotEvent<VkPhotoCommentDeleteEvent> {
+    @Getter @Setter private Integer groupId;
+    @Getter @Setter private CallbackPhotoCommentDelete message;
 }

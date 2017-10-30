@@ -89,7 +89,7 @@ public class VkCallbackHandler extends CallbackApi {
 
     @Override
     public void photoCommentDelete(Integer groupId, CallbackPhotoCommentDelete message) {
-        eventManager.callEvents(new VkphotoCommentDeleteEvent(groupId, message));
+        eventManager.callEvents(new VkPhotoCommentDeleteEvent(groupId, message));
     }
 
     @Override

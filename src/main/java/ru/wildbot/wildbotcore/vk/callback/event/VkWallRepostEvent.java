@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkWallRepostEvent implements WildBotEvent {
+public class VkWallRepostEvent implements WildBotEvent<VkWallRepostEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private WallPost message;
 }

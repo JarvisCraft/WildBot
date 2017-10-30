@@ -22,9 +22,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconData;
+import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconResponse;
 
 @RequiredArgsConstructor
-public class HttpRconEvent implements WildBotEvent {
+public class HttpRconEvent implements WildBotEvent<HttpRconEvent> {
     @NonNull @Getter final private HttpRconData data;
     @Getter @Setter private boolean handled = false;
+    @Getter @Setter private HttpRconResponse response = HttpRconResponse.getDefault();
 }

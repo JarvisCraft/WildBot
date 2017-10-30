@@ -18,12 +18,16 @@ package ru.wildbot.wildbotcore.api.event;
 
 import ru.wildbot.wildbotcore.WildBotCore;
 
-public interface WildBotEvent {
-    default void call() {
+public interface WildBotEvent<T extends WildBotEvent<T>> {
+    @SuppressWarnings("unchecked")
+    default T call() {
         WildBotCore.eventManager().callEvents(this);
+        return (T) this;
     }
 
-    default void call(final EventManager eventManager) {
+    @SuppressWarnings("unchecked")
+    default T call(final EventManager eventManager) {
         eventManager.callEvents(this);
+        return (T) this;
     }
 }

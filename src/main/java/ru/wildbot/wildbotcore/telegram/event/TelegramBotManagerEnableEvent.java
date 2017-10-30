@@ -22,6 +22,6 @@ import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 
 @RequiredArgsConstructor
-public class TelegramBotManagerEnableEvent implements WildBotEvent {
+public class TelegramBotManagerEnableEvent implements WildBotEvent<TelegramBotManagerEnableEvent> {
     @NonNull private final TelegramBotManager botManager;
 }

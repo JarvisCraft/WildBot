@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkGroupLeaveEvent implements WildBotEvent {
+public class VkGroupLeaveEvent implements WildBotEvent<VkGroupLeaveEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private CallbackGroupLeave message;
 }

@@ -17,6 +17,7 @@
 package ru.wildbot.wildbotcore.console.logging;
 
 public final class AnsiCodes {
+    @SuppressWarnings("unused")
     public static final String
             RESET = "\033[0m",
             BOLD_ON = "\033[1m",

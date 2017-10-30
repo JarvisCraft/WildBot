@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha512;
 
-@ToString
+@ToString(exclude = {"sha512KeyHash", "sha512ContentHash"})
 @EqualsAndHashCode
 @NoArgsConstructor
 @RequiredArgsConstructor

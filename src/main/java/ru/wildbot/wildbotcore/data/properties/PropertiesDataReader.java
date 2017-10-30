@@ -18,6 +18,7 @@ package ru.wildbot.wildbotcore.data.properties;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.val;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.math.BigDecimal;
@@ -39,7 +40,7 @@ public class PropertiesDataReader {
             Tracer.infoP(Arrays.asList(setting.getRequestInputMessage().toArray()),
                     Arrays.asList(SETTING_NAME_PLACEHOLDER, setting.getName()));
 
-            final Object settingValue = readSettingFromConsole(setting);
+            final Object settingValue = readApplicableSettingFromConsole(setting);
 
             PropertiesDataManager.setSetting(setting.getName(), settingValue, true);
 
@@ -49,75 +50,80 @@ public class PropertiesDataReader {
         }
     }
 
-    private static Object readSettingFromConsole(final PropertiesDataRequired setting) {
+
+    private static Object readApplicableSettingFromConsole(final PropertiesDataRequired setting) {
+        Object value = null;
+        while (value == null) value = readSettingFromConsoleInput(setting);
+        return value;
+    }
+
+    private static Object readSettingFromConsoleInput(final PropertiesDataRequired setting) {
         final Scanner scanner = new Scanner(System.in, "UTF-8");
 
         try {
             switch (setting.getInputType()) {
-                case BOOLEAN:
-                    return scanner.nextBoolean();
+                case BOOLEAN: return Optional.of(scanner.nextBoolean());
                 case SHORT: {
-                    short value = scanner.nextShort();
+                    val value = scanner.nextShort();
                     if (value < setting.getMin()
                             || value > setting.getMax()) throw new InputMismatchException();
-                    return value;
+                    break;
                 }
                 case INT: {
-                    int value = scanner.nextInt();
+                    val value = scanner.nextInt();
                     if (value < setting.getMin()
                             || value > setting.getMax()) throw new InputMismatchException();
                     return value;
                 }
                 case FLOAT: {
-                    float value = scanner.nextFloat();
+                    val value = scanner.nextFloat();
                     if (value < setting.getMin()
                             || value > setting.getMax()) throw new InputMismatchException();
                     return value;
                 }
                 case DOUBLE: {
-                    double value = scanner.nextDouble();
+                    val value = scanner.nextDouble();
                     if (value < setting.getMin()
                             || value > setting.getMax()) throw new InputMismatchException();
                 }
                 case BIG_INT: {
-                    BigInteger value = scanner.nextBigInteger();
+                    val value = scanner.nextBigInteger();
                     if (value.compareTo(BigInteger.valueOf(setting.getMin())) < 0
                             || value.compareTo(BigInteger.valueOf(setting.getMax())) > 0) throw
                             new InputMismatchException();
                     return value;
                 }
                 case BIG_DEC: {
-                    BigDecimal value = scanner.nextBigDecimal();
+                    val value = scanner.nextBigDecimal();
                     if (value.compareTo(BigDecimal.valueOf(setting.getMin())) < 0
                             || value.compareTo(BigDecimal.valueOf(setting.getMax())) > 0) throw
                             new InputMismatchException();
                     return value;
                 }
                 case LONG: {
-                    long value = scanner.nextLong();
+                    val value = scanner.nextLong();
                     if (value < setting.getMin()
                             || value > setting.getMax()) throw new InputMismatchException();
                     return value;
                 }
                 case SINGLE_STRING: {
-                    String value = scanner.next();
+                    val value = scanner.next();
                     if (value.length() < setting.getMin()
                             || value.length() > setting.getMax()) throw new InputMismatchException();
                     return value;
                 }
                 case STRING: {
-                    String value = scanner.nextLine();
+                    val value = scanner.nextLine();
                     if (value.length() < setting.getMin()
                             || value.length() > setting.getMax()) throw new InputMismatchException();
                     return value;
                 }
-                default:
-                    return scanner.nextLine();
+                default: return scanner.nextLine();
             }
         } catch (InputMismatchException e) {
             Tracer.warnP(Arrays.asList(setting.getWrongInputMessage().toArray()),
-                    Arrays.asList(SETTING_NAME_PLACEHOLDER, setting.getName()));
-            return readSettingFromConsole(setting);
+                    SETTING_NAME_PLACEHOLDER, setting.getName());
         }
+        return null;
     }
 }

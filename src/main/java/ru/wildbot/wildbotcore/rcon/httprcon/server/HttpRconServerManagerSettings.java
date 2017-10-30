@@ -16,6 +16,7 @@
 
 package ru.wildbot.wildbotcore.rcon.httprcon.server;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,4 +28,11 @@ import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 public class HttpRconServerManagerSettings extends AbstractJsonData {
     @Getter private int port = 12524;
     @NonNull @Getter private String key = "MyS3cr37K$&";
+    @SerializedName("log-unauthorized") @Getter private boolean logUnauthorised = true;
+    @SerializedName("log-unverified") @Getter private boolean logUnverified = true;
+    @SerializedName("verify-content") @Getter private boolean verifyContent = true;
+    @SerializedName("log-malformed") @Getter private boolean logMalformed = true;
+    @SerializedName("log-malformed-content") @Getter private boolean logMalformedContent = true;
+    @SerializedName("log-received") @Getter private boolean logReceived = true;
+    @SerializedName("log-received-content") @Getter private boolean logReceivedContent = true;
 }

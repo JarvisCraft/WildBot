@@ -23,7 +23,7 @@ import lombok.Setter;
 import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
 @AllArgsConstructor
-public class VkAudioNewEvent implements WildBotEvent {
+public class VkAudioNewEvent implements WildBotEvent<VkAudioNewEvent> {
     @Getter @Setter private Integer groupId;
     @Getter @Setter private Audio message;
 }
