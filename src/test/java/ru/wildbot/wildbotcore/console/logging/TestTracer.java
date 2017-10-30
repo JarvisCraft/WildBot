@@ -16,12 +16,37 @@
 
 package ru.wildbot.wildbotcore.console.logging;
 
+import lombok.extern.log4j.Log4j2;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.wildbot.wildbotcore.test.WildBotTest;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.Collections;
 
+@Log4j2
 public class TestTracer extends WildBotTest {
+    @AfterClass
+    @BeforeClass
+    public static void clearLogs() throws Exception {
+        info("Clearing file `logs/latest.log`");
+
+        final File file = new File("logs/latest.log");
+        if (!file.exists() || file.isDirectory()) {
+            info("No `logs/latest.log` file found");
+            return;
+        }
+
+        final PrintWriter writer = new PrintWriter(file);
+        writer.print("");
+        writer.close();
+
+
+        info("File `logs/latest.log` has been been successfully cleared");
+    }
+
     @Test
     public void testInfo() {
         Tracer.info("Tracer.info(String) Test successful");

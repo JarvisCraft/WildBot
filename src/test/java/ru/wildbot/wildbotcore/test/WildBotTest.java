@@ -20,16 +20,24 @@ public class WildBotTest {
     private final static String SUCCESS = "Success";
     private final static String ALL_SUCCESS = "All tests successful";
 
-    public final void success() {
+    public static void success() {
         System.out.println(SUCCESS);
     }
 
-    public final void allSuccess() {
+    public static void allSuccess() {
         System.out.println(ALL_SUCCESS);
     }
 
-    public final void testing(final String tested) {
+    public static void testing(final String tested) {
         System.out.printf("Testing %s\n", tested);
+    }
+
+    public static void info(final String message) {
+        System.out.println(message);
+    }
+
+    public static void err(final String message) {
+        System.err.println(message);
     }
 
     public final WildBotTest assertException(final ThrowingRunnable test)
