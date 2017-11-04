@@ -17,6 +17,6 @@
 package ru.wildbot.wildbotcore.data.json;
 
 /**
- * Default class to be used in case when content should be empty but can not be {@link null}
+ * Default class to be used in case when content should be empty but can not be null
  */
 public final class EmptyObject {}
