@@ -23,20 +23,18 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import java.time.Duration;
 import java.time.Instant;
 
-@UtilityClass
 public final class Analytics {
+    private Instant beginTime = Instant.now();
 
-    private static Instant currentInstant = Instant.now();
-
-    @Synchronized public static void updateStartTime() {
-        currentInstant = Instant.now();
+    @Synchronized public void updateBeginTime() {
+        beginTime = Instant.now();
     }
 
-    @Synchronized public static long getUptime() {
-        return Duration.between(currentInstant, Instant.now()).toMillis();
+    @Synchronized public long getUptime() {
+        return Duration.between(beginTime, Instant.now()).toMillis();
     }
 
-    @Synchronized public static String getUptimeFormatted() {
+    @Synchronized public String getUptimeFormatted() {
         return DurationFormatUtils.formatDurationHMS(getUptime());
     }
 }

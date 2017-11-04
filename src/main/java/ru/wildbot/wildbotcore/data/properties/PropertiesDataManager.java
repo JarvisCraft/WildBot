@@ -36,6 +36,10 @@ public class PropertiesDataManager {
     }
 
     private static final Properties DEFAULT_SETTINGS = new Properties() {{
+        // Start script
+        setProperty("restart-script", "sh start.sh");
+        setProperty("restart-arguments", "-Xmx1024M -Xms1024M");
+        setProperty("restart-file-name", "start.sh");
         // Locale
         setProperty("language", "en_US");
         // Netty

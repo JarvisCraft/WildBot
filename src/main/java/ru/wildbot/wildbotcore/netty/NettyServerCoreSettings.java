@@ -22,10 +22,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
+/**
+ * Class representing all settings used with {@link NettyServerCore}
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 public class NettyServerCoreSettings extends AbstractJsonData {
     @SerializedName("parent-threads") @Getter private int parentThreads = 0;
     @SerializedName("child-threads") @Getter private int childThreads = 0;
     @SerializedName("use-native") @Getter private boolean useNative = true;
+    @SerializedName("log") @Getter private boolean log = true;
 }

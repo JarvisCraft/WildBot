@@ -29,7 +29,7 @@ public class WildBotTest {
     }
 
     public static void testing(final String tested) {
-        System.out.printf("Testing %s\n", tested);
+        System.out.printf("Testing %s%n", tested);
     }
 
     public static void info(final String message) {
@@ -62,7 +62,7 @@ public class WildBotTest {
         throw new UnsuccessfulException(expected);
     }
 
-    public final class UnsuccessfulException extends Exception {
+    public static final class UnsuccessfulException extends Exception {
         public UnsuccessfulException() {
             super("No expected exception was thrown");
         }

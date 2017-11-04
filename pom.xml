@@ -22,7 +22,7 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot-core</artifactId>
-    <version>0.1.2-beta-SNAPSHOT</version>
+    <version>0.1.2</version>
     <packaging>jar</packaging>
     <name>WildBot Project</name>
     <url>https://github.com/JarvisCraft/WildBot/</url>
@@ -81,6 +81,13 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+            </resource>
+            <!-- Add LICENSE.md to root of targer .jar -->
+            <resource>
+                <directory>${basedir}</directory>
+                <includes>
+                    <include>LICENSE.md</include>
+                </includes>
             </resource>
         </resources>
 
@@ -185,18 +192,21 @@
             <groupId>com.vk.api</groupId>
             <artifactId>sdk</artifactId>
             <version>0.5.9</version>
+            <scope>compile</scope>
         </dependency>
         <!-- Telegram Bot Api -->
         <dependency>
             <groupId>com.github.pengrad</groupId>
             <artifactId>java-telegram-bot-api</artifactId>
             <version>3.3.0</version>
+            <scope>compile</scope>
         </dependency>
         <!-- Google 2F-Auth -->
         <dependency>
             <groupId>com.warrenstrange</groupId>
             <artifactId>googleauth</artifactId>
             <version>1.1.2</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Utilities -->
@@ -205,40 +215,47 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>LATEST</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>LATEST</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>LATEST</version>
+            <scope>compile</scope>
         </dependency>
         <!-- Console Colors -->
         <dependency>
             <groupId>com.diogonunes</groupId>
             <artifactId>JCDP</artifactId>
             <version>2.0.3.1</version>
+            <scope>compile</scope>
         </dependency>
         <!-- Guava -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>23.2-jre</version>
+            <scope>compile</scope>
         </dependency>
         <!-- Netty -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.15.Final</version>
+            <scope>compile</scope>
         </dependency>
         <!-- SnakeYaml -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.18</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Code -->

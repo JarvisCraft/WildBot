@@ -18,7 +18,7 @@ package ru.wildbot.wildbotcore.core.exception;
 
 public class NotImplementedException extends Exception {
     public NotImplementedException() {
-        super("There's no valid json for file");
+        super("This feature is not implemented");
     }
     public NotImplementedException(final String message) {
         super(message);

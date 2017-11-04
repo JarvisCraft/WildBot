@@ -21,6 +21,7 @@ import com.vk.api.sdk.client.VkApiClient;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.val;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import ru.wildbot.wildbotcore.api.annotation.Shorthand;
 import ru.wildbot.wildbotcore.api.command.CommandManager;
 import ru.wildbot.wildbotcore.api.event.EventManager;
@@ -42,6 +43,8 @@ import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
+import ru.wildbot.wildbotcore.restart.Restarter;
+import ru.wildbot.wildbotcore.restart.RestarterSettings;
 import ru.wildbot.wildbotcore.secure.googleauth.GoggleAuthManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManager;
 import ru.wildbot.wildbotcore.telegram.TelegramBotManagerSettings;
@@ -52,6 +55,8 @@ import ru.wildbot.wildbotcore.vk.VkManagerSettings;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManager;
 import ru.wildbot.wildbotcore.vk.callback.server.VkCallbackServerManagerSettings;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Scanner;
 
@@ -77,8 +82,7 @@ public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
     
     public static void main(String[] args) {
-        // Analytics initialisation
-        Analytics.updateStartTime();
+        final Instant beginTime = Instant.now();
 
         // Tracer initialisation
         Tracer.setupLogging();
@@ -116,19 +120,12 @@ public class WildBotCore {
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.NETTY).call();
 
-        /*_instance.commandReader = new CommandManager() {{
-            open(); TODO implement CommandManager
-        }};*/
-
         instance.enableMessengers();
         instance.enableRcon();
         instance.enableHttpRcon();
 
         new WildBotEnableEvent(WildBotEnableEvent.Phase.OPTIONAL_MANAGERS).call();
 
-        // Info on basic components initialised
-        Tracer.info(AnsiCodes.BG_GREEN + "It took " + Analytics.getUptimeFormatted() + " to open The Core"
-                + AnsiCodes.RESET);
         Tracer.info("HI, I am mister Missix, Look at me!"); // УУУУ, Пасхалочкаааа!
 
         instance.loadPlugins();
@@ -145,6 +142,12 @@ public class WildBotCore {
         Tracer.info("CommandManager has been successfully enabled");
 
         instance.registerDefaultCommands();
+
+        instance.setupRestarter();
+
+        Tracer.info(AnsiCodes.BG_GREEN + "It took "
+                + DurationFormatUtils.formatDurationHMS(Duration.between(beginTime, Instant.now()).toMillis())
+                + " to start The Core" + AnsiCodes.RESET, "Now reading console input");
         instance.readCommands(); // Used for reading commands and not exiting application
 
         shutdown();
@@ -166,6 +169,16 @@ public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
 
     // Basic managers
+    @Getter private Analytics analytics = new Analytics();
+    @Shorthand public static Analytics analytics() {
+        return instance.analytics;
+    }
+
+    @Getter private Restarter restarter;
+    @Shorthand public static Restarter restarter() {
+        return instance.restarter;
+    }
+
     @Getter private PluginManager pluginManager;
     @Shorthand public static PluginManager pluginManager() {
         return instance.pluginManager;
@@ -191,6 +204,16 @@ public class WildBotCore {
     @Getter private NettyServerCore nettyServerCore;
     @Shorthand public static NettyServerCore nettyServerCore() {
         return instance.nettyServerCore;
+    }
+
+    private void setupRestarter() {// TODO: 01.11.2017 Manager
+        try {
+            restarter = new Restarter(JsonDataManager
+                    .readAndWrite("restart.json", RestarterSettings.class)
+                    .orElseThrow(JsonNotPresentException::new));
+        } catch (Exception e) {
+            Tracer.error("An exception occurred while trying to initialise Netty-Server-Core:", e);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -381,10 +404,9 @@ public class WildBotCore {
     }
 
     public void logInfo() {
-        Tracer.info(Collections.singleton("Uptime: {}"), Analytics.getUptimeFormatted());
+        Tracer.info(Collections.singleton("Uptime: {}"), analytics.getUptimeFormatted());
 
         val plugins = pluginManager.getPlugins();
-
 
         Tracer.info(plugins.size() > 0 ? "There are no plugins loaded" : Collections
                         .singleton("Plugins loaded: {}{}"), plugins.size(), plugins.toString());
@@ -401,9 +423,7 @@ public class WildBotCore {
     }
 
     private void readCommands() {
-        while (enabled && scanner.hasNextLine()) {
-            commandManager.parse(scanner.nextLine());
-        }
+        while (enabled && scanner.hasNextLine()) commandManager.parse(scanner.nextLine());
     }
 
     private static void shutdown() {

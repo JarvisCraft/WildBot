@@ -17,14 +17,15 @@
 package ru.wildbot.wildbotcore.api.command;
 
 import com.google.common.collect.Sets;
-import lombok.Synchronized;
-import lombok.val;
+import lombok.*;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.util.*;
 
 public class CommandManager {
-    private final Set<Command> commands = Sets.newConcurrentHashSet();
+    @Getter private final Set<Command> commands = Sets.newConcurrentHashSet();
+
+    @Getter @Setter private String unknownCommandMessage = "Unknown command";
 
     public boolean register(final Command command) {
         if (isRegistered(command.getNames())) {
@@ -36,21 +37,31 @@ public class CommandManager {
         return true;
     }
 
-    // TODO: 22.10.2017 impl reregistration
-
-    public boolean isRegistered(final String name) {
+    public boolean isRegistered(@NonNull final String name) {
         for (val command : commands) for (val commandName : command.getNames()) if (name
                 .equalsIgnoreCase(commandName)) return true;
         return false;
     }
 
-    public boolean isRegistered(final Collection<String> names) {
+    public boolean isRegistered(@NonNull final Collection<String> names) {
         for (val command : commands) for (val commandName : command.getNames()) for (val name : names) if (name
                 .equalsIgnoreCase(commandName)) return true;
         return false;
     }
 
-    @Synchronized public Optional<Runnable> parse(String commandLine) {
+    public Optional<Command> getCommand(@NonNull final String name) {
+        for (val command : commands) for (val commandName : command.getNames()) if (name
+                .equalsIgnoreCase(commandName)) return Optional.of(command);
+        return Optional.empty();
+    }
+
+    public Optional<Command> getCommand(@NonNull final Collection<String> names) {
+        for (val command : commands) for (val commandName : command.getNames()) for (val name : names) if (name
+                .equalsIgnoreCase(commandName)) return Optional.of(command);
+        return Optional.empty();
+    }
+
+    public Optional<Runnable> parse(String commandLine) {
         while (commandLine.indexOf(" ") == 0) commandLine = commandLine.substring(1); // remove spaces in the beginning
         final int firstSpaceIndex = commandLine.indexOf(' ');
 
@@ -62,10 +73,11 @@ public class CommandManager {
                         firstSpaceIndex >= 0 ? commandLine.substring(firstSpaceIndex + 1).split("\\s")
                                 : new String[]{""})));
 
+        Tracer.info(unknownCommandMessage);
         return Optional.empty();
     }
 
-    @Synchronized public Collection<Optional<Runnable>> parse(final String... commandLines) {
+    public Collection<Optional<Runnable>> parse(final String... commandLines) {
         val actions = new ArrayList<Optional<Runnable>>();
 
         for (val commandLine : commandLines) {

@@ -23,29 +23,37 @@ import io.netty.channel.socket.ServerSocketChannel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * {@link NettyTransportType} which can and should be used on BSD and MacOS.
+ */
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class KQueueTransportType extends NettyTransportType {
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends EventLoopGroup> getEventLoopGroupClass() {
         return KQueueEventLoopGroup.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup() {
         return new KQueueEventLoopGroup();
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup(int nThreads) {
         return new KQueueEventLoopGroup(nThreads);
     }
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends ServerSocketChannel> getServerSocketChannelClass() {
         return KQueueServerSocketChannel.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public ServerSocketChannel newServerSocketChannel() {
         return new KQueueServerSocketChannel();

@@ -23,33 +23,88 @@ import lombok.val;
 import org.apache.commons.lang3.math.NumberUtils;
 import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.api.command.Command;
+import ru.wildbot.wildbotcore.console.logging.AnsiCodes;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.secure.googleauth.AuthId;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @AllArgsConstructor
 public enum DefaultCommand {
     STOP(Command.builder()
             .name("stop")
             .name("end")
-            .pluginName("")
             .locked(true)
+            .description("Stops WildBot Core")
             .executor((command, name, arguments) -> {
-        Tracer.info("Stopping WildBot due to `stop` command being called");
+        Tracer.info("Stopping WildBot due to stop-command being called");
         WildBotCore.getInstance().disable();
         return null;
     }).build()),
 
+    RESTART(Command.builder()
+            .name("restart")
+            .locked(true)
+            .description("Restarts WildBot Core")
+            .executor((command, name, arguments) -> {
+                Tracer.info("Restarting WildBot due to restart-command being called");
+
+                val restartRunnable = WildBotCore.restarter().getRestartRunnable();
+                Runtime.getRuntime().addShutdownHook(new Thread(restartRunnable));
+
+                WildBotCore.getInstance().disable();
+                return null;
+            }).build()),
+
     INFO(Command.builder()
             .name("info")
-            .pluginName("")
             .executor((command, name, args) -> {
         WildBotCore.getInstance().logInfo();
         return null;
     }).build()),
 
+    HELP(Command.builder()
+            .name("help")
+            .executor((command, name, args) -> {
+        val helpMessage = new StringBuilder(AnsiCodes.BG_WHITE)
+                .append(AnsiCodes.FG_BLACK)
+                .append("Commands available:");
+
+        val commands = new ArrayList<Command>(WildBotCore.commandManager().getCommands());
+        for (int i = 0; i < commands.size(); i++) {
+            val cmd = commands.get(i);
+            // Marker
+            helpMessage.append("• ")
+                    // Names
+                    .append(cmd.getNames().toString())
+                    // Is locked
+                    .append(cmd.isLocked() ? " 🔐 : " : " : ")
+                    // Plugin name
+                    .append(cmd.getPluginName() == null || cmd.getPluginName().isEmpty() ? "☆"
+                            : cmd.getPluginName())
+                    // Description
+                    .append(cmd.getDescription() == null || cmd.getDescription().isEmpty() ? ""
+                            : " (" + cmd.getDescription() + ")")
+                    // Usage
+                    .append(cmd.getUsage() == null || cmd.getUsage().isEmpty() ? ""
+                            : ":\n" + cmd.getUsage())
+                    // New line or Colors-Reset
+                    .append(i < commands.size() - 1 ? "\n" : AnsiCodes.RESET);
+        }
+        Tracer.info(helpMessage.toString());
+        return null;
+    }).build()),
+
+    UPTIME(Command.builder()
+            .name("uptime")
+            .executor((command, name, args) -> {
+                WildBotCore.getInstance().logInfo();
+                return null;
+            }).build()),
+
     AUTH_KEY_NEW(Command.builder()
             .name("auth_key_new")
-            .pluginName("")
             .executor((command, name, args) -> {
         if (args.size() >= 2) {
 
@@ -68,6 +123,8 @@ public enum DefaultCommand {
     AUTH_KEY_CHECK(Command.builder()
             .name("auth_key_check")
             .pluginName("")
+            .description("Checks secure Google-2F-Auth Key")
+            .usage(".. <platform> <name> <key>")
             .executor((command, name, args) -> {
         if (args.size() >= 3) {
             if (NumberUtils.isCreatable(args.get(2))) {

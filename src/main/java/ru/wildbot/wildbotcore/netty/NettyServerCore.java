@@ -47,7 +47,8 @@ public class NettyServerCore implements WildBotManager {
     private EventLoopGroup childGroup;
 
     // Each name can associate with multiple Pairs of Channel and it's Port
-    private final Multimap<String, Pair<ChannelFuture, Integer>> channels = Multimaps.synchronizedListMultimap(ArrayListMultimap.create());
+    private final Multimap<String, Pair<ChannelFuture, Integer>> channels = Multimaps
+            .synchronizedListMultimap(ArrayListMultimap.create());
 
     private Thread shutdownHook = new Thread(() -> {
         try {
@@ -65,7 +66,8 @@ public class NettyServerCore implements WildBotManager {
         if (settings.isUseNative()) transportType = NettyTransportType.getNative();
         else transportType = NettyTransportType.getDefault();
 
-        Tracer.info("Using " + transportType.getClass().getSimpleName() + " for Netty ServerCore");
+        if (settings.isLog()) Tracer.info("Using " + transportType.getClass().getSimpleName()
+                + " for Netty ServerCore");
         // Parent (boss) and Child (worker) groups
         parentGroup = transportType.newEventLoopGroup(settings.getParentThreads());
         childGroup = transportType.newEventLoopGroup(settings.getChildThreads());
@@ -98,8 +100,13 @@ public class NettyServerCore implements WildBotManager {
         this.settings = settings;
     }
 
+    public NettyServerCore(final int parentThreads, final int childThreads, final boolean useNative,
+                           final boolean log) {
+        this(new NettyServerCoreSettings(parentThreads, childThreads, useNative, log));
+    }
+
     public NettyServerCore(final int parentThreads, final int childThreads, final boolean useNative) {
-        this(new NettyServerCoreSettings(parentThreads, childThreads, useNative));
+        this(new NettyServerCoreSettings(parentThreads, childThreads, useNative, true));
     }
 
     public NettyServerCore(final int parentThreads, final int childThreads) {
@@ -111,7 +118,7 @@ public class NettyServerCore implements WildBotManager {
     }
 
     public void open(final String name, final ServerBootstrap bootstrap, final int port) throws Exception {
-        Tracer.info("Opening Netty Channel for name `" + name + "`");
+        if (settings.isLog())  Tracer.info("Opening Netty Channel for name `" + name + "`");
 
         // Add parent and children for Bootstrap if none
         if (bootstrap.group() == null || bootstrap.childGroup() == null) bootstrap.group(parentGroup, childGroup);
@@ -119,17 +126,18 @@ public class NettyServerCore implements WildBotManager {
         // Registering in `channels` Map
         channels.put(name, Pair.of(bootstrap.bind(port), port));
 
-        Tracer.info("Netty Channel for name `" + name + "` has been successfully opened");
+        if (settings.isLog()) Tracer.info("Netty Channel for name `" + name
+                + "` has been successfully opened");
     }
 
     public boolean close(final String name, final int port) throws Exception {
         //if (true) throw new NotImplementedException("Channel closing is yet disabled");
-        Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
+        if (settings.isLog()) Tracer.info("Closing Netty Channel for name `" + name + "` and port " + port);
 
         if (channels.containsKey(name)) {
             for (val channel : channels.get(name))
                 if (channel.getSecond() == port) {
-                    Tracer.info("Closing Netty Channel on port " + channel.getSecond());
+                    if (settings.isLog()) Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
                             /*
                             .channel().close().addListener(future -> {
@@ -158,8 +166,8 @@ public class NettyServerCore implements WildBotManager {
                 }
         }
 
-        Tracer.info("There is no registered Netty Channel for name `" + name + "` on port " + port
-                + " to be stopped");
+        if (settings.isLog()) Tracer.info("There is no registered Netty Channel for name `" + name
+                + "` on port " + port + " to be stopped");
 
         return false;
     }
@@ -167,41 +175,46 @@ public class NettyServerCore implements WildBotManager {
     public boolean close(final String name) throws Exception {
         //if (true) throw new NotImplementedException("Channel closing is yet disabled");
 
-        Tracer.info("Closing all Netty Channels for name `" + name + "`");
+        if (settings.isLog()) Tracer.info("Closing all Netty Channels for name `" + name + "`");
 
         if (channels.containsKey(name)) {
             val removes = new HashSet<Pair<String, Pair<ChannelFuture, Integer>>>();
 
             for (Pair<ChannelFuture, Integer> channel : this.channels.get(name)) {
-                Tracer.info("Closing Netty Channel on port " + channel.getSecond());
+                if (settings.isLog()) Tracer.info("Closing Netty Channel on port " + channel.getSecond());
 
-                Tracer.info("Netty Channel on port " + channel.getSecond() + " has been successfully stopped");
+                // TODO: 01.11.2017
+
+                if (settings.isLog()) Tracer.info("Netty Channel on port " + channel.getSecond()
+                        + " has been successfully stopped");
 
                 removes.add(Pair.of(name, channel));
             }
 
             for (val remove : removes) channels.remove(remove.getFirst(), remove.getSecond());
 
-            Tracer.info("All Netty Channels for name `" + name + "` have been successfully stopped");
+            if (settings.isLog()) Tracer.info("All Netty Channels for name `" + name
+                    + "` have been successfully stopped");
 
             return true;
         } else {
-            Tracer.info("There are no registered Netty Channels for name `" + name + "` to be stopped");
+            if (settings.isLog()) Tracer.info("There are no registered Netty Channels for name `" + name
+                    + "` to be stopped");
 
             return false;
         }
     }
 
     public boolean closeAll() throws Exception {
-        Tracer.info("Closing all Netty Channels");
+        if (settings.isLog()) Tracer.info("Closing all Netty Channels");
 
         if (channels.isEmpty()) {
-            Tracer.info("There are no registered Netty Channels");
+            if (settings.isLog()) Tracer.info("There are no registered Netty Channels");
             return false;
         }
 
         for (val channelName : channels.keys()) close(channelName);
-        Tracer.info("All Netty Channels have been closed");
+        if (settings.isLog()) Tracer.info("All Netty Channels have been closed");
 
         return true;
     }

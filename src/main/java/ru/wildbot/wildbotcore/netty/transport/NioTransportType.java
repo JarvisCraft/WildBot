@@ -23,29 +23,37 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * The most universal {@link NettyTransportType} which can be used on all machines.
+ */
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class NioTransportType extends NettyTransportType {
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends EventLoopGroup> getEventLoopGroupClass() {
         return NioEventLoopGroup.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup() {
         return new NioEventLoopGroup();
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup(int nThreads) {
         return new NioEventLoopGroup(nThreads);
     }
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends ServerSocketChannel> getServerSocketChannelClass() {
         return NioServerSocketChannel.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public ServerSocketChannel newServerSocketChannel() {
         return new NioServerSocketChannel();

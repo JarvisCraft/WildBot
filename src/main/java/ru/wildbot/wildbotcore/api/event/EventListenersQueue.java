@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EventListenersQueue extends ArrayList<Class<?>> {
+    private static final long serialVersionUID = -8631776433936322494L; // Automatically generated using plugin
+
     @Getter private transient List<EventHandlerMethod> handlers = new ArrayList<>();
 
     public EventListenersQueue(final WildBotEvent event, final List<Object> eventListeners) {

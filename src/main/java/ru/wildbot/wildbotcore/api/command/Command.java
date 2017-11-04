@@ -28,4 +28,6 @@ public class Command {
     @NonNull @Getter @Builder.Default private String pluginName = "";
     @Getter @Builder.Default private boolean locked = false;
     @NonNull @Getter private CommandExecutor executor;
+    @NonNull @Getter @Builder.Default private String description = "";
+    @Getter @Builder.Default private String usage = null;
 }

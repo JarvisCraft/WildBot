@@ -23,29 +23,37 @@ import io.netty.channel.socket.ServerSocketChannel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * {@link NettyTransportType} which can and should be used on Linux.
+ */
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class EpollTransportType extends NettyTransportType {
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends EventLoopGroup> getEventLoopGroupClass() {
         return EpollEventLoopGroup.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup() {
         return new EpollEventLoopGroup();
     }
 
+    /**{@inheritDoc}*/
     @Override
     public EventLoopGroup newEventLoopGroup(int nThreads) {
         return new EpollEventLoopGroup(nThreads);
     }
 
+    /**{@inheritDoc}*/
     @Override
     public Class<? extends ServerSocketChannel> getServerSocketChannelClass() {
         return EpollServerSocketChannel.class;
     }
 
+    /**{@inheritDoc}*/
     @Override
     public ServerSocketChannel newServerSocketChannel() {
         return new EpollServerSocketChannel();

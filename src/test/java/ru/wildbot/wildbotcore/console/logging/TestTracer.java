@@ -39,7 +39,7 @@ public class TestTracer extends WildBotTest {
             return;
         }
 
-        final PrintWriter writer = new PrintWriter(file);
+        final PrintWriter writer = new PrintWriter(file, "UTF-8");
         writer.print("");
         writer.close();
 
