@@ -1,5 +1,5 @@
 # WildBot
-[![Maven Central](https://img.shields.io/maven-central/v/ru.wildbot/wildbot-core.svg)]() 
+[![Maven Central](https://img.shields.io/maven-central/v/ru.wildbot/wildbot-core.svg)](https://mvnrepository.com/artifact/ru.wildbot/wildbot-core) 
 [![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot)  
 [![GitHub contributors](https://img.shields.io/github/contributors/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/graphs/contributors) 
 [![license](https://img.shields.io/github/license/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/blob/master/LICENSE.md) 
