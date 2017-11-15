@@ -42,7 +42,6 @@ import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManager;
 import ru.wildbot.wildbotcore.rcon.httprcon.server.HttpRconServerManagerSettings;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManager;
 import ru.wildbot.wildbotcore.rcon.rcon.server.RconServerManagerSettings;
-import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 import ru.wildbot.wildbotcore.restart.Restarter;
 import ru.wildbot.wildbotcore.restart.RestarterSettings;
 import ru.wildbot.wildbotcore.secure.googleauth.GoggleAuthManager;
@@ -371,11 +370,10 @@ public class WildBotCore {
         if (Boolean.parseBoolean(PropertiesDataManager.getSetting("enable-rcon"))) {
             Tracer.info("Enabling RCON");
             try {
-                val packets = RconPackets.ofDefault();
 
                 rconServerManager = new RconServerManager(JsonDataManager
                         .readAndWrite("settings/rcon/rcon.json",
-                                RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new), packets);
+                                RconServerManagerSettings.class).orElseThrow(JsonNotPresentException::new));
                 rconServerManager.enable();
                 Tracer.info("RCON has been successfully enabled");
             } catch (Exception e) {

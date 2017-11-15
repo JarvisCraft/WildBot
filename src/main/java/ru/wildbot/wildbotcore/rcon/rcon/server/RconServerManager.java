@@ -24,7 +24,6 @@ import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 import ru.wildbot.wildbotcore.api.manager.WildBotNettyManager;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.rcon.rcon.server.packet.RconPackets;
 
 @RequiredArgsConstructor
 public class RconServerManager implements WildBotManager, WildBotNettyManager {
@@ -32,7 +31,6 @@ public class RconServerManager implements WildBotManager, WildBotNettyManager {
     @Getter private boolean nettyEnabled = false;
 
     @NonNull @Getter private final RconServerManagerSettings settings;
-    @NonNull private final RconPackets packets;
 
     @Override
     public void enable() throws Exception {
@@ -59,7 +57,7 @@ public class RconServerManager implements WildBotManager, WildBotNettyManager {
         Tracer.info("Starting RCON netty on port " + settings.getPort() + " by first: " + settings.getKey());
 
         WildBotCore.getInstance().getNettyServerCore().startStandard(NETTY_CHANNEL_NAME, new ServerBootstrap()
-                .childHandler(new RconChannelInitializer(settings.getKey(), packets)), settings.getPort());
+                .childHandler(new RconChannelInitializer(settings.getKey())), settings.getPort());
 
         Tracer.info("RCON netty has been successfully started");
 
