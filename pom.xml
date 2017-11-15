@@ -22,7 +22,7 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot-core</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
     <packaging>jar</packaging>
     <name>WildBot Project</name>
     <url>https://github.com/JarvisCraft/WildBot/</url>
@@ -40,6 +40,13 @@
             <timezone>UTC+3</timezone>
             <organization>WildCubes</organization>
             <organizationUrl>http://wildcubes.ru</organizationUrl>
+        </developer>
+        <developer>
+            <id>CatCoder</id>
+            <name>Ruslan Onischenko</name>
+            <email>catcoder@wildbot.ru</email>
+            <url>https://vk.com/catcoder</url>
+            <timezone>UTC+3</timezone>
         </developer>
     </developers>
 
