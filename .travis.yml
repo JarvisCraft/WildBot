@@ -13,7 +13,7 @@ deploy:
   provider: releases
   api_key:
     secure: $GITHUB_DEPLOY_TOKEN
-  file: "target/${project.build.finalName}.${project.packaging}"
+  file: "target/wildbot-core-0.1.4-SNAPSHOT.jar"
   skip_cleanup: true
   on:
     branch: master
