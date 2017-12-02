@@ -16,7 +16,6 @@
 
 package ru.wildbot.wildbotcore.util;
 
-import io.netty.util.internal.UnstableApi;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 
@@ -75,7 +74,6 @@ public class DataFormatter {
         return host;
     }
 
-    @UnstableApi
     @Deprecated
     public static String toVkHttpUrl(String host, Integer port) {
         // Protocol

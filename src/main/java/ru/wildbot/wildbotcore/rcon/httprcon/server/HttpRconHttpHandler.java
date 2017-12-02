@@ -23,9 +23,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import lombok.*;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import ru.wildbot.wildbotcore.WildBotCore;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.rcon.httprcon.event.HttpRconEvent;
 
@@ -33,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
 

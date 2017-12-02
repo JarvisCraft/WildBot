@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.rcon.rcon.server;
+package ru.wildbot.wildbotcore.util.collection;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
+import lombok.Setter;
 
-@NoArgsConstructor
+@EqualsAndHashCode
 @AllArgsConstructor
-@Getter
-public class RconServerManagerSettings extends AbstractJsonData {
-    private int port = 12514;
-    @NonNull private String key = "MyS3cr37K$&";
+public class Triplet<F, S, T> {
+    @Getter @Setter private F first;
+    @Getter @Setter private S second;
+    @Getter @Setter private T third;
+
+    public static <F, S, T> Triplet<F, S, T> of(final F first, final S second, final T third) {
+        return new Triplet<>(first, second, third);
+    }
 }

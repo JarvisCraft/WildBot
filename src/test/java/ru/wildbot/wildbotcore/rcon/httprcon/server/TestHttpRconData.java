@@ -69,7 +69,7 @@ public class TestHttpRconData extends WildBotTest {
                 ::decodeHashes, DecoderException.class).success();
 
         testing("key-hash empty & content-hash wrong");
-        assertException( new HttpRconData(HEX_HASH_EMPTY, HEX_HASH_MALFORMED, RIGHT_CONTENT)
+        assertException(new HttpRconData(HEX_HASH_EMPTY, HEX_HASH_MALFORMED, RIGHT_CONTENT)
                 ::decodeHashes, DecoderException.class).success();
 
         testing("both hashes wrong");

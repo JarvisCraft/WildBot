@@ -9,3 +9,11 @@ after_success:
 - chmod +x ./.travis/deploy.sh
 - "./.travis/before-deploy.sh"
 - "./.travis/deploy.sh"
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_DEPLOY_TOKEN
+  file: "${project.build.finalName}.${project.packaging}"
+  skip_cleanup: true
+  on:
+    branch: master

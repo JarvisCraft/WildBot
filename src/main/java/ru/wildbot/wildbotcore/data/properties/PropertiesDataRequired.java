@@ -19,7 +19,6 @@ package ru.wildbot.wildbotcore.data.properties;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 

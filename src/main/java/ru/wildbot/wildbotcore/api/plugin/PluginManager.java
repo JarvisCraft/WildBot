@@ -149,7 +149,7 @@ public class PluginManager {
 
     private File[] loadJarFiles() {
         val folder = new File(PLUGINS_FOLDER);
-        if (!folder.isDirectory() && !folder.exists()) if (folder.mkdirs()) Tracer
+        if (!folder.isDirectory() && !folder.exists() && folder.mkdirs()) Tracer
                 .info("\"/plugins\" folder has been created");
 
         val filesArray = folder.listFiles(); // Holds all files in /plugins/ folder

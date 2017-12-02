@@ -17,7 +17,10 @@
 package ru.wildbot.wildbotcore.api.command;
 
 import com.google.common.collect.Sets;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.val;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
 
 import java.util.*;

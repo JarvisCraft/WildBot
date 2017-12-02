@@ -29,7 +29,6 @@ import lombok.NonNull;
 import lombok.val;
 import ru.wildbot.wildbotcore.api.manager.WildBotManager;
 import ru.wildbot.wildbotcore.console.logging.Tracer;
-import ru.wildbot.wildbotcore.core.exception.NotImplementedException;
 import ru.wildbot.wildbotcore.netty.transport.NettyTransportType;
 import ru.wildbot.wildbotcore.util.collection.Pair;
 

@@ -29,9 +29,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@ToString(exclude = {"jarFile", "pluginsClasses"})
 @EqualsAndHashCode
-@ToString(exclude = {"jarFile", "yaml", "pluginsClasses"})
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class JavaPluginInQueue {
     @NonNull @Getter private final File file;
     @NonNull @Getter private final JarFile jarFile;
@@ -86,7 +86,12 @@ class JavaPluginInQueue {
 
     private static void injectFile(final File file) throws Exception {
         val method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        val accessible = method.isAccessible();
+
         method.setAccessible(true);
+        method.setAccessible(accessible);
         method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());
+        method.setAccessible(accessible);
+
     }
 }

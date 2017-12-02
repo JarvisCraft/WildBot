@@ -23,6 +23,44 @@ import ru.wildbot.wildbotcore.data.json.EmptyObject;
 @RequiredArgsConstructor
 public class HttpRconResponse implements Cloneable {
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Constant values
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * 0-valued {@link short} used as a default {@link #errorMessage} meaning no error.
+     */
+    public static final short DEFAULT_ERROR_CODE = 0;
+
+    /**
+     * Empty {@link String} used as a default {@link #errorMessage} meaning no error.
+     */
+    public static final String DEFAULT_ERROR_MESSAGE = "";
+
+    /**
+     * 1-valued {@link short} used as an {@link #errorMessage} meaning that given key-hash is wrong.
+     */
+    public static final short KEY_HASH_ERROR_ID = 1;
+
+    /**
+     * Self-explanatory {@link String} used as an {@link #errorMessage} meaning that given key-hash is wrong.
+     */
+    public static final String KEY_HASH_ERROR_MESSAGE = "Bad key-hash";
+
+    /**
+     * 2-valued {@link short} used as an {@link #errorMessage} meaning that given content-hash is wrong.
+     */
+    public static final short CONTENT_HASH_ERROR_ID = 2;
+
+    /**
+     * Self-explanatory {@link String} used as an {@link #errorMessage} meaning that given content-hash is wrong.
+     */
+    public static final String CONTENT_HASH_ERROR_MESSAGE = "Bad content-hash";
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Main methods
+    ///////////////////////////////////////////////////////////////////////////
+
     /**
      * ID of an error if it occurred.
      * Leave unchanged or use {@link #DEFAULT_ERROR_CODE} if none occurred.
@@ -71,38 +109,4 @@ public class HttpRconResponse implements Cloneable {
     public static HttpRconResponse getContentHashError() {
         return new HttpRconResponse(CONTENT_HASH_ERROR_ID, CONTENT_HASH_ERROR_MESSAGE, new EmptyObject());
     }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Constant values
-    ///////////////////////////////////////////////////////////////////////////
-
-    /**
-     * 0-valued {@link short} used as a default {@link #errorMessage} meaning no error.
-     */
-    public static final short DEFAULT_ERROR_CODE = 0;
-
-    /**
-     * Empty {@link String} used as a default {@link #errorMessage} meaning no error.
-     */
-    public static final String DEFAULT_ERROR_MESSAGE = "";
-
-    /**
-     * 1-valued {@link short} used as an {@link #errorMessage} meaning that given key-hash is wrong.
-     */
-    public static final short KEY_HASH_ERROR_ID = 1;
-
-    /**
-     * Self-explanatory {@link String} used as an {@link #errorMessage} meaning that given key-hash is wrong.
-     */
-    public static final String KEY_HASH_ERROR_MESSAGE = "Bad key-hash";
-
-    /**
-     * 2-valued {@link short} used as an {@link #errorMessage} meaning that given content-hash is wrong.
-     */
-    public static final short CONTENT_HASH_ERROR_ID = 2;
-
-    /**
-     * Self-explanatory {@link String} used as an {@link #errorMessage} meaning that given content-hash is wrong.
-     */
-    public static final String CONTENT_HASH_ERROR_MESSAGE = "Bad content-hash";
 }

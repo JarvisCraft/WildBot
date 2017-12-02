@@ -19,6 +19,9 @@ package ru.wildbot.wildbotcore.api.plugin;
 import lombok.experimental.UtilityClass;
 import ru.wildbot.wildbotcore.api.plugin.annotation.WildBotPluginData;
 
+/**
+ * Utility Class used for simpler usage of functionality related to WildBot Plugins
+ */
 @UtilityClass
 public class PluginHelper {
     public static WildBotPluginData getPluginData(final WildBotAbstractPlugin plugin) {

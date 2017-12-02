@@ -16,11 +16,20 @@
 
 package ru.wildbot.wildbotcore.api.annotation;
 
+import ru.wildbot.wildbotcore.WildBotCore;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation used to indicate that given field or method is used as a shorthand for a longer variant.
+ * As an example if there's always at least one instance of an object and each instance has getters and/or setters
+ * for some field you can create a static Shorthand in the base class to get default instance's value of this field.
+ * For example, {@link WildBotCore#eventManager()} is {@link Shorthand}
+ * for {@code WildBotCore.getInstance().getEventManager()}
+ */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Shorthand {}

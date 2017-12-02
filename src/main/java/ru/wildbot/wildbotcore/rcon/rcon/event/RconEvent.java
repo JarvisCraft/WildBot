@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package ru.wildbot.wildbotcore.rcon.rcon.server;
+package ru.wildbot.wildbotcore.rcon.rcon.event;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
+import ru.wildbot.wildbotcore.api.event.WildBotEvent;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-public class RconServerManagerSettings extends AbstractJsonData {
-    private int port = 12514;
-    @NonNull private String key = "MyS3cr37K$&";
+public class RconEvent implements WildBotEvent<RconEvent> {
+    // TODO: 05.11.2017
 }

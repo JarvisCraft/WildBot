@@ -20,15 +20,15 @@ public class WildBotTest {
     private final static String SUCCESS = "Success";
     private final static String ALL_SUCCESS = "All tests successful";
 
-    public static void success() {
+    public void success() {
         System.out.println(SUCCESS);
     }
 
-    public static void allSuccess() {
+    public void allSuccess() {
         System.out.println(ALL_SUCCESS);
     }
 
-    public static void testing(final String tested) {
+    public void testing(final String tested) {
         System.out.printf("Testing %s%n", tested);
     }
 
@@ -36,7 +36,7 @@ public class WildBotTest {
         System.out.println(message);
     }
 
-    public static void err(final String message) {
+    public void err(final String message) {
         System.err.println(message);
     }
 

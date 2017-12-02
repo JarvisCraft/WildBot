@@ -32,6 +32,22 @@ import java.util.regex.Pattern;
 
 @Log4j2(topic = "WildBot")
 public class Tracer {
+
+    private static final String LATEST_LOG = "logs/latest.log";
+
+    private static final Object[] ASCII_LOGO = {
+            "                                                                              ",
+            "oooooo   oooooo     oooo  o8o  oooo        .o8  oooooooooo.                .  ",
+            " `888.    `888.     .8'   `\"'  `888       \"888  `888'   `Y8b             .o8  ",
+            "  `888.   .8888.   .8'   oooo   888   .oooo888   888     888  .ooooo.  .o888oo",
+            "   `888  .8'`888. .8'    `888   888  d88' `888   888oooo888' d88' `88b   888  ",
+            "    `888.8'  `888.8'      888   888  888   888   888    `88b 888   888   888  ",
+            "     `888'    `888'       888   888  888   888   888    .88P 888   888   888 .",
+            "      `8'      `8'       o888o o888o `Y8bod88P\" o888bood8P'  `Y8bod8P'   \"888\"",
+            "                                                                              ",
+            "                                                          by JARvis PROgrammer"
+    };
+
     ///////////////////////////////////////////////////////////////////////////
     // Info
     ///////////////////////////////////////////////////////////////////////////
@@ -266,8 +282,6 @@ public class Tracer {
         info(ASCII_LOGO);
     }
 
-    private static final String LATEST_LOG = "logs/latest.log";
-
     public static void setupLogging() {
         final File file = new File(LATEST_LOG);
         try {
@@ -306,17 +320,4 @@ public class Tracer {
     private static void outputSessionInfo() {
         info("<" + new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss").format(new Date()) + ">");
     }
-
-    private static final Object[] ASCII_LOGO = {
-            "                                                                              ",
-            "oooooo   oooooo     oooo  o8o  oooo        .o8  oooooooooo.                .  ",
-            " `888.    `888.     .8'   `\"'  `888       \"888  `888'   `Y8b             .o8  ",
-            "  `888.   .8888.   .8'   oooo   888   .oooo888   888     888  .ooooo.  .o888oo",
-            "   `888  .8'`888. .8'    `888   888  d88' `888   888oooo888' d88' `88b   888  ",
-            "    `888.8'  `888.8'      888   888  888   888   888    `88b 888   888   888  ",
-            "     `888'    `888'       888   888  888   888   888    .88P 888   888   888 .",
-            "      `8'      `8'       o888o o888o `Y8bod88P\" o888bood8P'  `Y8bod8P'   \"888\"",
-            "                                                                              ",
-            "                                                          by JARvis PROgrammer"
-    };
 }

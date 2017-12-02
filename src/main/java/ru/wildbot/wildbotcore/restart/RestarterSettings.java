@@ -19,7 +19,6 @@ package ru.wildbot.wildbotcore.restart;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import ru.wildbot.wildbotcore.data.json.AbstractJsonData;
 
 import java.io.File;

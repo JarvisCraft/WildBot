@@ -17,12 +17,15 @@
 package ru.wildbot.wildbotcore;
 
 import lombok.Synchronized;
-import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import java.time.Duration;
 import java.time.Instant;
 
+
+/**
+ * A thread-safe class used for storing analytic data. Is used with {@link WildBotCore}.
+ */
 public final class Analytics {
     private Instant beginTime = Instant.now();
 

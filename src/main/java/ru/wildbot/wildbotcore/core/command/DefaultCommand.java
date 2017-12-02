@@ -28,7 +28,6 @@ import ru.wildbot.wildbotcore.console.logging.Tracer;
 import ru.wildbot.wildbotcore.secure.googleauth.AuthId;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 @AllArgsConstructor
 public enum DefaultCommand {
