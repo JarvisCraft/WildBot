@@ -17,4 +17,5 @@ deploy:
   skip_cleanup: true
   name: WildBot v$TRAVIS_TAG
   on:
+    tag: true
     branch: master
