@@ -13,9 +13,9 @@ deploy:
   api_key:
     secure: $GITHUB_DEPLOY_TOKEN
   file_glob: true
-  file: "target/wildbot-core-*-SNAPSHOT.jar"
+  file: "target/wildbot-core-*.jar"
   skip_cleanup: true
   name: WildBot $TRAVIS_TAG
   on:
-    tag: true
+    tags: true
     branch: master
