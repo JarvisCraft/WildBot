@@ -15,6 +15,7 @@ deploy:
   file_glob: true
   file: "target/wildbot-core-*-SNAPSHOT.jar"
   skip_cleanup: true
+  name: WildBot v$TRAVIS_TAG
   on:
     branch: release
     repo: JarvisCraft/WildBot
