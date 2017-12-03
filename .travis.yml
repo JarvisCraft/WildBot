@@ -1,3 +1,4 @@
+sudo: true
 language: java
 install: mvn install -P !build-extras -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -P !build-extras -B
@@ -5,15 +6,15 @@ cache:
   directories:
   - "~/.m2/repository"
 after_success:
-- chmod +x ./.travis/before-deploy.sh
-- chmod +x ./.travis/deploy.sh
 - "./.travis/before-deploy.sh"
 - "./.travis/deploy.sh"
 deploy:
   provider: releases
   api_key:
     secure: $GITHUB_DEPLOY_TOKEN
-  file: "target/wildbot-core-0.1.4-SNAPSHOT.jar"
+  file_glob: true
+  file: "target/wildbot-core-*-SNAPSHOT.jar"
   skip_cleanup: true
   on:
-    branch: master
+    branch: release
+    repo: JarvisCraft/WildBot
