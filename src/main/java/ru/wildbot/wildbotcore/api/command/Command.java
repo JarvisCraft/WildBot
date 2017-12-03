@@ -24,10 +24,10 @@ import java.util.HashSet;
 @Builder
 @EqualsAndHashCode
 public class Command {
-    @Singular @NonNull @Getter private Collection<String> names = new HashSet<>();
-    @NonNull @Getter @Builder.Default private String pluginName = "";
-    @Getter @Builder.Default private boolean locked = false;
+    @Singular @NonNull @Getter private Collection<String> names;
+    @NonNull @Getter @Builder.Default private String pluginName;
+    @Getter @Builder.Default private boolean locked;
     @NonNull @Getter private CommandExecutor executor;
-    @NonNull @Getter @Builder.Default private String description = "";
-    @Getter @Builder.Default private String usage = null;
+    @NonNull @Getter @Builder.Default private String description;
+    @Getter @Builder.Default private String usage;
 }
