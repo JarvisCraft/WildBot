@@ -1,15 +1,17 @@
 # WildBot
 [![Maven Central](https://img.shields.io/maven-central/v/ru.wildbot/wildbot-core.svg)](https://mvnrepository.com/artifact/ru.wildbot/wildbot-core) 
 [![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot)  
-[![GitHub contributors](https://img.shields.io/github/contributors/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/graphs/contributors) 
-[![license](https://img.shields.io/github/license/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/blob/master/LICENSE.md) 
+[![Contributors](https://img.shields.io/github/contributors/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/graphs/contributors) 
+[![License](https://img.shields.io/github/license/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/blob/master/LICENSE.md) 
 [![Discord](https://img.shields.io/discord/359322755650551818.svg)](https://discord.gg/3fn3YSM)  
-[![GitHub issues](https://img.shields.io/github/issues-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
-[![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
-[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls) 
-[![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls)  
+[![Opened issues](https://img.shields.io/github/issues-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
+[![Closed issues](https://img.shields.io/github/issues-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
+[![Pull requests](https://img.shields.io/github/issues-pr-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls) 
+[![Closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls)  
 An advanced open-source Bot for different messengers with it's own API.  
-This project is under development  
+This project is under development  
+## Download
+[![Downloads](https://img.shields.io/github/downloads/atom/atom/total.svg)](https://github.com/JarvisCraft/WildBot/releases) 
 ## Maven
 WildBot Core is available from Maven Central so, in order to use it, you can simply add the foolowing to your `<dependencies>` tag:  
 ```xml
