@@ -5,6 +5,8 @@ cache:
   directories:
   - "~/.m2/repository"
 after_success:
+- chmod +x ./.travis/before-deploy.sh
+- chmod +x ./.travis/deploy.sh
 - "./.travis/before-deploy.sh"
 - "./.travis/deploy.sh"
 deploy:
@@ -13,8 +15,6 @@ deploy:
     secure: $GITHUB_DEPLOY_TOKEN
   file_glob: true
   file:
-  - chmod +x ./cd/before-deploy.sh
-  - chmod +x ./cd/deploy.sh
   - "./Core/target/wildbot-core-*.jar"
   - "./Bootstrap/target/wildbot-bootstrap-*.jar"
   skip_cleanup: true
