@@ -13,7 +13,9 @@ deploy:
   api_key:
     secure: $GITHUB_DEPLOY_TOKEN
   file_glob: true
-  file: "./target/wildbot-core-*.jar"
+  file:
+  - "./Core/target/wildbot-core-*.jar"
+  - "./Bootstrap/target/wildbot-bootstrap-*.jar"
   skip_cleanup: true
   name: WildBot v$TRAVIS_TAG
   on:

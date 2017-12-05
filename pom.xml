@@ -21,9 +21,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.wildbot</groupId>
-    <artifactId>wildbot-core</artifactId>
-    <version>0.1.6-beta-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <artifactId>wildbot</artifactId>
+    <version>0.2.0-gamma-SNAPSHOT</version>
+    <modules>
+        <module>Bootstrap</module>
+        <module>Core</module>
+    </modules>
+    <packaging>pom</packaging>
     <name>WildBot Project</name>
     <url>https://github.com/JarvisCraft/WildBot/</url>
     <description>
@@ -89,7 +93,7 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-            <!-- Add LICENSE.md to root of targer .jar -->
+            <!-- Add LICENSE.md to root of target .jar -->
             <resource>
                 <directory>${basedir}</directory>
                 <includes>
@@ -109,21 +113,6 @@
                     <source>${maven.compiler.source}</source>
                 </configuration>
             </plugin>
-            <!-- Compilation to .jar -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
-
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>ru.wildbot.wildbotcore.WildBotCore</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
             <!-- Shading (Required Dependencies) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -136,27 +125,6 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Settings -->
-            <!-- Properties from outer files -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>properties-maven-plugin</artifactId>
-                <version>1.0.0</version>
-                <executions>
-                    <execution>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>read-project-properties</goal>
-                        </goals>
-                        <configuration>
-                            <files>
-                                <file>properties/main.properties</file>
-                            </files>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -193,29 +161,6 @@
     </build>
 
     <dependencies>
-        <!-- APIs -->
-        <!-- VK API -->
-        <dependency>
-            <groupId>com.vk.api</groupId>
-            <artifactId>sdk</artifactId>
-            <version>0.5.9</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- Telegram Bot Api -->
-        <dependency>
-            <groupId>com.github.pengrad</groupId>
-            <artifactId>java-telegram-bot-api</artifactId>
-            <version>3.3.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- Google 2F-Auth -->
-        <dependency>
-            <groupId>com.warrenstrange</groupId>
-            <artifactId>googleauth</artifactId>
-            <version>1.1.2</version>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- Utilities -->
         <!-- Logging -->
         <dependency>

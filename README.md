@@ -1,8 +1,9 @@
 # WildBot
 [![Maven Central](https://img.shields.io/maven-central/v/ru.wildbot/wildbot-core.svg)](https://mvnrepository.com/artifact/ru.wildbot/wildbot-core) 
-[![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot)  
+[![Build Status](https://travis-ci.org/JarvisCraft/WildBot.svg?branch=master)](https://travis-ci.org/JarvisCraft/WildBot) 
+[![Docs Status](https://img.shields.io/readthedocs/pip.svg)](https://www.javadoc.io/doc/ru.wildbot/wildbot-core) 
+[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.md)  
 [![Contributors](https://img.shields.io/github/contributors/JarvisCraft/WildBot.svg)](./graphs/contributors) 
-[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.md) 
 [![Discord](https://img.shields.io/discord/359322755650551818.svg)](https://discord.gg/3fn3YSM)  
 [![Opened issues](https://img.shields.io/github/issues-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
 [![Closed issues](https://img.shields.io/github/issues-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
@@ -13,7 +14,7 @@ This project is under development  
 ## Download
 [![Downloads](https://img.shields.io/github/downloads/JarvisCraft/WildBot/total.svg)](./releases) 
 ## Maven
-WildBot Core is available from Maven Central so, in order to use it, you can simply add the foolowing to your `<dependencies>` tag:  
+WildBot Core is available from Maven Central so, in order to use it, you can simply add the following to your `<dependencies>` tag:  
 ```xml
 <dependency>
     <groupId>ru.wildbot</groupId>
