@@ -25,7 +25,7 @@
     <version>0.2.0-gamma-SNAPSHOT</version>
     <modules>
         <module>Bootstrap</module>
-        <module>CoreW</module>
+        <module>Core</module>
     </modules>
     <packaging>pom</packaging>
     <name>WildBot Project</name>

@@ -1,4 +1,3 @@
-sudo: true
 language: java
 install: mvn install -P !build-extras -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -P !build-extras -B
@@ -14,6 +13,8 @@ deploy:
     secure: $GITHUB_DEPLOY_TOKEN
   file_glob: true
   file:
+  - chmod +x ./cd/before-deploy.sh
+  - chmod +x ./cd/deploy.sh
   - "./Core/target/wildbot-core-*.jar"
   - "./Bootstrap/target/wildbot-bootstrap-*.jar"
   skip_cleanup: true
