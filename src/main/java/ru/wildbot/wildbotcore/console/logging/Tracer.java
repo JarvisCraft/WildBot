@@ -17,6 +17,9 @@
 package ru.wildbot.wildbotcore.console.logging;
 
 import lombok.Cleanup;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.apache.commons.io.FileUtils;
@@ -27,15 +30,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+/**
+ * Log4j2 based class for most console output.
+ * While being {@link UtilityClass} this class is not available for extending so for your own custom debug
+ * you should use Log4j2 (by default is stored in `latest.log`) or your own logging implementation (depends on you).
+ * Also Lombok's annotation {@link Log4j2} is acceptable, moreover it's used right here.
+ */
 @Log4j2(topic = "WildBot")
+@UtilityClass
+@SuppressWarnings("unused")
 public class Tracer {
 
-    private static final String LATEST_LOG = "logs/latest.log";
+    private final String LATEST_LOG = "logs/latest.log";
 
-    private static final Object[] ASCII_LOGO = {
+    private final Object[] ASCII_LOGO = {
             "                                                                              ",
             "oooooo   oooooo     oooo  o8o  oooo        .o8  oooooooooo.                .  ",
             " `888.    `888.     .8'   `\"'  `888       \"888  `888'   `Y8b             .o8  ",
@@ -52,34 +64,34 @@ public class Tracer {
     // Info
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void info(Collection<Object> objects) {
+    public void info(final Object... objects) {
         if (objects != null && log.isInfoEnabled()) for (Object object : objects) log
                 .info(String.valueOf(object));
     }
 
-    public static void info(Object... objects) {
-        if (objects != null && log.isInfoEnabled()) for (Object object : objects) log
-                .info(String.valueOf(object));
+    public void info(final Collection<Object> objects) {
+        if (objects == null) return;
+        info(objects.toArray());
     }
 
-    public static void info(Collection<Object> objects, Object... args) {
+    public void info(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isInfoEnabled()) for (Object object : objects) log
                 .info(String.valueOf(object), args);
     }
 
-    public static void infoF(Collection<Object> objects, Object... args) {
+    public void infoF(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isInfoEnabled()) for (Object object : objects) log
                 .info(String.format(String.valueOf(object), args));
     }
 
-    public static void infoP(Collection<Object> objects, Object... args) {
+    public void infoP(Collection<Object> objects, final Object... args) {
         if (objects != null && log.isInfoEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) log.info(String.valueOf(object), args);
         }
     }
 
-    public static void infoP(Collection<Object> objects, Collection<Object> args) {
+    public void infoP(final Collection<Object> objects, final Collection<Object> args) {
         infoP(objects, args.toArray());
     }
 
@@ -87,33 +99,31 @@ public class Tracer {
     // Warn
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void warn(Collection<Object> objects) {
+    public void warn(final Object... objects) {
         if (objects != null && log.isWarnEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             log.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
         }
     }
 
-    public static void warn(Object... objects) {
-        if (objects != null && log.isWarnEnabled()) for (Object object : objects) {
-            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
-            log.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET);
-        }
+    public void warn(final Collection<Object> objects) {
+        if (objects == null) return;
+        warn(objects.toArray());
     }
 
-    public static void warn(Collection<Object> objects, Object... args) {
+    public void warn(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isWarnEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             log.warn(AnsiCodes.FG_YELLOW + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
-    public static void warnF(Collection<Object> objects, Object... args) {
+    public void warnF(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isWarnEnabled()) for (Object object : objects) log
                 .warn(String.format(String.valueOf(object), args));
     }
 
-    public static void warnP(Collection<Object> objects, Object... args) {
+    public void warnP(Collection<Object> objects, final Object... args) {
         if (objects != null && log.isWarnEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) {
@@ -123,7 +133,7 @@ public class Tracer {
         }
     }
 
-    public static void warnP(Collection<Object> objects, Collection<Object> args) {
+    public void warnP(final Collection<Object> objects, final Collection<Object> args) {
         warnP(objects, args.toArray());
     }
 
@@ -131,33 +141,31 @@ public class Tracer {
     // Error
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void error(Collection<Object> objects) {
+    public void error(final Object... objects) {
         if (objects != null && log.isErrorEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             log.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
         }
     }
 
-    public static void error(Object... objects) {
-        if (objects != null && log.isErrorEnabled()) for (Object object : objects) {
-            if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
-            log.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET);
-        }
+    public void error(final Collection<Object> objects) {
+        if (objects == null) return;
+        error(objects.toArray());
     }
 
-    public static void error(Collection<Object> objects, Object... args) {
+    public void error(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isErrorEnabled()) for (Object object : objects) {
             if (object instanceof Throwable) object = ExceptionUtils.getStackTrace((Throwable) object);
             log.error(AnsiCodes.FG_RED + String.valueOf(object) + AnsiCodes.RESET, args);
         }
     }
 
-    public static void errorF(Collection<Object> objects, Object... args) {
+    public void errorF(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isErrorEnabled()) for (Object object : objects) log
                 .error(String.format(String.valueOf(object), args));
     }
 
-    public static void errorP(Collection<Object> objects, Object... args) {
+    public void errorP(Collection<Object> objects, final Object... args) {
         if (objects != null && log.isErrorEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects) {
@@ -167,7 +175,7 @@ public class Tracer {
         }
     }
 
-    public static void errorP(Collection<Object> objects, Collection<Object> args) {
+    public void errorP(final Collection<Object> objects, final Collection<Object> args) {
         errorP(objects, args.toArray());
     }
 
@@ -175,27 +183,27 @@ public class Tracer {
     // Debug
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void debug(Collection<Object> objects) {
+    public void debug(final Object... objects) {
         if (objects != null && log.isDebugEnabled()) for (Object object : objects) log
                 .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
     }
 
-    public static void debug(Object... objects) {
-        if (objects != null && log.isDebugEnabled()) for (Object object : objects) log
-                .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET);
+    public void debug(final Collection<Object> objects) {
+        if (objects == null) return;
+        debug(objects.toArray());
     }
 
-    public static void debug(Collection<Object> objects, Object... args) {
+    public void debug(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isDebugEnabled()) for (Object object : objects) log
                 .debug(AnsiCodes.FG_CYAN + String.valueOf(object) + AnsiCodes.RESET, args);
     }
 
-    public static void debugF(Collection<Object> objects, Object... args) {
+    public void debugF(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isDebugEnabled()) for (Object object : objects) log
                 .debug(String.format(String.valueOf(object), args));
     }
 
-    public static void debugP(Collection<Object> objects, Object... args) {
+    public void debugP(Collection<Object> objects, final Object... args) {
         if (objects != null && log.isDebugEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects)
@@ -203,7 +211,7 @@ public class Tracer {
         }
     }
 
-    public static void debugP(Collection<Object> objects, Collection<Object> args) {
+    public void debugP(final Collection<Object> objects, final Collection<Object> args) {
         debugP(objects, args.toArray());
     }
 
@@ -211,27 +219,27 @@ public class Tracer {
     // Trace
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void trace(Collection<Object> objects) {
+    public void trace(final Object... objects) {
         if (objects != null && log.isTraceEnabled()) for (Object object : objects) log
                 .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
     }
 
-    public static void trace(Object... objects) {
-        if (objects != null && log.isTraceEnabled()) for (Object object : objects) log
-                .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET);
+    public void trace(final Collection<Object> objects) {
+        if (objects == null) return;
+        trace(objects.toArray());
     }
 
-    public static void trace(Collection<Object> objects, Object... args) {
+    public void trace(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isTraceEnabled()) for (Object object : objects) log
                 .debug(AnsiCodes.FG_BLUE + String.valueOf(object) + AnsiCodes.RESET, args);
     }
 
-    public static void traceF(Collection<Object> objects, Object... args) {
+    public void traceF(final Collection<Object> objects, final Object... args) {
         if (objects != null && log.isTraceEnabled()) for (Object object : objects) log
                 .trace(String.format(String.valueOf(object), args));
     }
 
-    public static void traceP(Collection<Object> objects, Object... args) {
+    public void traceP(Collection<Object> objects, final Object... args) {
         if (objects != null && log.isTraceEnabled()) {
             objects = formatWithPlaceholders(objects, args);
             for (Object object : objects)
@@ -239,7 +247,7 @@ public class Tracer {
         }
     }
 
-    public static void traceP(Collection<Object> objects, Collection<Object> args) {
+    public void traceP(final Collection<Object> objects, final Collection<Object> args) {
         traceP(objects, args.toArray());
     }
 
@@ -247,7 +255,7 @@ public class Tracer {
     // Util
     ///////////////////////////////////////////////////////////////////////////
 
-    public static Map<String, String> toPlaceholders(Object... args) {
+    public Map<String, String> toPlaceholders(final Object... args) {
         final Map<String, String> placeholders = new HashMap<>(args.length / 2);
         String latestKey = null;
         for (int i = 0; i < args.length; i++) {
@@ -258,7 +266,7 @@ public class Tracer {
     }
 
 
-    public static Collection<Object> formatWithPlaceholders(final Collection<Object> objects, Object... args) {
+    public final Collection<Object> formatWithPlaceholders(final Collection<Object> objects, final Object... args) {
         if (objects == null || objects.size() == 0) return null;
 
         final List<Object> objectList = new ArrayList<>(objects);
@@ -275,15 +283,183 @@ public class Tracer {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Universal
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Enum containing all available Log4j logging types and all possible Trav{@link Consumer}s
+     */
+    @Getter
+    @RequiredArgsConstructor
+    public enum LogType {
+        INFO(Tracer::info, Tracer::info, Tracer::info, Tracer::infoF, Tracer::infoP, Tracer::infoP),
+        WARN(Tracer::warn, Tracer::warn, Tracer::warn, Tracer::warnF, Tracer::warnP, Tracer::warnP),
+        ERROR(Tracer::error, Tracer::error, Tracer::error, Tracer::errorF, Tracer::errorP, Tracer::errorP),
+        DEBUG(Tracer::debug, Tracer::debug, Tracer::debug, Tracer::debugF, Tracer::debugP, Tracer::debugP),
+        TRACE(Tracer::trace, Tracer::trace, Tracer::trace, Tracer::traceF, Tracer::traceP, Tracer::traceP),
+        NONE(null, null, null, null, null, null);
+
+        /**
+         * Objects-array message consumer.
+         * @see Tracer#info(Object...)
+         * @see Tracer#warn(Object...)
+         * @see Tracer#error(Object...)
+         * @see Tracer#debug(Object...)
+         * @see Tracer#trace(Object...)
+         */
+        private final Consumer<Object[]> consumerMsgObjects;
+
+        /**
+         * Objects-collection message consumer.
+         * @see Tracer#info(Collection)
+         * @see Tracer#warn(Collection)
+         * @see Tracer#error(Collection)
+         * @see Tracer#debug(Collection)
+         * @see Tracer#trace(Collection)
+         */
+        private final Consumer<Collection<Object>> consumerMsgCollection;
+
+        /**
+         * Message consumer for formatting objects-collection with objects-array argument using Log4j's formatting.
+         * @see Tracer#info(Collection, Object...)
+         * @see Tracer#warn(Collection, Object...)
+         * @see Tracer#error(Collection, Object...)
+         * @see Tracer#debug(Collection, Object...)
+         * @see Tracer#trace(Collection, Object...)
+         */
+        private final BiConsumer<Collection<Object>, Object[]> consumerMsgCollectionObjects;
+
+        /**
+         * Message consumer for formatting objects-collection with objects-array argument using Java's formatting.
+         * @see Tracer#infoF(Collection, Object...)
+         * @see Tracer#warnF(Collection, Object...)
+         * @see Tracer#errorF(Collection, Object...)
+         * @see Tracer#debugF(Collection, Object...)
+         * @see Tracer#traceF(Collection, Object...)
+         */
+        private final BiConsumer<Collection<Object>, Object[]> consumerMsgF;
+
+        /**
+         * Message consumer for formatting objects-collection with objects-array argument using placeholder-pairs.
+         * @see Tracer#infoP(Collection, Object...)
+         * @see Tracer#warnP(Collection, Object...)
+         * @see Tracer#errorP(Collection, Object...)
+         * @see Tracer#debugP(Collection, Object...)
+         * @see Tracer#traceP(Collection, Object...)
+         */
+        private final BiConsumer<Collection<Object>, Object[]> consumerMsgPObjects;
+
+        /**
+         * Message consumer for formatting objects-collection with objects-collection argument using placeholder-pairs.
+         * @see Tracer#infoP(Collection, Collection)
+         * @see Tracer#warnP(Collection, Collection)
+         * @see Tracer#errorP(Collection, Collection)
+         * @see Tracer#debugP(Collection, Collection)
+         * @see Tracer#traceP(Collection, Collection)
+         */
+        private final BiConsumer<Collection<Object>, Collection<Object>> consumerMsgPCollection;
+
+        /**
+         * Null-check {@link #consumerMsgObjects} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         */
+        public void msg(final Object... objects) {
+            if (consumerMsgObjects == null) return;
+            consumerMsgObjects.accept(objects);
+        }
+
+        /**
+         * Null-check {@link #consumerMsgCollection} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         */
+        public void msg(final Collection<Object> objects) {
+            if (consumerMsgCollection == null) return;
+            consumerMsgCollection.accept(objects);
+        }
+
+        /**
+         * Null-check {@link #consumerMsgCollectionObjects} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         * @param args formatting values for Log4j
+         */
+        public void msg(final Collection<Object> objects, final Object... args) {
+            if (consumerMsgCollectionObjects == null) return;
+            consumerMsgCollectionObjects.accept(objects, args);
+        }
+
+        /**
+         * Null-check {@link #consumerMsgF} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         * @param args formatting values for {@link Formatter}
+         */
+        public void msgF(final Collection<Object> objects, final Object... args) {
+            if (consumerMsgF == null) return;
+            consumerMsgF.accept(objects, args);
+        }
+
+        /**
+         * Null-check {@link #consumerMsgPObjects} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         */
+        public void msgP(Collection<Object> objects, final Object... args) {
+            if (consumerMsgPObjects == null) return;
+            consumerMsgPObjects.accept(objects, args);
+        }
+
+        /**
+         * Null-check {@link #consumerMsgPCollection} and use it if possible by passing the arguments given.
+         * @param objects - message-objects
+         */
+        public void msgP(final Collection<Object> objects, final Collection<Object> args) {
+            if (consumerMsgPCollection == null) return;
+            consumerMsgPCollection.accept(objects, args);
+        }
+    }
+
+    public void msg(final LogType type, final Object... objects) {
+        if (type == null) return;
+        type.msg(objects);
+    }
+
+    public void msg(final LogType type, final Collection<Object> objects) {
+        if (type == null) return;
+        type.msg(objects);
+    }
+
+    public void msg(LogType type, final Collection<Object> objects, final Object... args) {
+        if (type == null) return;
+        type.msg(objects, args);
+    }
+
+    public void msgF(LogType type, final Collection<Object> objects, final Object... args) {
+        if (type == null) return;
+        type.msg(objects, args);
+    }
+
+    public void msgP(final LogType type, final Collection<Object> objects, final Object... args) {
+        if (type == null) return;
+        type.msg(objects, args);
+    }
+
+    public void msgP(final LogType type, final Collection<Object> objects, final Collection<Object> args) {
+        if (type == null) return;
+        type.msgP(objects, args);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // Setup
     ///////////////////////////////////////////////////////////////////////////
 
-    public static void outputLogo() {
+    public void outputLogo() {
         info(ASCII_LOGO);
     }
 
-    public static void setupLogging() {
-        final File file = new File(LATEST_LOG);
+    @Getter private boolean setUp = false;
+
+    public void setupLogging() {
+        if (setUp) return;
+
+        val file = new File(LATEST_LOG);
         try {
             @Cleanup val reader = new BufferedReader(new InputStreamReader(FileUtils
                     .openInputStream(file), StandardCharsets.UTF_8));
@@ -291,7 +467,7 @@ public class Tracer {
             String previousLog = reader.readLine();
 
             if (previousLog != null) {
-                final Matcher matcher = Pattern.compile("<(.*?)>").matcher(previousLog);
+                val matcher = Pattern.compile("<(.*?)>").matcher(previousLog);
                 if (matcher.find()) previousLog = matcher.group(1);
                 else {
                     System.out.println("Could not get date for \"latest.log\". Using current time to save it");
@@ -305,8 +481,6 @@ public class Tracer {
                 Files.copy(file.toPath(), new File(previousLog).toPath());
 
                 new PrintWriter(file, "UTF-8").close();
-
-                outputSessionInfo();
             } else {
                 outputSessionInfo();
                 info("No yaml found in \"latest.log\", adding it for you <3");
@@ -314,10 +488,15 @@ public class Tracer {
         } catch (IOException e) {
             System.err.println("An error occurred while trying to update \".log\" files:");
             e.printStackTrace();
+            return;
         }
+
+        outputSessionInfo();
+
+        setUp = true;
     }
 
-    private static void outputSessionInfo() {
+    private void outputSessionInfo() {
         info("<" + new SimpleDateFormat("YYYY-MM-dd_HH-mm-ss").format(new Date()) + ">");
     }
 }

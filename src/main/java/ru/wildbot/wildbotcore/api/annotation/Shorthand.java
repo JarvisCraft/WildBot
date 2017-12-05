@@ -29,6 +29,8 @@ import java.lang.annotation.Target;
  * for some field you can create a static Shorthand in the base class to get default instance's value of this field.
  * For example, {@link WildBotCore#eventManager()} is {@link Shorthand}
  * for {@code WildBotCore.getInstance().getEventManager()}
+ *
+ * @see WildBotCore
  */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -15,7 +15,7 @@ deploy:
   file_glob: true
   file: "./target/wildbot-core-*.jar"
   skip_cleanup: true
-  name: WildBot $TRAVIS_TAG
+  name: WildBot v$TRAVIS_TAG
   on:
     tags: true
     branch: master
