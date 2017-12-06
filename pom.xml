@@ -22,7 +22,7 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot</artifactId>
-    <version>0.2.0-gamma-SNAPSHOT</version>
+    <version>0.2.0-gamma</version>
     <modules>
         <module>Bootstrap</module>
         <module>Core</module>
