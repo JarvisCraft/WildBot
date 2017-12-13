@@ -20,6 +20,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.vk.api.sdk.client.VkApiClient;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.val;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import ru.wildbot.core.api.annotation.Shorthand;
@@ -69,6 +70,8 @@ import java.util.Scanner;
  * using special methods marked as {@link Shorthand}
  */
 public class WildBotCore {
+    @Getter @Setter private static boolean bootstrap;
+
     ///////////////////////////////////////////////////////////////////////////
     // Singleton
     ///////////////////////////////////////////////////////////////////////////
@@ -81,11 +84,15 @@ public class WildBotCore {
     ///////////////////////////////////////////////////////////////////////////
 
     public static void main(final String... args) {
+        for (val arg : args) if (arg.equals("--wildbot-bootstrap")) bootstrap = true;
+
         final Instant beginTime = Instant.now();
 
         // Tracer initialisation
         Tracer.setupLogging();
         Tracer.outputLogo();
+
+        if (bootstrap) Tracer.info("Started from Bootstrap");
 
         // Settings Manager (static)
         PropertiesDataManager.init();

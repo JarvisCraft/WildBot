@@ -89,7 +89,6 @@ class JavaPluginInQueue {
         val accessible = method.isAccessible();
 
         method.setAccessible(true);
-        method.setAccessible(accessible);
         method.invoke(ClassLoader.getSystemClassLoader(), file.toURI().toURL());
         method.setAccessible(accessible);
 
