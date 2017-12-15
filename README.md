@@ -12,7 +12,7 @@
 An advanced open-source Bot for different messengers with it's own API.  
 This project is under development  
 ## Download
-[![Downloads](https://img.shields.io/github/downloads/JarvisCraft/WildBot/total.svg)](./releases) 
+[![Downloads](https://img.shields.io/github/downloads/JarvisCraft/WildBot/total.svg)](https://github.com/JarvisCraft/WildBot/releases) 
 ## Maven
 WildBot Core is available from Maven Central so, in order to use it, you can simply add the following to your `<dependencies>` tag:  
 ```xml
