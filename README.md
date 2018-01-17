@@ -8,7 +8,7 @@
 [![Opened issues](https://img.shields.io/github/issues-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
 [![Closed issues](https://img.shields.io/github/issues-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/issues) 
 [![Pull requests](https://img.shields.io/github/issues-pr-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls) 
-[![Closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](./pulls)  
+[![Closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/JarvisCraft/WildBot.svg)](https://github.com/JarvisCraft/WildBot/pulls?q=is%3Apr+is%3Aclosed)  
 An advanced open-source Bot for different messengers with it's own API.  
 This project is under development  
 ## Download
