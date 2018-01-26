@@ -22,10 +22,11 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot</artifactId>
-    <version>0.2.1-gamma</version>
+    <version>0.2.2-gamma-SNAPSHOT</version>
     <modules>
-        <module>Bootstrap</module>
-        <module>Core</module>
+        <module>core</module>
+        <module>bootstrap</module>
+        <module>all</module>
     </modules>
     <packaging>pom</packaging>
     <name>WildBot Project</name>

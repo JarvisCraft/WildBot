@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>wildbot</artifactId>
+        <groupId>ru.wildbot</groupId>
+        <version>0.2.2-gamma-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>wildbot-core</artifactId>
+    <name>WildBot Core</name>
+
+    <build>
+        <plugins>
+            <!-- Compilation to .jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>ru.wildbot.core.WildBotCore</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!-- APIs -->
+        <!-- VK API -->
+        <dependency>
+            <groupId>com.vk.api</groupId>
+            <artifactId>sdk</artifactId>
+            <version>0.5.11</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Telegram Bot Api -->
+        <dependency>
+            <groupId>com.github.pengrad</groupId>
+            <artifactId>java-telegram-bot-api</artifactId>
+            <version>3.3.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Google 2F-Auth -->
+        <dependency>
+            <groupId>com.warrenstrange</groupId>
+            <artifactId>googleauth</artifactId>
+            <version>1.1.2</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>
