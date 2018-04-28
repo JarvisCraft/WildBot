@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.util.concurrent.*;
 
+@SuppressWarnings("unused")
 public class Scheduler {
     @NonNull private final ScheduledExecutorService executorService;
 

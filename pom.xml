@@ -22,7 +22,7 @@
 
     <groupId>ru.wildbot</groupId>
     <artifactId>wildbot</artifactId>
-    <version>0.2.2-gamma-SNAPSHOT</version>
+    <version>0.2.3-gamma-SNAPSHOT</version>
     <modules>
         <module>core</module>
         <module>bootstrap</module>
@@ -283,6 +283,10 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <quiet>true</quiet>
+                                    <failOnError>false</failOnError>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

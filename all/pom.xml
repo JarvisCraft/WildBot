@@ -5,7 +5,7 @@
     <parent>
         <artifactId>wildbot</artifactId>
         <groupId>ru.wildbot</groupId>
-        <version>0.2.2-gamma-SNAPSHOT</version>
+        <version>0.2.3-gamma-SNAPSHOT</version>
     </parent>
     <packaging>jar</packaging>
     <name>WildBot-All</name>
